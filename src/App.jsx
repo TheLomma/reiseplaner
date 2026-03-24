@@ -453,7 +453,7 @@ const TRANSLATIONS = {
     apiSave: "Speichern",
     apiSaved: "✅ Gespeichert!",
     apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.1 · Powered by KI",
+    footerText: "Reiseplaner v2.2 · Powered by KI",
     noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
     errorEmpty: "Bitte gib einen Link ein.",
     errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
@@ -474,6 +474,9 @@ const TRANSLATIONS = {
     travelTime: "Reisezeit",
     walkingTime: "zu Fuß",
     transitTime: "mit ÖPNV",
+    notePlaceholder: "Notiz eingeben... (z.B. Tickets vorbuchen!)",
+    noteLabel: "📝 Notiz",
+    noteHide: "📝 Notiz ausblenden",
   },
   en: {
     appName: "Travel Planner",
@@ -531,7 +534,7 @@ const TRANSLATIONS = {
     apiSave: "Save",
     apiSaved: "✅ Saved!",
     apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.1 · Powered by AI",
+    footerText: "Travel Planner v2.2 · Powered by AI",
     noRouteHint: "Add at least 2 places for a route.",
     errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized. Tip: Enter an API key!",
@@ -552,6 +555,9 @@ const TRANSLATIONS = {
     travelTime: "Travel time",
     walkingTime: "walking",
     transitTime: "by transit",
+    notePlaceholder: "Add a note... (e.g. Book tickets!)",
+    noteLabel: "📝 Note",
+    noteHide: "📝 Hide note",
   }
 };
 
@@ -692,11 +698,12 @@ function MetroTag({ line, time }) {
   );
 }
 
-function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays }) {
+function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays, onNoteChange, t }) {
   const openInfo = day ? getOpeningInfo(loc.name, day, city) : null;
   const locInfo = getLocationInfo(loc.name, city);
   const rating = getRating(loc.name, city);
   const [showInfo, setShowInfo] = useState(false);
+  const [showNote, setShowNote] = useState(!!loc.note);
 
   return (
     <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
@@ -774,6 +781,26 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
             )}
           </div>
         )}
+        {/* Notiz-Bereich */}
+        <div className="mt-2">
+          <button
+            onClick={() => setShowNote(v => !v)}
+            className="text-xs font-semibold flex items-center gap-1"
+            style={{ color: showNote ? "#e74c3c" : "#27ae60" }}>
+            {showNote ? (t?.noteHide || "📝 Notiz ausblenden") : (t?.noteLabel || "📝 Notiz")}
+            {loc.note && !showNote && <span style={{ color: "#27ae60", marginLeft: 4 }}>●</span>}
+          </button>
+          {showNote && (
+            <textarea
+              value={loc.note || ""}
+              onChange={(e) => onNoteChange && onNoteChange(loc.id, e.target.value)}
+              placeholder={t?.notePlaceholder || "Notiz eingeben..."}
+              rows={2}
+              className="mt-2 w-full px-3 py-2 rounded-lg text-xs resize-none focus:outline-none"
+              style={{ background: "#1a2a1a", color: "#ccc", border: "1px solid #2d5a2d" }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -974,6 +1001,10 @@ export default function TravelPlanner() {
 
   const changeLocationDay = (locId, newDay) => {
     setLocations(prev => prev.map(l => l.id === locId ? { ...l, day: newDay } : l));
+  };
+
+  const updateNote = (locId, note) => {
+    setLocations(prev => prev.map(l => l.id === locId ? { ...l, note } : l));
   };
 
   const addLocation = async () => {
@@ -1226,6 +1257,8 @@ export default function TravelPlanner() {
                       city={currentCity}
                       onDayChange={changeLocationDay}
                       availableDays={DAYS_CURRENT}
+                      onNoteChange={updateNote}
+                      t={t}
                     />
                     {i < filteredLocations.length - 1 && (
                       <TravelTimeBadge from={filteredLocations[i]} to={filteredLocations[i + 1]} />
