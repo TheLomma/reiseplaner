@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 
+// Mobile-Optimierung: viewport + global styles
+if (typeof window !== "undefined") {
+  let vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
+  vp.content = 'width=device-width, initial-scale=1, maximum-scale=1';
+  if (!document.getElementById('mobile-fix')) {
+    const s = document.createElement('style');
+    s.id = 'mobile-fix';
+    s.textContent = '* { box-sizing: border-box !important; } body, #root { overflow-x: hidden !important; max-width: 100vw !important; } input, select, textarea { font-size: 16px !important; } button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }';
+    document.head.appendChild(s);
+  }
+}
+
 // Leaflet laden
 if (typeof window !== "undefined" && !window.L) {
   const link = document.createElement("link");
@@ -464,7 +477,7 @@ const TRANSLATIONS = {
     apiSave: "Speichern",
     apiSaved: "✅ Gespeichert!",
     apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.6 · Powered by KI",
+    footerText: "Reiseplaner v2.7 · Powered by KI",
     noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
     errorEmpty: "Bitte gib einen Link ein.",
     errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
@@ -545,7 +558,7 @@ const TRANSLATIONS = {
     apiSave: "Save",
     apiSaved: "✅ Saved!",
     apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.6 · Powered by AI",
+    footerText: "Travel Planner v2.7 · Powered by AI",
     noRouteHint: "Add at least 2 places for a route.",
     errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized. Tip: Enter an API key!",
@@ -680,8 +693,8 @@ function CollapsibleSection({ title, badge, rightContent, children, defaultOpen 
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: "#222", border: "1px solid #444" }}>
-      <button onClick={() => setOpen(v => !v)} className="w-full px-5 py-3 flex items-center justify-between" style={{ borderBottom: open ? "1px solid #444" : "none", background: "#1a1a1a", cursor: "pointer" }}>
-        <h2 className="font-black text-base flex items-center gap-2" style={{ color: "#e74c3c", fontFamily: "Georgia,serif", fontSize: "1.2rem" }}>
+      <button onClick={() => setOpen(v => !v)} className="w-full px-4 py-3 flex items-center justify-between gap-2" style={{ borderBottom: open ? "1px solid #444" : "none", background: "#1a1a1a", cursor: "pointer" }}>
+        <h2 className="font-black flex items-center gap-2 text-left" style={{ color: "#e74c3c", fontFamily: "Georgia,serif", fontSize: "1rem" }}>
           {title}
           {badge !== undefined && <span className="text-xs font-normal" style={{ color: "#666" }}>({badge})</span>}
         </h2>
@@ -875,7 +888,7 @@ function MiniMap({ locations, city }) {
 
     return (
       <div>
-        <div ref={mapRef} style={{ height: "260px", borderRadius: "12px", overflow: "hidden", border: "1px solid #333" }} />
+        <div ref={mapRef} style={{ height: "220px", borderRadius: "12px", overflow: "hidden", border: "1px solid #333", width: "100%" }} />
         {locations.length === 0 && (
           <p className="text-xs text-center mt-2" style={{ color: "#555" }}>Füge Orte hinzu, um sie auf der Karte zu sehen.</p>
         )}
@@ -904,7 +917,7 @@ function MiniMap({ locations, city }) {
     return (
       <div className="space-y-2">
         {dayStats.map(({ day, locs, totalMin, totalCost, mapsUrl }) => (
-          <div key={day} className="rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div key={day} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#c0392b", color: "#fff" }}>{day.slice(0, 2)}</span>
               <span className="text-xs" style={{ color: "#888" }}>📍 {locs.length} {t.places}</span>
@@ -1022,9 +1035,9 @@ function CitySelector({ currentCityId, onSelectCity, onAddCustomCity, t }) {
       </button>
 
       {showSelector && (
-        <div className="absolute top-full left-0 mt-2 w-80 rounded-2xl p-4 z-50 space-y-3" style={{ background: "#1a1a1a", border: "1px solid #444", boxShadow: "0 10px 40px #000a" }}>
+        <div className="absolute top-full left-0 mt-2 rounded-2xl p-4 z-50 space-y-3" style={{ width: "min(320px, calc(100vw - 24px))", maxHeight: "80vh", overflowY: "auto" }} style={{ background: "#1a1a1a", border: "1px solid #444", boxShadow: "0 10px 40px #000a" }}>
           <p className="text-xs font-bold" style={{ color: "#e74c3c" }}>{t.selectCity}</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {CITY_ORDER.map(cid => {
               const c = CITIES[cid];
               return (
@@ -1233,12 +1246,12 @@ export default function TravelPlanner() {
   });
 
   return (
-    <div className="min-h-screen" style={{ background: "#111", color: "#f0ece0" }}>
+    <div className="min-h-screen" style={{ background: "#111", color: "#f0ece0", overflowX: "hidden" }}>
       {/* Header */}
       <div className="relative" style={{ background: "linear-gradient(135deg, #1a0a0a 0%, #2a1a1a 50%, #1a0a0a 100%)", borderBottom: "2px solid #c0392b" }}>
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-2xl font-black tracking-tight" style={{ fontFamily: "Georgia,serif", color: "#e74c3c" }}>
+        <div className="w-full max-w-2xl mx-auto px-3 py-4" style={{ boxSizing: "border-box" }}>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: "Georgia,serif", color: "#e74c3c" }}>
               {currentCity.emoji} {t.appName}
             </h1>
             <div className="flex items-center gap-2">
@@ -1272,10 +1285,10 @@ export default function TravelPlanner() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="w-full max-w-2xl mx-auto px-3 py-4 space-y-4" style={{ boxSizing: "border-box" }}>
         {/* Warnings */}
         {warnings.length > 0 && (
-          <div className="rounded-xl p-4 space-y-2" style={{ background: "#2a1a1a", border: "1px solid #7a2d2d" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "#2a1a1a", border: "1px solid #7a2d2d", wordBreak: "break-word" }}>
             <p className="text-sm font-bold" style={{ color: "#e74c3c" }}>⚠️ {t.warningTitle}</p>
             {warnings.map(loc => (
               <p key={loc.id} className="text-xs" style={{ color: "#e74c3c" }}>
@@ -1287,14 +1300,14 @@ export default function TravelPlanner() {
         )}
 
         {/* Add Location */}
-        <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1a1a1a", border: "1px solid #333" }}>
+        <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1a1a", border: "1px solid #333" }}>
           <h2 className="font-black text-lg" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>+ {t.addPlace}</h2>
           <div>
             <label className="text-xs font-bold tracking-wider mb-1 block" style={{ color: "#888" }}>{t.insertLink}</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-col sm:flex-row">
               <input value={linkInput} onChange={e => setLinkInput(e.target.value)} placeholder={t.linkPlaceholder}
                 onKeyDown={e => e.key === "Enter" && addLocation()}
-                className="flex-1 px-4 py-3 rounded-xl text-sm" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
+                className="w-full px-3 py-2.5 rounded-xl text-sm" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
               <button onClick={addLocation} disabled={isAnalyzing}
                 className="px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-105"
                 style={{ background: isAnalyzing ? "#555" : "#c0392b", color: "#fff" }}>
@@ -1305,7 +1318,7 @@ export default function TravelPlanner() {
           </div>
           <div>
             <label className="text-xs font-bold tracking-wider mb-1 block" style={{ color: "#888" }}>{t.visitDay}</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {DAYS_CURRENT.map(d => (
                 <button key={d} onClick={() => setSelectedDay(d)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
@@ -1333,7 +1346,7 @@ export default function TravelPlanner() {
         <div className="flex gap-2">
           {["places", "map", "route", "timeline"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
+              className="px-3 py-2 rounded-xl text-xs font-bold transition-all flex-1 text-center"
               style={activeTab === tab ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888", border: "1px solid #444" }}>
               {tab === "places" ? `📍 ${t.places}` : tab === "map" ? `🗺 Karte` : tab === "route" ? `🗺 ${t.route}` : `⏰ ${t.timeline}`}
             </button>
@@ -1343,8 +1356,8 @@ export default function TravelPlanner() {
         {/* Places Tab */}
         {activeTab === "places" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-black text-lg" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="font-black text-base" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>
                 📍 {t.myPlaces} <span className="text-sm font-normal" style={{ color: "#666" }}>({locations.length})</span>
               </h2>
               <div className="flex gap-1">
@@ -1466,7 +1479,7 @@ export default function TravelPlanner() {
             {locations.map(loc => {
               const cost = getEntryCost(loc.name, currentCity);
               return (
-                <div key={loc.id} className="flex items-center justify-between py-1.5 border-b" style={{ borderColor: "#333" }}>
+                <div key={loc.id} className="flex items-center justify-between gap-2 py-1.5 border-b flex-wrap" style={{ borderColor: "#333" }}>
                   <span className="text-xs" style={{ color: "#ccc" }}>{loc.icon} {loc.name}</span>
                   <span className="text-xs font-bold" style={{ color: cost && cost.max > 0 ? "#f39c12" : "#6dbf6d" }}>
                     {cost ? (cost.max > 0 ? `${cost.min === cost.max ? cost.max.toFixed(2) : `${cost.min.toFixed(2)}–${cost.max.toFixed(2)}`} ${cost.currency}` : t.free) : "?"}
@@ -1474,7 +1487,7 @@ export default function TravelPlanner() {
                 </div>
               );
             })}
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-2 flex-wrap">
               <span className="text-xs" style={{ color: "#888" }}>{t.budgetExtras}</span>
               <input type="number" value={extras} onChange={e => setExtras(Number(e.target.value) || 0)}
                 className="w-24 px-2 py-1 rounded text-xs text-right" style={{ background: "#2a2a2a", color: "#f39c12", border: "1px solid #444" }} />
@@ -1491,9 +1504,9 @@ export default function TravelPlanner() {
         {/* Save & Load Plans */}
         <CollapsibleSection title={`📋 ${t.savePlans}`} badge={savedPlans.length}>
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-col sm:flex-row">
               <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
-                className="flex-1 px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
+                className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
               <button onClick={savePlan} disabled={!planName.trim() || locations.length === 0}
                 className="px-4 py-2 rounded-lg text-xs font-bold" style={{ background: "#c0392b", color: "#fff", opacity: (!planName.trim() || locations.length === 0) ? 0.5 : 1 }}>
                 {saveSuccess ? t.saved : t.save}
@@ -1503,7 +1516,7 @@ export default function TravelPlanner() {
               <div className="space-y-2 pt-2 border-t" style={{ borderColor: "#333" }}>
                 <p className="text-xs font-bold" style={{ color: "#888" }}>{t.savedPlans}</p>
                 {savedPlans.map((plan, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg" style={{ background: "#2a2a2a" }}>
+                  <div key={i} className="flex items-start justify-between gap-2 py-2 px-3 rounded-lg flex-wrap" style={{ background: "#2a2a2a" }}>
                     <div>
                       <p className="text-xs font-bold" style={{ color: "#ccc" }}>{plan.name}</p>
                       <p className="text-xs" style={{ color: "#666" }}>{(allCities[plan.city]?.emoji || "📍")} {allCities[plan.city]?.name || plan.city} · {plan.locations.length} {t.places}</p>
@@ -1530,8 +1543,8 @@ export default function TravelPlanner() {
             {shareLink && (
               <div className="space-y-2">
                 <p className="text-xs" style={{ color: "#888" }}>{t.shareHint}</p>
-                <div className="flex gap-2">
-                  <input value={shareLink} readOnly className="flex-1 px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#5dade2", border: "1px solid #444" }} />
+                <div className="flex gap-2 flex-col sm:flex-row">
+                  <input value={shareLink} readOnly className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#5dade2", border: "1px solid #444" }} />
                   <button onClick={copyLink} className="px-3 py-2 rounded-lg text-xs font-bold" style={{ background: "#1a2a3a", color: "#5dade2" }}>
                     {copied ? t.copied : t.copy}
                   </button>
