@@ -606,13 +606,13 @@ function getOpeningInfo(name, day, city) {
 }
 
 // ── Metro line helper ──
-  function getMetroLine(loc1, loc2, city) {
+function getMetroLine(loc1, loc2, city) {
     const lines = city?.metroLines || {};
     const key = `${loc1.area} -> ${loc2.area}`;
     return lines[key] || null;
   }
 
-  // ── Travel time calculation (Haversine) ──
+// ── Travel time calculation (Haversine) ──
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
