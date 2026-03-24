@@ -464,7 +464,7 @@ const TRANSLATIONS = {
     apiSave: "Speichern",
     apiSaved: "✅ Gespeichert!",
     apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.4 · Powered by KI",
+    footerText: "Reiseplaner v2.5 · Powered by KI",
     noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
     errorEmpty: "Bitte gib einen Link ein.",
     errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
@@ -545,7 +545,7 @@ const TRANSLATIONS = {
     apiSave: "Save",
     apiSaved: "✅ Saved!",
     apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.4 · Powered by AI",
+    footerText: "Travel Planner v2.5 · Powered by AI",
     noRouteHint: "Add at least 2 places for a route.",
     errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized. Tip: Enter an API key!",
@@ -607,10 +607,10 @@ function getOpeningInfo(name, day, city) {
 
 // ── Metro line helper ──
 function getMetroLine(loc1, loc2, city) {
-    const lines = city?.metroLines || {};
-    const key = `${loc1.area} -> ${loc2.area}`;
-    return lines[key] || null;
-  }
+  const lines = city?.metroLines || {};
+  const key = `${loc1.area} -> ${loc2.area}`;
+  return lines[key] || null;
+}
 
 // ── Travel time calculation (Haversine) ──
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -827,7 +827,7 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
 }
 
 // ── Mini-Karte ──
-  function MiniMap({ locations, city }) {
+function MiniMap({ locations, city }) {
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const markersRef = useRef([]);
