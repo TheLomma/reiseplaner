@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-// Mobile-Optimierung: viewport + global styles
 if (typeof window !== "undefined") {
   let vp = document.querySelector('meta[name="viewport"]');
   if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
@@ -13,7 +12,6 @@ if (typeof window !== "undefined") {
   }
 }
 
-// Leaflet laden
 if (typeof window !== "undefined" && !window.L) {
   const link = document.createElement("link");
   link.rel = "stylesheet";
@@ -24,7 +22,6 @@ if (typeof window !== "undefined" && !window.L) {
   document.head.appendChild(script);
 }
 
-// ── City Database ──
 const CITIES = {
   paris: {
     id: "paris", name: "Paris", emoji: "🗼", country: "🇫🇷",
@@ -104,15 +101,11 @@ const CITIES = {
       "Tower of London": { min: 33.60, max: 33.60, currency: "£", note: "Erwachsene" },
       "Big Ben": { min: 0, max: 0, currency: "£", note: "Außenbesichtigung frei" },
       "Borough Market": { min: 0, max: 0, currency: "£", note: "Eintritt frei" },
-      "British Museum": { min: 0, max: 0, currency: "£", note: "Eintritt frei" },
-      "Buckingham Palace": { min: 30, max: 30, currency: "£", note: "Erwachsene (Sommer)" },
     },
     ratings: {
       "Tower of London": { stars: 4.7, reviews: 112000, price: "€€", badge: "UNESCO Welterbe" },
       "Big Ben": { stars: 4.8, reviews: 198000, price: "Kostenlos", badge: "Ikone" },
       "Borough Market": { stars: 4.6, reviews: 67000, price: "€€", badge: "Foodie-Paradies" },
-      "British Museum": { stars: 4.8, reviews: 245000, price: "Kostenlos", badge: "Weltklasse" },
-      "Buckingham Palace": { stars: 4.5, reviews: 89000, price: "€€", badge: "Royal" },
     },
     locationInfo: {
       "Tower of London": { short: "Historische Festung an der Themse, seit 1066.", highlights: ["Kronjuwelen besichtigen", "Beefeater-Führung", "Raben des Towers"] },
@@ -144,7 +137,6 @@ const CITIES = {
       "Kolosseum": { min: 16, max: 22, currency: "€", note: "Erwachsene" },
       "Vatikan": { min: 17, max: 17, currency: "€", note: "Museen, Erwachsene" },
       "Trevi-Brunnen": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
-      "Pantheon": { min: 5, max: 5, currency: "€", note: "Erwachsene" },
     },
     ratings: {
       "Kolosseum": { stars: 4.8, reviews: 320000, price: "€€", badge: "UNESCO Welterbe" },
@@ -158,7 +150,7 @@ const CITIES = {
     },
     openingHours: {
       "Kolosseum": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–19:00" },
-      "Vatikan": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: false, hours: "08:00–18:00", note: "So geschlossen (außer letzter So/Monat)" },
+      "Vatikan": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: false, hours: "08:00–18:00", note: "So geschlossen" },
       "Trevi-Brunnen": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
     },
     metroLines: {},
@@ -174,7 +166,7 @@ const CITIES = {
     demoLinks: ["https://maps.google.com/?q=sagrada+familia", "https://maps.google.com/?q=park+guell", "https://maps.google.com/?q=la+boqueria"],
     linkMatchers: [
       { pattern: /sagrada|familia/i, locationIndex: 0 },
-      { pattern: /güell|guell|park\+g/i, locationIndex: 1 },
+      { pattern: /güell|guell/i, locationIndex: 1 },
       { pattern: /boqueria|rambla/i, locationIndex: 2 },
     ],
     entryCosts: {
@@ -209,9 +201,9 @@ const CITIES = {
     ],
     demoLinks: ["https://maps.google.com/?q=rijksmuseum", "https://maps.google.com/?q=anne+frank+haus", "https://maps.google.com/?q=vondelpark"],
     linkMatchers: [
-      { pattern: /rijksmuseum|rijks/i, locationIndex: 0 },
+      { pattern: /rijksmuseum/i, locationIndex: 0 },
       { pattern: /anne.*frank/i, locationIndex: 1 },
-      { pattern: /vondelpark|vondel/i, locationIndex: 2 },
+      { pattern: /vondelpark/i, locationIndex: 2 },
     ],
     entryCosts: {
       "Rijksmuseum": { min: 22.50, max: 22.50, currency: "€", note: "Erwachsene" },
@@ -246,7 +238,7 @@ const CITIES = {
     demoLinks: ["https://maps.google.com/?q=brandenburger+tor", "https://maps.google.com/?q=museumsinsel+berlin", "https://maps.google.com/?q=east+side+gallery"],
     linkMatchers: [
       { pattern: /brandenburger|brandenburg/i, locationIndex: 0 },
-      { pattern: /museumsinsel|museum.*insel/i, locationIndex: 1 },
+      { pattern: /museumsinsel/i, locationIndex: 1 },
       { pattern: /east.*side|gallery/i, locationIndex: 2 },
     ],
     entryCosts: {
@@ -262,7 +254,7 @@ const CITIES = {
     locationInfo: {
       "Brandenburger Tor": { short: "Symbol der deutschen Wiedervereinigung.", highlights: ["Pariser Platz Atmosphäre", "Foto-Hotspot", "Nah am Reichstag"] },
       "Museumsinsel": { short: "Fünf weltberühmte Museen auf einer Insel.", highlights: ["Pergamonmuseum", "Nofretete-Büste", "Alte Nationalgalerie"] },
-      "East Side Gallery": { short: "Längste Open-Air-Galerie der Welt, bemalt auf der Berliner Mauer.", highlights: ["Bruderkuss-Gemälde", "1,3 km Mauer-Kunst", "Spree-Ufer Spaziergang"] },
+      "East Side Gallery": { short: "Längste Open-Air-Galerie der Welt.", highlights: ["Bruderkuss-Gemälde", "1,3 km Mauer-Kunst", "Spree-Ufer Spaziergang"] },
     },
     openingHours: {
       "Brandenburger Tor": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
@@ -353,9 +345,9 @@ const CITIES = {
     ],
     demoLinks: ["https://maps.google.com/?q=torre+de+belem", "https://maps.google.com/?q=alfama+lissabon", "https://maps.google.com/?q=pasteis+de+belem"],
     linkMatchers: [
-      { pattern: /torre.*bel[eé]m|belem.*tower/i, locationIndex: 0 },
+      { pattern: /torre.*bel[eé]m/i, locationIndex: 0 },
       { pattern: /alfama/i, locationIndex: 1 },
-      { pattern: /past[eé]is|bel[eé]m.*cafe/i, locationIndex: 2 },
+      { pattern: /past[eé]is/i, locationIndex: 2 },
     ],
     entryCosts: {
       "Torre de Belém": { min: 8, max: 8, currency: "€", note: "Erwachsene" },
@@ -405,7 +397,7 @@ const CITIES = {
     },
     locationInfo: {
       "Freiheitsstatue": { short: "Geschenk Frankreichs an die USA, 1886 eingeweiht.", highlights: ["Fähre ab Battery Park", "Krone nur mit Voranmeldung", "Ellis Island Museum"] },
-      "Central Park": { short: "Ikonischer Stadtpark mitten in Manhattan.", highlights: ["Bethesda Fountain", "Bow Bridge", "Strawberry Fields (John Lennon Memorial)"] },
+      "Central Park": { short: "Ikonischer Stadtpark mitten in Manhattan.", highlights: ["Bethesda Fountain", "Bow Bridge", "Strawberry Fields"] },
       "Times Square": { short: "Das leuchtende Herz von Manhattan.", highlights: ["Broadway-Theater", "Neon-Reklamen bei Nacht", "TKTS für günstige Tickets"] },
     },
     openingHours: {
@@ -419,177 +411,94 @@ const CITIES = {
 
 const CITY_ORDER = ["paris", "london", "rom", "barcelona", "amsterdam", "berlin", "wien", "prag", "lissabon", "new_york"];
 
-// ── Translations ──
 const TRANSLATIONS = {
   de: {
-    appName: "Reiseplaner",
-    addPlace: "Ort hinzufügen",
-    insertLink: "LINK EINFÜGEN",
-    linkPlaceholder: "https://maps.google.com/... oder Website-URL",
-    analyze: "Analysieren",
-    analyzing: "Analyse...",
-    visitDay: "BESUCHSTAG",
-    demo: "Demo-Beispiele – diese Links werden erkannt:",
-    myPlaces: "Alle Orte",
-    allDays: "Alle Tage",
-    dragHint: "↕ ziehen zum sortieren",
-    route: "Route",
-    timeline: "Timeline",
-    pdf: "PDF",
-    travelMode: "FORTBEWEGUNGSMITTEL",
-    walking: "🚶 Zu Fuß",
-    transit: "🚇 ÖPNV + Fuß",
-    driving: "🚗 Auto + Fuß",
-    openInMaps: "In Google Maps öffnen",
-    stops: "Stopps",
-    timelineTitle: "TAGESPLAN – TIMELINE (ab 09:00 Uhr)",
-    transfer: "+20 Min. Transfer",
-    infoShow: "▼ Info & Highlights",
-    infoHide: "▲ Info ausblenden",
-    closedDay: "Geschlossen an diesem Tag",
-    unknownHours: "⏰ Öffnungszeiten unbekannt – bitte vorab prüfen",
-    reviews: "Bewertungen",
-    budgetTitle: "Budget-Tracker",
-    budgetTotal: "Gesamt",
-    budgetExtras: "+ Extras (Essen, Shopping...):",
-    budgetNote: "* Eintrittspreise sind Schätzungen.",
-    savePlans: "Reisepläne",
-    savedPlans: "Gespeicherte Pläne",
-    planNamePlaceholder: "Planname z.B. Paris-Wochenende...",
-    save: "💾 Speichern",
-    saved: "✅ Gespeichert!",
-    load: "Laden",
-    noPlans: "Noch keine Pläne gespeichert.",
-    addFirst: "Füge Orte hinzu, um einen Plan zu speichern.",
-    share: "🤝 Reiseplan teilen",
-    createLink: "🔗 Link erstellen",
-    shareHint: "Teile diesen Link mit deinen Reisebegleitern:",
-    copy: "📋 Kopieren",
-    copied: "✅ Kopiert!",
-    warningTitle: "Achtung",
-    warningClosed: "ist an dem gewählten Tag geschlossen!",
-    warningHint: "Bitte ändere den Besuchstag oder wähle einen anderen Ort.",
-    closed: "geschlossen",
-    apiActive: "✅ API aktiv",
-    apiMissing: "⚠️ API-Key fehlt",
-    apiTitle: "🔐 OpenAI API-Key",
-    apiHint: "Dein Key wird nur lokal gespeichert.",
-    apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!",
-    apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.7 · Powered by KI",
-    noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
-    errorEmpty: "Bitte gib einen Link ein.",
-    errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
-    days: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
-    admission: "Eintritt",
-    free: "Kostenlos",
-    close: "Schließen",
-    places: "Orte",
-    selectCity: "Stadt wählen",
-    customCity: "✨ Andere Stadt",
-    customCityPlaceholder: "Stadtname eingeben...",
-    customCityAdd: "Stadt hinzufügen",
-    customCityHint: "Eigene Stadt – Demo-Daten nur für vorgegebene Städte verfügbar.",
-    switchCity: "Stadt wechseln",
-    currentCity: "Aktuelle Stadt",
-    helpButton: "❓",
-    cityNoDemo: "Für diese Stadt sind keine Demo-Daten verfügbar. Nutze einen API-Key für volle Funktionalität.",
-    travelTime: "Reisezeit",
-    walkingTime: "zu Fuß",
-    transitTime: "mit ÖPNV",
-    notePlaceholder: "Notiz eingeben... (z.B. Tickets vorbuchen!)",
-    noteLabel: "📝 Notiz",
-    noteHide: "📝 Notiz ausblenden",
+    appName: "Reiseplaner", addPlace: "Ort hinzufügen", insertLink: "LINK EINFÜGEN",
+    linkPlaceholder: "https://maps.google.com/ oder Website-URL", analyze: "Analysieren",
+    analyzing: "Analyse", visitDay: "BESUCHSTAG", demo: "Demo-Beispiele:", myPlaces: "Alle Orte",
+    allDays: "Alle Tage", dragHint: "↕ ziehen", route: "Route", timeline: "Timeline", pdf: "PDF",
+    travelMode: "FORTBEWEGUNG", walking: "🚶 Zu Fuß", transit: "🚇 ÖPNV", driving: "🚗 Auto",
+    openInMaps: "In Google Maps öffnen", stops: "Stopps", timelineTitle: "TAGESPLAN – TIMELINE",
+    transfer: "+20 Min. Transfer", infoShow: "▼ Info", infoHide: "▲ Info ausblenden",
+    closedDay: "Geschlossen", unknownHours: "⏰ Öffnungszeiten unbekannt", reviews: "Bewertungen",
+    budgetTitle: "Budget-Tracker", budgetTotal: "Gesamt", budgetExtras: "+ Extras:",
+    budgetNote: "* Schätzungen.", savePlans: "Reisepläne", savedPlans: "Gespeicherte Pläne",
+    planNamePlaceholder: "Planname", save: "💾 Speichern", saved: "✅ Gespeichert!",
+    load: "Laden", noPlans: "Noch keine Pläne.", addFirst: "Füge Orte hinzu.",
+    share: "🤝 Teilen", createLink: "🔗 Link erstellen", shareHint: "Teile diesen Link:",
+    copy: "📋 Kopieren", copied: "✅ Kopiert!", warningTitle: "Achtung",
+    warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
+    closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
+    apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.1",
+    noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
+    errorNotFound: "Link nicht erkannt.", days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
+    admission: "Eintritt", free: "Kostenlos", close: "Schließen", places: "Orte",
+    selectCity: "Stadt wählen", customCity: "✨ Andere Stadt", customCityPlaceholder: "Stadtname",
+    customCityAdd: "Hinzufügen", customCityHint: "Eigene Stadt.", switchCity: "Stadt wechseln",
+    currentCity: "Aktuelle Stadt", helpButton: "❓", cityNoDemo: "Keine Demo-Daten.",
+    travelTime: "Reisezeit", walkingTime: "zu Fuß", transitTime: "mit ÖPNV",
+    notePlaceholder: "Notiz (z.B. Tickets vorbuchen!)", noteLabel: "📝 Notiz", noteHide: "📝 Ausblenden",
   },
   en: {
-    appName: "Travel Planner",
-    addPlace: "Add Place",
-    insertLink: "INSERT LINK",
-    linkPlaceholder: "https://maps.google.com/... or website URL",
-    analyze: "Analyze",
-    analyzing: "Analyzing...",
-    visitDay: "VISIT DAY",
-    demo: "Demo examples – these links are recognized:",
-    myPlaces: "All Places",
-    allDays: "All Days",
-    dragHint: "↕ drag to sort",
-    route: "Route",
-    timeline: "Timeline",
-    pdf: "PDF",
-    travelMode: "TRAVEL MODE",
-    walking: "🚶 Walking",
-    transit: "🚇 Transit + Walk",
-    driving: "🚗 Car + Walk",
-    openInMaps: "Open in Google Maps",
-    stops: "Stops",
-    timelineTitle: "DAY PLAN – TIMELINE (from 09:00)",
-    transfer: "+20 min transfer",
-    infoShow: "▼ Info & Highlights",
-    infoHide: "▲ Hide info",
-    closedDay: "Closed on this day",
-    unknownHours: "⏰ Hours unknown – please check",
-    reviews: "reviews",
-    budgetTitle: "Budget Tracker",
-    budgetTotal: "Total",
-    budgetExtras: "+ Extras (food, shopping...):",
-    budgetNote: "* Prices are estimates.",
-    savePlans: "Travel Plans",
-    savedPlans: "Saved Plans",
-    planNamePlaceholder: "Plan name e.g. Paris Weekend...",
-    save: "💾 Save",
-    saved: "✅ Saved!",
-    load: "Load",
-    noPlans: "No plans saved yet.",
-    addFirst: "Add places to save a plan.",
-    share: "🤝 Share Plan",
-    createLink: "🔗 Create Link",
-    shareHint: "Share this link with your travel companions:",
-    copy: "📋 Copy",
-    copied: "✅ Copied!",
-    warningTitle: "Warning",
-    warningClosed: "is closed on the selected day!",
-    warningHint: "Please change the visit day.",
-    closed: "closed",
-    apiActive: "✅ API active",
-    apiMissing: "⚠️ API Key missing",
-    apiTitle: "🔐 OpenAI API Key",
-    apiHint: "Stored locally only.",
-    apiSave: "Save",
-    apiSaved: "✅ Saved!",
-    apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.7 · Powered by AI",
-    noRouteHint: "Add at least 2 places for a route.",
-    errorEmpty: "Please enter a link.",
-    errorNotFound: "Link not recognized. Tip: Enter an API key!",
-    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    admission: "Admission",
-    free: "Free",
-    close: "Close",
-    places: "Places",
-    selectCity: "Select City",
-    customCity: "✨ Other City",
-    customCityPlaceholder: "Enter city name...",
-    customCityAdd: "Add City",
-    customCityHint: "Custom city – demo data only for preset cities.",
-    switchCity: "Switch City",
-    currentCity: "Current City",
-    helpButton: "❓",
-    cityNoDemo: "No demo data for this city. Use an API key for full functionality.",
-    travelTime: "Travel time",
-    walkingTime: "walking",
-    transitTime: "by transit",
-    notePlaceholder: "Add a note... (e.g. Book tickets!)",
-    noteLabel: "📝 Note",
-    noteHide: "📝 Hide note",
+    appName: "Travel Planner", addPlace: "Add Place", insertLink: "INSERT LINK",
+    linkPlaceholder: "https://maps.google.com/ or website URL", analyze: "Analyze",
+    analyzing: "Analyzing", visitDay: "VISIT DAY", demo: "Demo examples:", myPlaces: "All Places",
+    allDays: "All Days", dragHint: "↕ drag", route: "Route", timeline: "Timeline", pdf: "PDF",
+    travelMode: "TRAVEL MODE", walking: "🚶 Walking", transit: "🚇 Transit", driving: "🚗 Car",
+    openInMaps: "Open in Google Maps", stops: "Stops", timelineTitle: "DAY PLAN – TIMELINE",
+    transfer: "+20 min transfer", infoShow: "▼ Info", infoHide: "▲ Hide info",
+    closedDay: "Closed", unknownHours: "⏰ Hours unknown", reviews: "reviews",
+    budgetTitle: "Budget Tracker", budgetTotal: "Total", budgetExtras: "+ Extras:",
+    budgetNote: "* Estimates.", savePlans: "Travel Plans", savedPlans: "Saved Plans",
+    planNamePlaceholder: "Plan name", save: "💾 Save", saved: "✅ Saved!",
+    load: "Load", noPlans: "No plans yet.", addFirst: "Add places first.",
+    share: "🤝 Share", createLink: "🔗 Create Link", shareHint: "Share this link:",
+    copy: "📋 Copy", copied: "✅ Copied!", warningTitle: "Warning",
+    warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
+    closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
+    apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.1",
+    noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
+    errorNotFound: "Link not recognized.", days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    admission: "Admission", free: "Free", close: "Close", places: "Places",
+    selectCity: "Select City", customCity: "✨ Other City", customCityPlaceholder: "City name",
+    customCityAdd: "Add", customCityHint: "Custom city.", switchCity: "Switch City",
+    currentCity: "Current City", helpButton: "❓", cityNoDemo: "No demo data.",
+    travelTime: "Travel time", walkingTime: "walking", transitTime: "by transit",
+    notePlaceholder: "Note (e.g. Book tickets!)", noteLabel: "📝 Note", noteHide: "📝 Hide",
   }
 };
 
-const DAYS_DE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-const DAYS_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const DAY_KEY_MAP = { "Montag": "mo", "Dienstag": "di", "Mittwoch": "mi", "Donnerstag": "do", "Freitag": "fr", "Samstag": "sa", "Sonntag": "so", "Monday": "mo", "Tuesday": "di", "Wednesday": "mi", "Thursday": "do", "Friday": "fr", "Saturday": "sa", "Sunday": "so" };
+const DAY_KEY_MAP = { "Montag":"mo","Dienstag":"di","Mittwoch":"mi","Donnerstag":"do","Freitag":"fr","Samstag":"sa","Sonntag":"so","Monday":"mo","Tuesday":"di","Wednesday":"mi","Thursday":"do","Friday":"fr","Saturday":"sa","Sunday":"so" };
 
-// ── Helper functions ──
+function getWeekdayKey(dateStr) {
+  const keys = ["so","mo","di","mi","do","fr","sa"];
+  const d = new Date(dateStr + "T12:00:00");
+  return keys[d.getDay()];
+}
+
+function formatDateLabel(dateStr, lang) {
+  const d = new Date(dateStr + "T12:00:00");
+  const shortDE = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+  const shortEN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const short = lang === "de" ? shortDE[d.getDay()] : shortEN[d.getDay()];
+  const day = String(d.getDate()).padStart(2,"0");
+  const month = String(d.getMonth()+1).padStart(2,"0");
+  return short + " " + day + "." + month + ".";
+}
+
+function generateTripDays(startDate, numDays) {
+  const days = [];
+  const base = new Date(startDate + "T12:00:00");
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+
 function getEntryCost(name, city) {
   const costs = city?.entryCosts || {};
   const key = Object.keys(costs).find(k => name.toLowerCase().includes(k.toLowerCase()));
@@ -613,37 +522,37 @@ function getOpeningInfo(name, day, city) {
   const key = Object.keys(hours).find(k => name.toLowerCase().includes(k.toLowerCase()));
   if (!key) return null;
   const info = hours[key];
-  const dayKey = DAY_KEY_MAP[day];
+  let dayKey;
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    dayKey = getWeekdayKey(day);
+  } else {
+    dayKey = DAY_KEY_MAP[day];
+  }
   const isOpen = dayKey ? info[dayKey] : true;
   return { isOpen, hours: info.hours, note: info.note };
 }
 
-// ── Metro line helper ──
 function getMetroLine(loc1, loc2, city) {
   const lines = city?.metroLines || {};
   const key = `${loc1.area} -> ${loc2.area}`;
   return lines[key] || null;
 }
 
-// ── Travel time calculation (Haversine) ──
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
 function calcTravelTime(loc1, loc2) {
-  if (!loc1.lat || !loc1.lng || !loc2.lat || !loc2.lng) return null;
-  const dist = haversineDistance(loc1.lat, loc1.lng, loc2.lat, loc2.lng);
-  const walkFactor = 1.3;
-  const walkDist = dist * walkFactor;
-  const walkSpeed = 4.5;
-  const walkMin = Math.round((walkDist / walkSpeed) * 60);
-  const transitSpeed = 25;
-  const transitMin = Math.max(5, Math.round((walkDist / transitSpeed) * 60) + 3);
-  return { distKm: Math.round(dist * 10) / 10, walkMin, transitMin };
+  if (!loc1.lat||!loc1.lng||!loc2.lat||!loc2.lng) return null;
+  const dist = haversineDistance(loc1.lat,loc1.lng,loc2.lat,loc2.lng);
+  const walkDist = dist*1.3;
+  const walkMin = Math.round((walkDist/4.5)*60);
+  const transitMin = Math.max(5,Math.round((walkDist/25)*60)+3);
+  return { distKm: Math.round(dist*10)/10, walkMin, transitMin };
 }
 
 function TravelTimeBadge({ from, to }) {
@@ -651,10 +560,10 @@ function TravelTimeBadge({ from, to }) {
   if (!travel) return null;
   return (
     <div className="flex items-center justify-center py-1">
-      <div className="flex items-center gap-3 px-3 py-1.5 rounded-full text-xs" style={{ background: "#1a1a2e", border: "1px solid #333" }}>
-        <span style={{ color: "#888" }}>{travel.distKm} km</span>
-        <span className="flex items-center gap-1" style={{ color: "#5dade2" }}>🚶 {travel.walkMin} Min.</span>
-        <span className="flex items-center gap-1" style={{ color: "#f39c12" }}>🚇 {travel.transitMin} Min.</span>
+      <div className="flex items-center gap-3 px-3 py-1.5 rounded-full text-xs" style={{ background:"#1a1a2e", border:"1px solid #333" }}>
+        <span style={{ color:"#888" }}>{travel.distKm} km</span>
+        <span style={{ color:"#5dade2" }}>🚶 {travel.walkMin} Min.</span>
+        <span style={{ color:"#f39c12" }}>🚇 {travel.transitMin} Min.</span>
       </div>
     </div>
   );
@@ -663,18 +572,16 @@ function TravelTimeBadge({ from, to }) {
 async function analyzeWithAI(url, apiKey, cityName) {
   const prompt = `Du bist ein Reiseassistent für ${cityName}. Analysiere diesen Link: "${url}"
 Extrahiere (antworte NUR mit JSON):
-{"name":"...","type":"Restaurant|Sehenswürdigkeit|Museum|Park|Bar|Café","address":"...","area":"Stadtteil","duration":"...","icon":"emoji","lat":0,"lng":0,"tip":"..."}`;
+{"name":"","type":"Restaurant|Sehenswürdigkeit|Museum|Park|Bar|Café","address":"","area":"Stadtteil","duration":"","icon":"emoji","lat":0,"lng":0,"tip":""}`;
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], temperature: 0.3 })
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${apiKey}`},
+    body: JSON.stringify({ model:"gpt-4o-mini", messages:[{role:"user",content:prompt}], temperature:0.3 })
   });
-  if (!res.ok) throw new Error("API Error: " + res.status);
+  if (!res.ok) throw new Error("API Error: "+res.status);
   const data = await res.json();
-  return JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g, "").trim());
+  return JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,"").trim());
 }
-
-// ── Weather Widget entfernt ──
 
 async function geocodeCity(name) {
   try {
@@ -682,25 +589,24 @@ async function geocodeCity(name) {
     const data = await res.json();
     if (data.results && data.results.length > 0) {
       const r = data.results[0];
-      return { lat: r.latitude, lng: r.longitude, timezone: r.timezone, fullName: r.name, country: r.country_code };
+      return { lat:r.latitude, lng:r.longitude, timezone:r.timezone, fullName:r.name, country:r.country_code };
     }
   } catch {}
   return null;
 }
 
-// ── Reusable Components ──
-function CollapsibleSection({ title, badge, rightContent, children, defaultOpen = false }) {
+function CollapsibleSection({ title, badge, rightContent, children, defaultOpen=false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#222", border: "1px solid #444" }}>
-      <button onClick={() => setOpen(v => !v)} className="w-full px-4 py-3 flex items-center justify-between gap-2" style={{ borderBottom: open ? "1px solid #444" : "none", background: "#1a1a1a", cursor: "pointer" }}>
-        <h2 className="font-black flex items-center gap-2 text-left" style={{ color: "#e74c3c", fontFamily: "Georgia,serif", fontSize: "1rem" }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background:"#222", border:"1px solid #444" }}>
+      <button onClick={() => setOpen(v => !v)} className="w-full px-4 py-3 flex items-center justify-between gap-2" style={{ borderBottom: open?"1px solid #444":"none", background:"#1a1a1a", cursor:"pointer" }}>
+        <h2 className="font-black flex items-center gap-2 text-left" style={{ color:"#e74c3c", fontFamily:"Georgia,serif", fontSize:"1rem" }}>
           {title}
-          {badge !== undefined && <span className="text-xs font-normal" style={{ color: "#666" }}>({badge})</span>}
+          {badge !== undefined && <span className="text-xs font-normal" style={{ color:"#666" }}>({badge})</span>}
         </h2>
         <div className="flex items-center gap-2">
           {rightContent}
-          <span className="text-xs" style={{ color: "#555" }}>{open ? "▲" : "▼"}</span>
+          <span className="text-xs" style={{ color:"#555" }}>{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && <div className="p-5">{children}</div>}
@@ -712,26 +618,24 @@ function StarRating({ stars }) {
   const full = Math.floor(stars);
   return (
     <span className="inline-flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} style={{ color: i < full ? "#f39c12" : "#444", fontSize: "0.7rem" }}>
-          {i < full ? "★" : "☆"}
-        </span>
+      {Array.from({length:5}).map((_,i) => (
+        <span key={i} style={{ color: i<full?"#f39c12":"#444", fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
       ))}
-      <span className="ml-1 text-xs font-bold" style={{ color: "#f39c12" }}>{stars}</span>
+      <span className="ml-1 text-xs font-bold" style={{ color:"#f39c12" }}>{stars}</span>
     </span>
   );
 }
 
 function MetroTag({ line, time }) {
-  const colors = { M1: "bg-yellow-400 text-yellow-900", M6: "bg-green-500 text-white", M14: "bg-purple-600 text-white" };
+  const colors = { M1:"bg-yellow-400 text-yellow-900", M6:"bg-green-500 text-white", M14:"bg-purple-600 text-white" };
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${colors[line] || "bg-gray-400 text-white"}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${colors[line]||"bg-gray-400 text-white"}`}>
       🚇 {line} · {time}
     </span>
   );
 }
 
-function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays, onNoteChange, t }) {
+function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays, onNoteChange, t, getDayLabel }) {
   const openInfo = day ? getOpeningInfo(loc.name, day, city) : null;
   const locInfo = getLocationInfo(loc.name, city);
   const rating = getRating(loc.name, city);
@@ -741,72 +645,71 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
   return (
     <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
       className="relative rounded-xl p-4 transition-all"
-      style={{ background: isDragging ? "#3a1a1a" : "#2a2a2a", border: isDragging ? "2px dashed #e74c3c" : "1px solid #444", opacity: isDragging ? 0.5 : 1, cursor: "grab" }}>
-      <div className="absolute top-2 left-2 w-7 h-7 bg-red-700 text-white rounded-full flex items-center justify-center text-sm font-bold">{index + 1}</div>
+      style={{ background: isDragging?"#3a1a1a":"#2a2a2a", border: isDragging?"2px dashed #e74c3c":"1px solid #444", opacity: isDragging?0.5:1, cursor:"grab" }}>
+      <div className="absolute top-2 left-2 w-7 h-7 bg-red-700 text-white rounded-full flex items-center justify-center text-sm font-bold">{index+1}</div>
       <button onClick={onRemove} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 text-lg leading-none">×</button>
       <div className="pl-8 pr-4 flex flex-col">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">{loc.icon}</span>
           <div>
-            <p className="font-bold text-sm" style={{ color: "#f0ece0", fontFamily: "Georgia,serif" }}>{loc.name}</p>
-            <p className="text-xs font-semibold" style={{ color: "#e67e22" }}>{loc.type}</p>
+            <p className="font-bold text-sm" style={{ color:"#f0ece0", fontFamily:"Georgia,serif" }}>{loc.name}</p>
+            <p className="text-xs font-semibold" style={{ color:"#e67e22" }}>{loc.type}</p>
           </div>
         </div>
-        <p className="text-xs mb-1" style={{ color: "#888", fontStyle: "italic" }}>{loc.address}</p>
+        <p className="text-xs mb-1" style={{ color:"#888", fontStyle:"italic" }}>{loc.address}</p>
         {rating && (
           <div className="flex items-center gap-2 flex-wrap mt-1 mb-1">
             <StarRating stars={rating.stars} />
-            <span className="text-xs" style={{ color: "#666" }}>({rating.reviews.toLocaleString("de-DE")})</span>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: "#2a1a3a", color: "#c39bd3", border: "1px solid #6c3483" }}>{rating.badge}</span>
+            <span className="text-xs" style={{ color:"#666" }}>({rating.reviews.toLocaleString("de-DE")})</span>
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background:"#2a1a3a", color:"#c39bd3", border:"1px solid #6c3483" }}>{rating.badge}</span>
           </div>
         )}
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#1a2a3a", color: "#5dade2", border: "1px solid #2d5a7a" }}>📍 {loc.area}</span>
-          <span className="text-xs" style={{ color: "#888" }}>⏱ {loc.duration}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>📍 {loc.area}</span>
+          <span className="text-xs" style={{ color:"#888" }}>⏱ {loc.duration}</span>
         </div>
         {day && availableDays && onDayChange ? (
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs font-medium" style={{ color: "#9b59b6" }}>📅</span>
-            <select
-              value={day}
-              onChange={(e) => onDayChange(loc.id, e.target.value)}
+            <span className="text-xs font-medium" style={{ color:"#9b59b6" }}>📅</span>
+            <select value={day} onChange={(e) => onDayChange(loc.id, e.target.value)}
               className="text-xs font-medium rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
-              style={{ background: "#1a1a2a", color: "#9b59b6", border: "1px solid #6c3483", appearance: "auto" }}>
+              style={{ background:"#1a1a2a", color:"#9b59b6", border:"1px solid #6c3483", appearance:"auto" }}>
               {availableDays.map(d => (
-                <option key={d} value={d}>{d}</option>
+                <option key={d} value={d}>{getDayLabel ? getDayLabel(d) : d}</option>
               ))}
             </select>
           </div>
         ) : day ? (
-          <p className="text-xs mt-2 font-medium" style={{ color: "#9b59b6" }}>📅 {day}</p>
+          <p className="text-xs mt-2 font-medium" style={{ color:"#9b59b6" }}>📅 {day}</p>
         ) : null}
         {openInfo ? (
-          <div className="mt-2 rounded-lg px-2 py-1.5 flex items-start gap-2" style={openInfo.isOpen ? { background: "#1a2a1a", border: "1px solid #2d5a2d" } : { background: "#2a1a1a", border: "1px solid #7a2d2d" }}>
+          <div className="mt-2 rounded-lg px-2 py-1.5 flex items-start gap-2"
+            style={openInfo.isOpen ? {background:"#1a2a1a",border:"1px solid #2d5a2d"} : {background:"#2a1a1a",border:"1px solid #7a2d2d"}}>
             <span className="text-xs mt-0.5">{openInfo.isOpen ? "✅" : "⚠️"}</span>
             <div>
-              <p className="text-xs font-semibold" style={{ color: openInfo.isOpen ? "#6dbf6d" : "#e74c3c" }}>
+              <p className="text-xs font-semibold" style={{ color: openInfo.isOpen?"#6dbf6d":"#e74c3c" }}>
                 {openInfo.isOpen ? `Geöffnet · ${openInfo.hours}` : "Geschlossen an diesem Tag"}
               </p>
-              {openInfo.note && <p className="text-xs" style={{ color: "#888", fontStyle: "italic" }}>{openInfo.note}</p>}
+              {openInfo.note && <p className="text-xs" style={{ color:"#888", fontStyle:"italic" }}>{openInfo.note}</p>}
             </div>
           </div>
         ) : (
-          <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background: "#2a2a1a", border: "1px solid #5a5a2d" }}>
-            <p className="text-xs" style={{ color: "#aaa8", fontStyle: "italic" }}>⏰ Öffnungszeiten unbekannt</p>
+          <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background:"#2a2a1a", border:"1px solid #5a5a2d" }}>
+            <p className="text-xs" style={{ color:"#aaa8", fontStyle:"italic" }}>⏰ Öffnungszeiten unbekannt</p>
           </div>
         )}
         {locInfo && (
           <div className="mt-2">
-            <button onClick={() => setShowInfo(v => !v)} className="text-xs font-semibold flex items-center gap-1" style={{ color: showInfo ? "#e74c3c" : "#5dade2" }}>
+            <button onClick={() => setShowInfo(v => !v)} className="text-xs font-semibold flex items-center gap-1" style={{ color: showInfo?"#e74c3c":"#5dade2" }}>
               {showInfo ? "▲ Info ausblenden" : "▼ Info & Highlights"}
             </button>
             {showInfo && (
-              <div className="mt-2 rounded-lg p-3 space-y-2" style={{ background: "#1a1a2a", border: "1px solid #2d2d5a" }}>
-                <p className="text-xs" style={{ color: "#ccc" }}>{locInfo.short}</p>
+              <div className="mt-2 rounded-lg p-3 space-y-2" style={{ background:"#1a1a2a", border:"1px solid #2d2d5a" }}>
+                <p className="text-xs" style={{ color:"#ccc" }}>{locInfo.short}</p>
                 <ul className="space-y-1">
-                  {locInfo.highlights.map((h, i) => (
-                    <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: "#5dade2" }}>
-                      <span style={{ color: "#e74c3c", flexShrink: 0 }}>✦</span> {h}
+                  {locInfo.highlights.map((h,i) => (
+                    <li key={i} className="text-xs flex items-start gap-1.5" style={{ color:"#5dade2" }}>
+                      <span style={{ color:"#e74c3c", flexShrink:0 }}>✦</span> {h}
                     </li>
                   ))}
                 </ul>
@@ -814,23 +717,20 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
             )}
           </div>
         )}
-        {/* Notiz-Bereich */}
         <div className="mt-2">
-          <button
-            onClick={() => setShowNote(v => !v)}
-            className="text-xs font-semibold flex items-center gap-1"
-            style={{ color: showNote ? "#e74c3c" : "#27ae60" }}>
-            {showNote ? (t?.noteHide || "📝 Notiz ausblenden") : (t?.noteLabel || "📝 Notiz")}
-            {loc.note && !showNote && <span style={{ color: "#27ae60", marginLeft: 4 }}>●</span>}
+          <button onClick={() => setShowNote(v => !v)} className="text-xs font-semibold flex items-center gap-1"
+            style={{ color: showNote?"#e74c3c":"#27ae60" }}>
+            {showNote ? (t?.noteHide || "📝 Ausblenden") : (t?.noteLabel || "📝 Notiz")}
+            {loc.note && !showNote && <span style={{ color:"#27ae60", marginLeft:4 }}>●</span>}
           </button>
           {showNote && (
             <textarea
               value={loc.note || ""}
               onChange={(e) => onNoteChange && onNoteChange(loc.id, e.target.value)}
-              placeholder={t?.notePlaceholder || "Notiz eingeben..."}
-              rows={2}
-              className="mt-2 w-full px-3 py-2 rounded-lg text-xs resize-none focus:outline-none"
-              style={{ background: "#1a2a1a", color: "#ccc", border: "1px solid #2d5a2d" }}
+              placeholder={t?.notePlaceholder || "Notiz eingeben"}
+              rows={3}
+              className="w-full mt-2 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none"
+              style={{ background:"#1a2a1a", color:"#ccc", border:"1px solid #2d5a2d" }}
             />
           )}
         </div>
@@ -839,713 +739,643 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
   );
 }
 
-// ── Mini-Karte ──
-function MiniMap({ locations, city }) {
-    const mapRef = useRef(null);
-    const mapInstanceRef = useRef(null);
-    const markersRef = useRef([]);
+export default function App() {
+  const [lang, setLang] = useState("de");
+  const t = TRANSLATIONS[lang];
+  const [cityId, setCityId] = useState("paris");
+  const [customCityName, setCustomCityName] = useState("");
+  const [customCityInput, setCustomCityInput] = useState("");
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const city = CITIES[cityId] || null;
 
-    useEffect(() => {
-      if (!window.L) return;
-      const L = window.L;
-      if (!mapInstanceRef.current) {
-        mapInstanceRef.current = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false })
-          .setView([city.lat, city.lng], 13);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  const [locations, setLocations] = useState([]);
+  const [locationDays, setLocationDays] = useState({});
+  const [locationNotes, setLocationNotes] = useState({});
+  const [linkInput, setLinkInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [showApiSection, setShowApiSection] = useState(false);
+  const [activeTab, setActiveTab] = useState("route");
+  const [travelMode, setTravelMode] = useState("transit");
+  const [filterDay, setFilterDay] = useState("all");
+  const [dragIdx, setDragIdx] = useState(null);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [planName, setPlanName] = useState("");
+  const [savedPlans, setSavedPlans] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("travel_plans") || "[]"); } catch { return []; }
+  });
+  const [saveFeedback, setSaveFeedback] = useState(false);
+  const [warnings, setWarnings] = useState([]);
+  const [tripStartDate, setTripStartDate] = useState(() => new Date().toISOString().slice(0,10));
+  const [tripNumDays, setTripNumDays] = useState(3);
+  const [budgetExtras, setBudgetExtras] = useState(0);
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markersRef = useRef([]);
+
+  const tripDays = generateTripDays(tripStartDate, tripNumDays);
+
+  const getDayLabel = (dateStr) => {
+    if (!dateStr) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return formatDateLabel(dateStr, lang);
+    return dateStr;
+  };
+
+  const locationsWithDays = locations.map(loc => ({
+    loc,
+    note: locationNotes[loc.id] || loc.note || "",
+    day: locationDays[loc.id] || tripDays[0],
+  }));
+
+  const filteredLocations = filterDay === "all"
+    ? locationsWithDays
+    : locationsWithDays.filter(l => l.day === filterDay);
+
+  useEffect(() => {
+    const newWarnings = [];
+    locationsWithDays.forEach(loc => {
+      if (loc.day) {
+        const info = getOpeningInfo(loc.name, loc.day, city);
+        if (info && !info.isOpen) {
+          newWarnings.push(loc.name);
+        }
+      }
+    });
+    setWarnings(newWarnings);
+  }, [locationsWithDays, city]);
+
+  useEffect(() => {
+    if (activeTab !== "route") return;
+    const interval = setInterval(() => {
+      if (!mapRef.current || !window.L) return;
+      clearInterval(interval);
+      if (!mapInstance.current) {
+        const cityData = city || { lat: 48.8566, lng: 2.3522 };
+        mapInstance.current = window.L.map(mapRef.current).setView([cityData.lat, cityData.lng], 13);
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap"
-        }).addTo(mapInstanceRef.current);
-      } else {
-        mapInstanceRef.current.setView([city.lat, city.lng], 13);
+        }).addTo(mapInstance.current);
       }
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
-      if (locations.length > 0) {
-        locations.forEach((loc, i) => {
-          if (!loc.lat || !loc.lng) return;
-          const icon = L.divIcon({
-            html: `<div style="background:#c0392b;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;border:2px solid #fff;box-shadow:0 2px 6px #0008">${i + 1}</div>`,
-            className: "", iconSize: [24, 24], iconAnchor: [12, 12]
-          });
-          const marker = L.marker([loc.lat, loc.lng], { icon })
-            .addTo(mapInstanceRef.current)
-            .bindPopup(`<b>${loc.name}</b><br><small>${loc.area}</small>`);
-          markersRef.current.push(marker);
+      const locs = filteredLocations.filter(l => l.lat && l.lng);
+      locs.forEach((loc, i) => {
+        const icon = window.L.divIcon({
+          html: `<div style="background:#e74c3c;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)">${i+1}</div>`,
+          className:"", iconSize:[28,28], iconAnchor:[14,14]
         });
-        if (locations.length === 1) {
-          mapInstanceRef.current.setView([locations[0].lat, locations[0].lng], 15);
-        } else {
-          const bounds = L.latLngBounds(locations.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]));
-          mapInstanceRef.current.fitBounds(bounds, { padding: [30, 30] });
+        const marker = window.L.marker([loc.lat, loc.lng], { icon })
+          .addTo(mapInstance.current)
+          .bindPopup(`<b>${loc.name}</b><br>${loc.type}<br>${loc.area}`);
+        markersRef.current.push(marker);
+      });
+      if (locs.length > 1) {
+        const coords = locs.map(l => [l.lat, l.lng]);
+        const poly = window.L.polyline(coords, { color:"#e74c3c", weight:2, dashArray:"6,6" }).addTo(mapInstance.current);
+        markersRef.current.push(poly);
+        mapInstance.current.fitBounds(poly.getBounds(), { padding:[30,30] });
+      } else if (locs.length === 1) {
+        mapInstance.current.setView([locs[0].lat, locs[0].lng], 14);
+      }
+    }, 300);
+    return () => clearInterval(interval);
+  }, [activeTab, filteredLocations, city]);
+
+  const handleAddDemo = () => {
+    if (!city) return;
+    const demo = city.sampleLocations;
+    const newLocs = demo.filter(d => !locations.find(l => l.name === d.name));
+    if (newLocs.length === 0) return;
+    const added = newLocs.map((l,i) => ({ l, id: Date.now()+i }));
+    setLocations(prev => [prev, added]);
+    const days = {};
+    added.forEach((l,i) => { days[l.id] = tripDays[i % tripDays.length]; });
+    setLocationDays(prev => ({...prev, days}));
+  };
+
+  const handleAnalyze = async () => {
+    if (!linkInput.trim()) { setError(t.errorEmpty); return; }
+    setError(""); setLoading(true);
+    try {
+      if (city) {
+        for (const matcher of city.linkMatchers) {
+          if (matcher.pattern.test(linkInput)) {
+            const loc = { ...city.sampleLocations[matcher.locationIndex], id: Date.now() };
+            setLocations(prev => [...prev, loc]);
+            setLocationDays(prev => ({prev, [loc.id]: tripDays[0]}));
+            setLinkInput(""); setLoading(false); return;
+          }
         }
       }
-    }, [locations, city]);
-
-    useEffect(() => {
-      if (mapInstanceRef.current) {
-        setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
+      if (apiKey) {
+        const cityName = city?.name || customCityName || "der Stadt";
+        const result = await analyzeWithAI(linkInput, apiKey, cityName);
+        const loc = { result, id: Date.now() };
+        setLocations(prev => [prev, loc]);
+        setLocationDays(prev => ({prev, [loc.id]: tripDays[0]}));
+        setLinkInput("");
+      } else {
+        setError(t.errorNotFound);
       }
+    } catch (e) {
+      setError("Fehler: " + e.message);
+    }
+    setLoading(false);
+  };
+
+  const handleRemove = (id) => {
+    setLocations(prev => prev.filter(l => l.id !== id));
+    setLocationDays(prev => { const n={prev}; delete n[id]; return n; });
+    setLocationNotes(prev => { const n={prev}; delete n[id]; return n; });
+  };
+
+  const handleDayChange = (id, day) => {
+    setLocationDays(prev => ({prev, [id]: day}));
+  };
+
+  const handleNoteChange = (id, note) => {
+    setLocationNotes(prev => ({prev, [id]: note}));
+  };
+
+  const handleDragStart = (i) => setDragIdx(i);
+  const handleDragOver = (e, i) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === i) return;
+    setLocations(prev => {
+      const arr = [prev];
+      const [removed] = arr.splice(dragIdx, 1);
+      arr.splice(i, 0, removed);
+      return arr;
     });
+    setDragIdx(i);
+  };
+  const handleDrop = () => setDragIdx(null);
 
-    return (
-      <div>
-        <div ref={mapRef} style={{ height: "220px", borderRadius: "12px", overflow: "hidden", border: "1px solid #333", width: "100%" }} />
-        {locations.length === 0 && (
-          <p className="text-xs text-center mt-2" style={{ color: "#555" }}>Füge Orte hinzu, um sie auf der Karte zu sehen.</p>
-        )}
-      </div>
-    );
-  }
+  const handleSavePlan = () => {
+    if (!planName.trim() || locations.length === 0) return;
+    const plan = { id: Date.now(), name: planName, cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
+    const updated = [savedPlans, plan];
+    setSavedPlans(updated);
+    localStorage.setItem("travel_plans", JSON.stringify(updated));
+    setPlanName(""); setSaveFeedback(true);
+    setTimeout(() => setSaveFeedback(false), 2000);
+  };
 
-  // ── Tages-Übersicht ──
-  function DayOverview({ locations, days, city, t, onTabChange }) {
-    const dayStats = days.map(day => {
-      const dayLocs = locations.filter(l => l.day === day);
-      if (dayLocs.length === 0) return null;
-      const totalMin = dayLocs.reduce((sum, loc) => sum + Math.round((parseFloat(loc.duration) || 1) * 60), 0);
-      const totalCost = dayLocs.reduce((sum, loc) => {
-        const cost = getEntryCost(loc.name, city);
-        return sum + (cost ? cost.max : 0);
-      }, 0);
-      const mapsUrl = dayLocs.length >= 2
-        ? `https://www.google.com/maps/dir/${dayLocs.map(l => `${l.lat},${l.lng}`).join("/")}`
-        : null;
-      return { day, locs: dayLocs, totalMin, totalCost, mapsUrl };
-    }).filter(Boolean);
+  const handleLoadPlan = (plan) => {
+    setCityId(plan.cityId || "paris");
+    setLocations(plan.locations || []);
+    setLocationDays(plan.locationDays || {});
+    setLocationNotes(plan.locationNotes || {});
+    setTripStartDate(plan.tripStartDate || new Date().toISOString().slice(0,10));
+    setTripNumDays(plan.tripNumDays || 3);
+  };
 
-    if (dayStats.length === 0) return null;
+  const handleDeletePlan = (id) => {
+    const updated = savedPlans.filter(p => p.id !== id);
+    setSavedPlans(updated);
+    localStorage.setItem("travel_plans", JSON.stringify(updated));
+  };
 
-    return (
-      <div className="space-y-2">
-        {dayStats.map(({ day, locs, totalMin, totalCost, mapsUrl }) => (
-          <div key={day} className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 flex-wrap" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#c0392b", color: "#fff" }}>{day.slice(0, 2)}</span>
-              <span className="text-xs" style={{ color: "#888" }}>📍 {locs.length} {t.places}</span>
-              <span className="text-xs" style={{ color: "#888" }}>⏱ {Math.floor(totalMin / 60)}h {totalMin % 60 > 0 ? `${totalMin % 60}m` : ""}</span>
-              {totalCost > 0 && <span className="text-xs" style={{ color: "#f39c12" }}>💰 ~{totalCost.toFixed(0)} €</span>}
-            </div>
-            <div className="flex gap-2">
-              {mapsUrl && (
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                  className="text-xs px-3 py-1 rounded-lg font-semibold"
-                  style={{ background: "#1a2a1a", color: "#6dbf6d", border: "1px solid #2d5a2d" }}>
-                  🗺 Route
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  const handleCreateShareLink = () => {
+    const data = { cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const url = `${window.location.origin}${window.location.pathname}?plan=${encoded}`;
+    setShareUrl(url);
+  };
 
-  function Timeline({ locations }) {
-  let currentMinutes = 9 * 60;
-  const items = locations.map((loc) => {
-    const durationMin = Math.round((parseFloat(loc.duration) || 1) * 60);
-    const fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-    const start = fmt(currentMinutes);
-    const end = fmt(currentMinutes + durationMin);
-    const item = { loc, start, end, durationMin };
-    currentMinutes += durationMin + 20;
-    return item;
-  });
-
-  return (
-    <div className="space-y-0">
-      {items.map(({ loc, start, end, durationMin }, i) => (
-        <div key={loc.id}>
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center w-16 flex-shrink-0">
-              <span className="text-xs font-bold" style={{ color: "#e74c3c" }}>{start}</span>
-              <div className="w-0.5 flex-1 my-1" style={{ background: "#444", minHeight: "40px" }}></div>
-              <span className="text-xs" style={{ color: "#666" }}>{end}</span>
-            </div>
-            <div className="flex-1 mb-1 rounded-xl p-3" style={{ background: "#2a2a2a", border: "1px solid #444" }}>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{loc.icon}</span>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: "#f0ece0", fontFamily: "Georgia,serif" }}>{loc.name}</p>
-                  <p className="text-xs" style={{ color: "#e67e22" }}>{loc.type}</p>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-2 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#1a2a3a", color: "#5dade2", border: "1px solid #2d5a7a" }}>📍 {loc.area}</span>
-                <span className="text-xs" style={{ color: "#888" }}>⏱ {durationMin} Min.</span>
-              </div>
-            </div>
-          </div>
-          {i < items.length - 1 && (
-            <TravelTimeBadge from={locations[i]} to={locations[i + 1]} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── City Selector Component ──
-function CitySelector({ currentCityId, onSelectCity, onAddCustomCity, t }) {
-  const [showSelector, setShowSelector] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [showCustom, setShowCustom] = useState(false);
-
-  const handleCustomCity = async () => {
-    if (!customName.trim()) return;
-    setSearching(true);
-    const geo = await geocodeCity(customName.trim());
-    setSearching(false);
-    if (geo) {
-      const flags = { DE: "🇩🇪", FR: "🇫🇷", GB: "🇬🇧", IT: "🇮🇹", ES: "🇪🇸", NL: "🇳🇱", AT: "🇦🇹", CZ: "🇨🇿", PT: "🇵🇹", US: "🇺🇸", JP: "🇯🇵", TH: "🇹🇭", AU: "🇦🇺", BR: "🇧🇷", MX: "🇲🇽", CA: "🇨🇦", GR: "🇬🇷", TR: "🇹🇷", HR: "🇭🇷", SE: "🇸🇪", NO: "🇳🇴", DK: "🇩🇰", FI: "🇫🇮", PL: "🇵🇱", HU: "🇭🇺", IE: "🇮🇪", CH: "🇨🇭" };
-      const country = flags[geo.country?.toUpperCase()] || "🌍";
-      onAddCustomCity({
-        id: customName.trim().toLowerCase().replace(/\s+/g, "_"),
-        name: geo.fullName || customName.trim(),
-        emoji: "📍",
-        country,
-        lat: geo.lat,
-        lng: geo.lng,
-        timezone: geo.timezone || "UTC",
-        sampleLocations: [],
-        demoLinks: [],
-        linkMatchers: [],
-        entryCosts: {},
-        ratings: {},
-        locationInfo: {},
-        openingHours: {},
-        metroLines: {},
-      });
-      setCustomName("");
-      setShowCustom(false);
-      setShowSelector(false);
+  const handleSaveMapImage = () => {
+    if (!mapRef.current) return;
+    const canvas = mapRef.current.querySelector('canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = 'reisekarte.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } else {
+      alert('Karte konnte nicht gespeichert werden. Bitte warte bis die Karte geladen ist.');
     }
   };
 
-  const currentCity = CITIES[currentCityId];
-
-  return (
-    <div className="relative">
-      <button onClick={() => setShowSelector(v => !v)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-105"
-        style={{ background: "#c0392b", color: "#fff", border: "2px solid #e74c3c" }}>
-        <span className="text-lg">{currentCity?.emoji || "📍"}</span>
-        <span>{currentCity?.name || currentCityId}</span>
-        <span className="text-xs opacity-70">{showSelector ? "▲" : "▼"}</span>
-      </button>
-
-      {showSelector && (
-        <div className="absolute top-full left-0 mt-2 rounded-2xl p-4 z-50 space-y-3" style={{ width: "min(320px, calc(100vw - 24px))", maxHeight: "80vh", overflowY: "auto" }} style={{ background: "#1a1a1a", border: "1px solid #444", boxShadow: "0 10px 40px #000a" }}>
-          <p className="text-xs font-bold" style={{ color: "#e74c3c" }}>{t.selectCity}</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {CITY_ORDER.map(cid => {
-              const c = CITIES[cid];
-              return (
-                <button key={cid} onClick={() => { onSelectCity(cid); setShowSelector(false); }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left"
-                  style={currentCityId === cid
-                    ? { background: "#c0392b", color: "#fff", border: "1px solid #e74c3c" }
-                    : { background: "#2a2a2a", color: "#aaa", border: "1px solid #444" }}>
-                  <span>{c.emoji}</span>
-                  <span>{c.name}</span>
-                  <span className="opacity-50">{c.country}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="border-t pt-3" style={{ borderColor: "#444" }}>
-            {!showCustom ? (
-              <button onClick={() => setShowCustom(true)} className="w-full text-center text-xs py-2 rounded-lg font-semibold" style={{ background: "#2a2a2a", color: "#5dade2", border: "1px solid #2d5a7a" }}>
-                {t.customCity}
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <input value={customName} onChange={e => setCustomName(e.target.value)} placeholder={t.customCityPlaceholder}
-                  className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
-                <button onClick={handleCustomCity} disabled={searching || !customName.trim()}
-                  className="w-full py-2 rounded-lg text-xs font-bold" style={{ background: searching ? "#555" : "#c0392b", color: "#fff" }}>
-                  {searching ? "Suche..." : t.customCityAdd}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// ── MAIN APP ──
-// ══════════════════════════════════════════════════════════════
-export default function TravelPlanner() {
-  const [lang, setLang] = useState("de");
-  const t = TRANSLATIONS[lang];
-  const DAYS_CURRENT = lang === "de" ? DAYS_DE : DAYS_EN;
-
-  const [currentCityId, setCurrentCityId] = useState("paris");
-  const [customCities, setCustomCities] = useState({});
-  const allCities = { ...CITIES, ...customCities };
-  const currentCity = allCities[currentCityId] || CITIES.paris;
-
-  const [locations, setLocations] = useState([]);
-  const [linkInput, setLinkInput] = useState("");
-  const [selectedDay, setSelectedDay] = useState(DAYS_CURRENT[0]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [showApiInput, setShowApiInput] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiSaved, setApiSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState("places");
-  const [travelMode, setTravelMode] = useState("transit");
-  const [filterDay, setFilterDay] = useState(null);
-
-  const [planName, setPlanName] = useState("");
-  const [savedPlans, setSavedPlans] = useState([]);
-  const [showSaved, setShowSaved] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
-  const [shareLink, setShareLink] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  const [extras, setExtras] = useState(0);
-
-  const [draggingIndex, setDraggingIndex] = useState(null);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   useEffect(() => {
-    const stored = localStorage.getItem("openai_api_key");
-    if (stored) setApiKey(stored);
-    const plans = localStorage.getItem("travel_plans");
-    if (plans) setSavedPlans(JSON.parse(plans));
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+    if (plan) {
+      try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(plan))));
+        setCityId(data.cityId || "paris");
+        setLocations(data.locations || []);
+        setLocationDays(data.locationDays || {});
+        setLocationNotes(data.locationNotes || {});
+        setTripStartDate(data.tripStartDate || new Date().toISOString().slice(0,10));
+        setTripNumDays(data.tripNumDays || 3);
+      } catch {}
+    }
   }, []);
 
-  const handleSelectCity = (cityId) => {
-    setCurrentCityId(cityId);
-    setLocations([]);
-    setError("");
-  };
-
-  const handleAddCustomCity = (city) => {
-    setCustomCities(prev => ({ ...prev, [city.id]: city }));
-    setCurrentCityId(city.id);
-    setLocations([]);
-  };
-
-  const changeLocationDay = (locId, newDay) => {
-    setLocations(prev => prev.map(l => l.id === locId ? { ...l, day: newDay } : l));
-  };
-
-  const updateNote = (locId, note) => {
-    setLocations(prev => prev.map(l => l.id === locId ? { ...l, note } : l));
-  };
-
-  const addLocation = async () => {
-    setError("");
-    if (!linkInput.trim()) { setError(t.errorEmpty); return; }
-    const matchers = currentCity.linkMatchers || [];
-    const match = matchers.find(m => m.pattern.test(linkInput));
-    if (match) {
-      const sample = currentCity.sampleLocations[match.locationIndex];
-      const newLoc = { ...sample, id: Date.now(), day: selectedDay };
-      setLocations(prev => [...prev, newLoc]);
-      setLinkInput("");
-      return;
-    }
-    if (apiKey) {
-      setIsAnalyzing(true);
-      try {
-        const result = await analyzeWithAI(linkInput, apiKey, currentCity.name);
-        const newLoc = { ...result, id: Date.now(), day: selectedDay };
-        setLocations(prev => [...prev, newLoc]);
-        setLinkInput("");
-      } catch { setError(t.errorNotFound); }
-      setIsAnalyzing(false);
-      return;
-    }
-    setError(t.errorNotFound);
-  };
-
-  const removeLocation = (id) => setLocations(prev => prev.filter(l => l.id !== id));
-
-  const handleDragStart = (index) => setDraggingIndex(index);
-  const handleDragOver = (e) => e.preventDefault();
-  const handleDrop = (dropIndex) => {
-    if (draggingIndex === null || draggingIndex === dropIndex) return;
-    setLocations(prev => {
-      const copy = [...prev];
-      const [moved] = copy.splice(draggingIndex, 1);
-      copy.splice(dropIndex, 0, moved);
-      return copy;
-    });
-    setDraggingIndex(null);
-  };
-
-  const saveApiKey = () => {
+  const handleSaveApiKey = () => {
     localStorage.setItem("openai_api_key", apiKeyInput);
-    setApiKey(apiKeyInput);
-    setApiSaved(true);
-    setTimeout(() => setApiSaved(false), 2000);
+    setApiKey(apiKeyInput); setApiKeySaved(true);
+    setTimeout(() => setApiKeySaved(false), 2000);
   };
 
-  const deleteApiKey = () => {
+  const handleDeleteApiKey = () => {
     localStorage.removeItem("openai_api_key");
-    setApiKey("");
-    setApiKeyInput("");
+    setApiKey(""); setApiKeyInput("");
   };
 
-  const savePlan = () => {
-    if (!planName.trim() || locations.length === 0) return;
-    const plan = { name: planName, city: currentCityId, locations, date: new Date().toISOString() };
-    const updated = [...savedPlans, plan];
-    setSavedPlans(updated);
-    localStorage.setItem("travel_plans", JSON.stringify(updated));
-    setPlanName("");
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+  const handleAddCustomCity = async () => {
+    if (!customCityInput.trim()) return;
+    const geo = await geocodeCity(customCityInput);
+    if (geo) {
+      setCustomCityName(geo.fullName || customCityInput);
+      setCityId("custom_" + customCityInput.toLowerCase().replace(/\s+/g,"_"));
+    } else {
+      setCustomCityName(customCityInput);
+      setCityId("custom_" + customCityInput.toLowerCase().replace(/\s+/g,"_"));
+    }
+    setShowCityPicker(false);
+    setLocations([]);
+    setLocationDays({});
+    setLocationNotes({});
   };
 
-  const loadPlan = (plan) => {
-    setCurrentCityId(plan.city);
-    setLocations(plan.locations);
-    setShowSaved(false);
-  };
+  const totalBudgetMin = locationsWithDays.reduce((sum, loc) => {
+    const cost = getEntryCost(loc.name, city);
+    return sum + (cost ? cost.min : 0);
+  }, 0) + Number(budgetExtras);
 
-  const deletePlan = (index) => {
-    const updated = savedPlans.filter((_, i) => i !== index);
-    setSavedPlans(updated);
-    localStorage.setItem("travel_plans", JSON.stringify(updated));
-  };
-
-  const createShareLink = () => {
-    const data = btoa(JSON.stringify({ city: currentCityId, locations }));
-    const link = `${window.location.origin}${window.location.pathname}?plan=${data}`;
-    setShareLink(link);
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const filteredLocations = filterDay ? locations.filter(l => l.day === filterDay) : locations;
-
-  const totalBudget = locations.reduce((sum, loc) => {
-    const cost = getEntryCost(loc.name, currentCity);
+  const totalBudgetMax = locationsWithDays.reduce((sum, loc) => {
+    const cost = getEntryCost(loc.name, city);
     return sum + (cost ? cost.max : 0);
-  }, 0);
+  }, 0) + Number(budgetExtras);
 
-  const mapsUrl = locations.length >= 2
-    ? `https://www.google.com/maps/dir/${locations.map(l => `${l.lat},${l.lng}`).join("/")}`
-    : null;
+  const cityData = CITIES[cityId];
+  const displayCityName = cityData ? `${cityData.emoji} ${cityData.name}` : `✨ ${customCityName}`;
 
-  const warnings = locations.filter(loc => {
-    const info = getOpeningInfo(loc.name, loc.day, currentCity);
-    return info && !info.isOpen;
-  });
+  const timelineByDay = tripDays.map(day => ({
+    day,
+    locs: locationsWithDays.filter(l => l.day === day),
+  })).filter(d => d.locs.length > 0);
+
+  const googleMapsUrl = () => {
+    const locs = filteredLocations.filter(l => l.lat && l.lng);
+    if (locs.length === 0) return "#";
+    if (locs.length === 1) return `https://www.google.com/maps/search/?api=1&query=${locs[0].lat},${locs[0].lng}`;
+    const waypoints = locs.slice(1, -1).map(l => `${l.lat},${l.lng}`).join("|");
+    const origin = `${locs[0].lat},${locs[0].lng}`;
+    const destination = `${locs[locs.length-1].lat},${locs[locs.length-1].lng}`;
+    const mode = travelMode === "driving" ? "driving" : travelMode === "walking" ? "walking" : "transit";
+    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints?`&waypoints=${waypoints}`:""}&travelmode=${mode}`;
+  };
 
   return (
-    <div className="min-h-screen" style={{ background: "#111", color: "#f0ece0", overflowX: "hidden" }}>
+    <div className="min-h-screen" style={{ background:"#111", color:"#eee", fontFamily:"system-ui,sans-serif" }}>
       {/* Header */}
-      <div className="relative" style={{ background: "linear-gradient(135deg, #1a0a0a 0%, #2a1a1a 50%, #1a0a0a 100%)", borderBottom: "2px solid #c0392b" }}>
-        <div className="w-full max-w-2xl mx-auto px-3 py-4" style={{ boxSizing: "border-box" }}>
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: "Georgia,serif", color: "#e74c3c" }}>
-              {currentCity.emoji} {t.appName}
-            </h1>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setLang(l => l === "de" ? "en" : "de")} className="px-2 py-1 rounded-lg text-xs font-bold" style={{ background: "#2a2a2a", color: "#aaa", border: "1px solid #444" }}>
-                {lang === "de" ? "🇩🇪 DE" : "🇬🇧 EN"}
-              </button>
-              <button onClick={() => setShowApiInput(v => !v)} className="text-xs px-2 py-1 rounded-lg" style={{ background: apiKey ? "#1a2a1a" : "#2a1a1a", color: apiKey ? "#6dbf6d" : "#e74c3c", border: `1px solid ${apiKey ? "#2d5a2d" : "#7a2d2d"}` }}>
-                {apiKey ? t.apiActive : t.apiMissing}
-              </button>
-            </div>
-          </div>
-          <div className="mt-4">
-            <CitySelector currentCityId={currentCityId} onSelectCity={handleSelectCity} onAddCustomCity={handleAddCustomCity} t={t} />
-            
-          </div>
-          {showApiInput && (
-            <div className="mt-4 p-4 rounded-xl space-y-2" style={{ background: "#1a1a1a", border: "1px solid #444" }}>
-              <p className="text-xs font-bold" style={{ color: "#e74c3c" }}>{t.apiTitle}</p>
-              <p className="text-xs" style={{ color: "#888" }}>{t.apiHint}</p>
-              <div className="flex gap-2">
-                <input value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="sk-..." type="password"
-                  className="flex-1 px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
-                <button onClick={saveApiKey} className="px-4 py-2 rounded-lg text-xs font-bold" style={{ background: "#c0392b", color: "#fff" }}>
-                  {apiSaved ? t.apiSaved : t.apiSave}
-                </button>
-              </div>
-              {apiKey && <button onClick={deleteApiKey} className="text-xs" style={{ color: "#e74c3c" }}>{t.apiDelete}</button>}
-            </div>
-          )}
+      <div className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between" style={{ background:"#0a0a0a", borderBottom:"1px solid #333" }}>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🗺️</span>
+          <span className="font-black text-lg" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.appName}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a1a", color:"#666", border:"1px solid #333" }}>v3.0</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setLang(l => l==="de"?"en":"de")} className="text-xs px-2 py-1 rounded-lg" style={{ background:"#222", color:"#888", border:"1px solid #444" }}>
+            {lang==="de"?"EN":"DE"}
+          </button>
+          <button onClick={() => setShowApiSection(v => !v)} className="text-xs px-2 py-1 rounded-lg" style={{ background: apiKey?"#1a2a1a":"#2a1a1a", color: apiKey?"#27ae60":"#e74c3c", border:`1px solid ${apiKey?"#2d5a2d":"#7a2d2d"}` }}>
+            {apiKey ? t.apiActive : t.apiMissing}
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="w-full max-w-2xl mx-auto px-3 py-4 space-y-4" style={{ boxSizing: "border-box" }}>
-        {/* Warnings */}
-        {warnings.length > 0 && (
-          <div className="rounded-xl p-3 space-y-2" style={{ background: "#2a1a1a", border: "1px solid #7a2d2d", wordBreak: "break-word" }}>
-            <p className="text-sm font-bold" style={{ color: "#e74c3c" }}>⚠️ {t.warningTitle}</p>
-            {warnings.map(loc => (
-              <p key={loc.id} className="text-xs" style={{ color: "#e74c3c" }}>
-                <strong>{loc.name}</strong> {t.warningClosed} ({loc.day})
-              </p>
-            ))}
-            <p className="text-xs" style={{ color: "#888" }}>{t.warningHint}</p>
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+
+        {/* API Key Section */}
+        {showApiSection && (
+          <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
+            <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.apiTitle}</h2>
+            <p className="text-xs" style={{ color:"#888" }}>{t.apiHint}</p>
+            <div className="flex gap-2">
+              <input value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="sk-" type="password"
+                className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+              <button onClick={handleSaveApiKey} className="px-3 py-2 rounded-xl text-sm font-bold" style={{ background:"#e74c3c", color:"white" }}>
+                {apiKeySaved ? t.apiSaved : t.apiSave}
+              </button>
+            </div>
+            {apiKey && (
+              <button onClick={handleDeleteApiKey} className="text-xs" style={{ color:"#888" }}>{t.apiDelete}</button>
+            )}
           </div>
         )}
 
-        {/* Add Location */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1a1a1a", border: "1px solid #333" }}>
-          <h2 className="font-black text-lg" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>+ {t.addPlace}</h2>
-          <div>
-            <label className="text-xs font-bold tracking-wider mb-1 block" style={{ color: "#888" }}>{t.insertLink}</label>
-            <div className="flex gap-2 flex-col sm:flex-row">
-              <input value={linkInput} onChange={e => setLinkInput(e.target.value)} placeholder={t.linkPlaceholder}
-                onKeyDown={e => e.key === "Enter" && addLocation()}
-                className="w-full px-3 py-2.5 rounded-xl text-sm" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
-              <button onClick={addLocation} disabled={isAnalyzing}
-                className="px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-105"
-                style={{ background: isAnalyzing ? "#555" : "#c0392b", color: "#fff" }}>
-                {isAnalyzing ? t.analyzing : t.analyze}
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div className="rounded-2xl p-4" style={{ background:"#2a1a1a", border:"1px solid #7a2d2d" }}>
+            <p className="font-bold text-sm mb-2" style={{ color:"#e74c3c" }}>⚠️ {t.warningTitle}</p>
+            {warnings.map(w => (
+              <p key={w} className="text-xs" style={{ color:"#e74c3c" }}>• {w} {t.warningClosed}</p>
+            ))}
+            <p className="text-xs mt-1" style={{ color:"#888" }}>{t.warningHint}</p>
+          </div>
+        )}
+
+        {/* City Picker */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
+          <div className="flex items-center justify-between">
+            <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.currentCity}: {displayCityName}</h2>
+            <button onClick={() => setShowCityPicker(v => !v)} className="text-xs px-3 py-1 rounded-lg font-bold" style={{ background:"#1a1a1a", color:"#e74c3c", border:"1px solid #e74c3c" }}>
+              {t.switchCity}
+            </button>
+          </div>
+          {showCityPicker && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                {CITY_ORDER.map(id => (
+                  <button key={id} onClick={() => { setCityId(id); setShowCityPicker(false); setLocations([]); setLocationDays({}); setLocationNotes({}); }}
+                    className="rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center gap-1 transition-all"
+                    style={{ background: cityId===id?"#3a1a1a":"#1a1a1a", border: cityId===id?"2px solid #e74c3c":"1px solid #333", color: cityId===id?"#e74c3c":"#aaa" }}>
+                    <span className="text-xl">{CITIES[id].emoji}</span>
+                    <span>{CITIES[id].name}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <input value={customCityInput} onChange={e => setCustomCityInput(e.target.value)} placeholder={t.customCityPlaceholder}
+                  className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+                <button onClick={handleAddCustomCity} className="px-3 py-2 rounded-xl text-sm font-bold" style={{ background:"#e74c3c", color:"white" }}>
+                  {t.customCityAdd}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Trip Settings */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
+          <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>📅 Reisezeitraum</h2>
+          <div className="flex gap-3 flex-wrap">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs" style={{ color:"#888" }}>Startdatum</label>
+              <input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)}
+                className="rounded-xl px-3 py-2 text-sm focus:outline-none"
+                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs" style={{ color:"#888" }}>Anzahl Tage</label>
+              <input type="number" min={1} max={14} value={tripNumDays} onChange={e => setTripNumDays(Number(e.target.value))}
+                className="rounded-xl px-3 py-2 text-sm focus:outline-none w-20"
+                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {tripDays.map(d => (
+              <span key={d} className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a2a", color:"#9b59b6", border:"1px solid #6c3483" }}>
+                {formatDateLabel(d, lang)}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Add Place */}
+        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
+          <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>➕ {t.addPlace}</h2>
+          <div className="flex gap-2">
+            <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
+              onKeyDown={e => e.key==="Enter" && handleAnalyze()}
+              placeholder={t.linkPlaceholder}
+              className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
+              style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            <button onClick={handleAnalyze} disabled={loading}
+              className="px-4 py-2 rounded-xl text-sm font-bold"
+              style={{ background: loading?"#444":"#e74c3c", color:"white", minWidth:80 }}>
+              {loading ? t.analyzing : t.analyze}
+            </button>
+          </div>
+          {error && <p className="text-xs" style={{ color:"#e74c3c" }}>{error}</p>}
+          {city && (
+            <div>
+              <p className="text-xs mb-2" style={{ color:"#666" }}>{t.demo}</p>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {city.demoLinks.map((link, i) => (
+                  <button key={i} onClick={() => setLinkInput(link)}
+                    className="text-xs px-2 py-1 rounded-lg"
+                    style={{ background:"#1a1a1a", color:"#5dade2", border:"1px solid #2d5a7a" }}>
+                    Demo {i+1}
+                  </button>
+                ))}
+              </div>
+              <button onClick={handleAddDemo} className="text-xs px-3 py-1.5 rounded-lg font-bold w-full"
+                style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>
+                ⚡ Alle Demo-Orte laden
               </button>
             </div>
-            {error && <p className="text-xs mt-2" style={{ color: "#e74c3c" }}>{error}</p>}
-          </div>
-          <div>
-            <label className="text-xs font-bold tracking-wider mb-1 block" style={{ color: "#888" }}>{t.visitDay}</label>
-            <div className="flex flex-wrap gap-1.5">
-              {DAYS_CURRENT.map(d => (
-                <button key={d} onClick={() => setSelectedDay(d)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                  style={selectedDay === d ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888", border: "1px solid #444" }}>
-                  {d.slice(0, 2)}
+          )}
+        </div>
+
+        {/* Locations */}
+        {locations.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>
+                📍 {t.myPlaces} <span className="text-xs font-normal" style={{ color:"#666" }}>({locations.length})</span>
+              </h2>
+              <div className="flex gap-1 flex-wrap">
+                <button onClick={() => setFilterDay("all")}
+                  className="text-xs px-2 py-1 rounded-lg font-medium"
+                  style={{ background: filterDay==="all"?"#e74c3c":"#222", color: filterDay==="all"?"white":"#888", border:"1px solid #444" }}>
+                  {t.allDays}
                 </button>
+                {tripDays.map(d => (
+                  <button key={d} onClick={() => setFilterDay(d)}
+                    className="text-xs px-2 py-1 rounded-lg font-medium"
+                    style={{ background: filterDay===d?"#9b59b6":"#222", color: filterDay===d?"white":"#888", border:"1px solid #444" }}>
+                    {formatDateLabel(d, lang)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs" style={{ color:"#555" }}>{t.dragHint}</p>
+            <div className="space-y-2">
+              {filteredLocations.map((loc, i) => (
+                <div key={loc.id}>
+                  <LocationCard
+                    loc={loc} day={loc.day} index={i} city={city} t={t} getDayLabel={getDayLabel}
+                    availableDays={tripDays} onDayChange={handleDayChange} onNoteChange={handleNoteChange}
+                    onRemove={() => handleRemove(loc.id)}
+                    isDragging={dragIdx === locations.indexOf(locations.find(l => l.id===loc.id))}
+                    onDragStart={() => handleDragStart(locations.indexOf(locations.find(l => l.id===loc.id)))}
+                    onDragOver={(e) => handleDragOver(e, locations.indexOf(locations.find(l => l.id===loc.id)))}
+                    onDrop={handleDrop}
+                  />
+                  {i < filteredLocations.length-1 && <TravelTimeBadge from={filteredLocations[i]} to={filteredLocations[i+1]} />}
+                </div>
               ))}
             </div>
           </div>
-          {currentCity.demoLinks?.length > 0 && (
-            <div className="pt-2 border-t" style={{ borderColor: "#333" }}>
-              <p className="text-xs mb-2" style={{ color: "#555" }}>{t.demo}</p>
-              <div className="space-y-1">
-                {currentCity.demoLinks.map((link, i) => (
-                  <button key={i} onClick={() => setLinkInput(link)} className="block text-xs truncate w-full text-left hover:underline" style={{ color: "#5dade2" }}>
-                    {link}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Tabs */}
-        <div className="flex gap-2">
-          {["places", "map", "route", "timeline"].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-3 py-2 rounded-xl text-xs font-bold transition-all flex-1 text-center"
-              style={activeTab === tab ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888", border: "1px solid #444" }}>
-              {tab === "places" ? `📍 ${t.places}` : tab === "map" ? `🗺 Karte` : tab === "route" ? `🗺 ${t.route}` : `⏰ ${t.timeline}`}
-            </button>
-          ))}
-        </div>
-
-        {/* Places Tab */}
-        {activeTab === "places" && (
+        {locations.length > 0 && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="font-black text-base" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>
-                📍 {t.myPlaces} <span className="text-sm font-normal" style={{ color: "#666" }}>({locations.length})</span>
-              </h2>
-              <div className="flex gap-1">
-                <button onClick={() => setFilterDay(null)}
-                  className="px-2 py-1 rounded text-xs"
-                  style={!filterDay ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888" }}>
-                  {t.allDays}
+            <div className="flex gap-2 rounded-xl p-1" style={{ background:"#1a1a1a", border:"1px solid #333" }}>
+              {["route","timeline"].map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
+                  style={{ background: activeTab===tab?"#e74c3c":"transparent", color: activeTab===tab?"white":"#666" }}>
+                  {tab==="route" ? t.route : t.timeline}
                 </button>
-                {DAYS_CURRENT.map(d => (
-                  <button key={d} onClick={() => setFilterDay(d)}
-                    className="px-2 py-1 rounded text-xs"
-                    style={filterDay === d ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888" }}>
-                    {d.slice(0, 2)}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
-            {locations.length > 0 && (
-                <DayOverview locations={locations} days={DAYS_CURRENT} city={currentCity} t={t} />
-              )}
-              {filteredLocations.length === 0 ? (
-              <p className="text-center py-8 text-sm" style={{ color: "#555" }}>{t.addFirst}</p>
-            ) : (
-              <div className="space-y-1">
-                {filteredLocations.map((loc, i) => (
-                  <div key={loc.id}>
-                    <LocationCard
-                      loc={loc} day={loc.day} index={i}
-                      onRemove={() => removeLocation(loc.id)}
-                      onDragStart={() => handleDragStart(i)}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(i)}
-                      isDragging={draggingIndex === i}
-                      city={currentCity}
-                      onDayChange={changeLocationDay}
-                      availableDays={DAYS_CURRENT}
-                      onNoteChange={updateNote}
-                      t={t}
-                    />
-                    {i < filteredLocations.length - 1 && (
-                      <TravelTimeBadge from={filteredLocations[i]} to={filteredLocations[i + 1]} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Route Tab */}
-        {activeTab === "map" && (
-            <div className="space-y-3">
-              <h2 className="font-black text-lg" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>🗺 Karte</h2>
-              <MiniMap locations={locations} city={currentCity} />
-            </div>
-          )}
-
-          {activeTab === "route" && (
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold tracking-wider mb-2 block" style={{ color: "#888" }}>{t.travelMode}</label>
-              <div className="flex gap-2">
-                {[["walking", t.walking], ["transit", t.transit], ["driving", t.driving]].map(([mode, label]) => (
-                  <button key={mode} onClick={() => setTravelMode(mode)}
-                    className="px-3 py-2 rounded-lg text-xs font-semibold"
-                    style={travelMode === mode ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888", border: "1px solid #444" }}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {mapsUrl ? (
+            {/* Route Tab */}
+            {activeTab==="route" && (
               <div className="space-y-3">
-                <div className="rounded-xl p-4" style={{ background: "#1a2a1a", border: "1px solid #2d5a2d" }}>
-                  <p className="text-sm font-bold mb-2" style={{ color: "#6dbf6d" }}>🗺 {t.route} – {locations.length} {t.stops}</p>
-                  {locations.map((loc, i) => (
-                    <div key={loc.id}>
-                      <div className="flex items-center gap-2 py-1">
-                        <span className="w-6 h-6 bg-red-700 text-white rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</span>
-                        <span className="text-xs" style={{ color: "#ccc" }}>{loc.icon} {loc.name}</span>
-                      </div>
-                      {i < locations.length - 1 && (
-                        <TravelTimeBadge from={locations[i]} to={locations[i + 1]} />
-                      )}
-                    </div>
+                <div className="flex gap-2 flex-wrap">
+                  {["walking","transit","driving"].map(mode => (
+                    <button key={mode} onClick={() => setTravelMode(mode)}
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                      style={{ background: travelMode===mode?"#e74c3c":"#222", color: travelMode===mode?"white":"#888", border:"1px solid #444" }}>
+                      {t[mode]}
+                    </button>
                   ))}
                 </div>
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                  className="block w-full text-center py-3 rounded-xl text-sm font-bold transition-all hover:scale-105"
-                  style={{ background: "#c0392b", color: "#fff" }}>
-                  🗺 {t.openInMaps}
-                </a>
+                <div ref={mapRef} className="w-full rounded-2xl overflow-hidden" style={{ height:320, background:"#1a1a2a" }} />
+                {filteredLocations.length >= 2 ? (
+                  <a href={googleMapsUrl()} target="_blank" rel="noopener noreferrer"
+                    className="block w-full py-3 rounded-xl text-center text-sm font-bold"
+                    style={{ background:"#e74c3c", color:"white" }}>
+                    🗺️ {t.openInMaps}
+                  </a>
+                ) : (
+                  <p className="text-xs text-center" style={{ color:"#666" }}>{t.noRouteHint}
+                  )}
+                  <button onClick={handleSaveMapImage} className="w-full py-2 rounded-xl text-sm font-bold mt-2" style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>📥 Karte als Bild speichern</button>
+                  </p>
+                )}
               </div>
-            ) : (
-              <p className="text-center py-8 text-sm" style={{ color: "#555" }}>{t.noRouteHint}</p>
             )}
-          </div>
-        )}
 
-        {/* Timeline Tab */}
-        {activeTab === "timeline" && (
-          <div className="space-y-4">
-            <h2 className="font-black text-base" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>
-              ⏰ {t.timelineTitle}
-            </h2>
-            {locations.length > 0 ? (
-              <Timeline locations={locations} />
-            ) : (
-              <p className="text-center py-8 text-sm" style={{ color: "#555" }}>{t.addFirst}</p>
-            )}
-          </div>
-        )}
-
-        {/* Budget Section */}
-        <CollapsibleSection title={`💰 ${t.budgetTitle}`} rightContent={
-          <span className="text-sm font-bold" style={{ color: "#f39c12" }}>{(totalBudget + extras).toFixed(2)} €</span>
-        }>
-          <div className="space-y-3">
-            {locations.map(loc => {
-              const cost = getEntryCost(loc.name, currentCity);
-              return (
-                <div key={loc.id} className="flex items-center justify-between gap-2 py-1.5 border-b flex-wrap" style={{ borderColor: "#333" }}>
-                  <span className="text-xs" style={{ color: "#ccc" }}>{loc.icon} {loc.name}</span>
-                  <span className="text-xs font-bold" style={{ color: cost && cost.max > 0 ? "#f39c12" : "#6dbf6d" }}>
-                    {cost ? (cost.max > 0 ? `${cost.min === cost.max ? cost.max.toFixed(2) : `${cost.min.toFixed(2)}–${cost.max.toFixed(2)}`} ${cost.currency}` : t.free) : "?"}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="flex items-center gap-2 pt-2 flex-wrap">
-              <span className="text-xs" style={{ color: "#888" }}>{t.budgetExtras}</span>
-              <input type="number" value={extras} onChange={e => setExtras(Number(e.target.value) || 0)}
-                className="w-24 px-2 py-1 rounded text-xs text-right" style={{ background: "#2a2a2a", color: "#f39c12", border: "1px solid #444" }} />
-              <span className="text-xs" style={{ color: "#888" }}>€</span>
-            </div>
-            <div className="flex justify-between pt-2 border-t" style={{ borderColor: "#444" }}>
-              <span className="text-sm font-bold" style={{ color: "#fff" }}>{t.budgetTotal}</span>
-              <span className="text-sm font-bold" style={{ color: "#f39c12" }}>{(totalBudget + extras).toFixed(2)} €</span>
-            </div>
-            <p className="text-xs" style={{ color: "#555", fontStyle: "italic" }}>{t.budgetNote}</p>
-          </div>
-        </CollapsibleSection>
-
-        {/* Save & Load Plans */}
-        <CollapsibleSection title={`📋 ${t.savePlans}`} badge={savedPlans.length}>
-          <div className="space-y-3">
-            <div className="flex gap-2 flex-col sm:flex-row">
-              <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
-                className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#fff", border: "1px solid #444" }} />
-              <button onClick={savePlan} disabled={!planName.trim() || locations.length === 0}
-                className="px-4 py-2 rounded-lg text-xs font-bold" style={{ background: "#c0392b", color: "#fff", opacity: (!planName.trim() || locations.length === 0) ? 0.5 : 1 }}>
-                {saveSuccess ? t.saved : t.save}
-              </button>
-            </div>
-            {savedPlans.length > 0 && (
-              <div className="space-y-2 pt-2 border-t" style={{ borderColor: "#333" }}>
-                <p className="text-xs font-bold" style={{ color: "#888" }}>{t.savedPlans}</p>
-                {savedPlans.map((plan, i) => (
-                  <div key={i} className="flex items-start justify-between gap-2 py-2 px-3 rounded-lg flex-wrap" style={{ background: "#2a2a2a" }}>
-                    <div>
-                      <p className="text-xs font-bold" style={{ color: "#ccc" }}>{plan.name}</p>
-                      <p className="text-xs" style={{ color: "#666" }}>{(allCities[plan.city]?.emoji || "📍")} {allCities[plan.city]?.name || plan.city} · {plan.locations.length} {t.places}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => loadPlan(plan)} className="text-xs px-3 py-1 rounded font-bold" style={{ background: "#1a2a3a", color: "#5dade2" }}>{t.load}</button>
-                      <button onClick={() => deletePlan(i)} className="text-xs px-2 py-1 rounded" style={{ color: "#e74c3c" }}>×</button>
-                    </div>
+            {/* Timeline Tab */}
+            {activeTab==="timeline" && (
+              <div className="space-y-4">
+                {timelineByDay.length === 0 ? (
+                  <p className="text-xs text-center" style={{ color:"#666" }}>Keine Orte geplant.</p>
+                ) : timelineByDay.map(({ day, locs }) => (
+                  <div key={day} className="space-y-2">
+                    <h3 className="font-bold text-sm" style={{ color:"#9b59b6" }}>
+                      📅 {formatDateLabel(day, lang)}
+                    </h3>
+                    {locs.map((loc, i) => {
+                      const startMin = 9*60 + locs.slice(0,i).reduce((s,l) => {
+                        const dur = parseFloat((l.duration||"1").replace(",","."));
+                        return s + (isNaN(dur)?60:dur*60) + 20;
+                      }, 0);
+                      const h = Math.floor(startMin/60);
+                      const m = startMin%60;
+                      const cost = getEntryCost(loc.name, city);
+                      return (
+                        <div key={loc.id} className="flex gap-3">
+                          <div className="flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                              style={{ background:"#e74c3c", color:"white" }}>{i+1}</div>
+                            {i < locs.length-1 && <div className="w-0.5 flex-1 my-1" style={{ background:"#333" }} />}
+                          </div>
+                          <div className="flex-1 rounded-xl p-3 mb-2" style={{ background:"#2a2a2a", border:"1px solid #444" }}>
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-bold text-sm" style={{ color:"#f0ece0" }}>{loc.icon} {loc.name}</p>
+                                <p className="text-xs" style={{ color:"#888" }}>{String(h).padStart(2,"0")}:{String(m).padStart(2,"0")} Uhr · ⏱ {loc.duration}</p>
+                              </div>
+                              {cost && (
+                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background:"#1a2a1a", color:"#27ae60", border:"1px solid #2d5a2d" }}>
+                                  {cost.min===0 ? "Frei" : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`}
+                                </span>
+                              )}
+                            </div>
+                            {loc.note && (
+                              <p className="text-xs mt-1 italic" style={{ color:"#27ae60" }}>📝 {loc.note}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
             )}
-            {savedPlans.length === 0 && <p className="text-xs text-center py-2" style={{ color: "#555" }}>{t.noPlans}</p>}
+          </div>
+        )}
+
+        {/* Budget */}
+        <CollapsibleSection
+          title={`💰 ${t.budgetTitle}`}
+          rightContent={
+            <span className="text-xs font-bold" style={{ color:"#27ae60" }}>
+              {totalBudgetMin === totalBudgetMax
+                ? `€${totalBudgetMin.toFixed(2)}`
+                : `€${totalBudgetMin.toFixed(2)}–€${totalBudgetMax.toFixed(2)}`}
+            </span>
+          }>
+          <div className="space-y-3">
+            {locationsWithDays.length === 0 ? (
+              <p className="text-xs" style={{ color:"#666" }}>Noch keine Orte hinzugefügt.</p>
+            ) : (
+              <div className="space-y-2">
+                {locationsWithDays.map(loc => {
+                  const cost = getEntryCost(loc.name, city);
+                  return (
+                    <div key={loc.id} className="flex items-center justify-between">
+                      <span className="text-sm" style={{ color:"#ccc" }}>{loc.icon} {loc.name}</span>
+                      <span className="text-sm font-bold" style={{ color:"#27ae60" }}>
+                        {cost ? (cost.min===0 ? t.free : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`) : "?"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color:"#888" }}>{t.budgetExtras}</span>
+              <input type="number" min={0} value={budgetExtras} onChange={e => setBudgetExtras(Number(e.target.value))}
+                className="w-24 rounded-lg px-2 py-1 text-xs focus:outline-none"
+                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            </div>
+            <div className="rounded-xl p-3" style={{ background:"#1a2a1a", border:"1px solid #2d5a2d" }}>
+              <p className="font-bold text-sm" style={{ color:"#27ae60" }}>
+                {t.budgetTotal}: {totalBudgetMin===totalBudgetMax ? `€${totalBudgetMin.toFixed(2)}` : `€${totalBudgetMin.toFixed(2)} – €${totalBudgetMax.toFixed(2)}`}
+              </p>
+              <p className="text-xs mt-1" style={{ color:"#666" }}>{t.budgetNote}</p>
+            </div>
           </div>
         </CollapsibleSection>
 
-        {/* Share Section */}
-        <CollapsibleSection title={t.share}>
+        {/* Share */}
+        <CollapsibleSection title={`🤝 ${t.share}`}>
           <div className="space-y-3">
-            <button onClick={(e) => { e.stopPropagation(); createShareLink(); }}
-              className="w-full py-2 rounded-lg text-xs font-bold" style={{ background: "#c0392b", color: "#fff" }}>
+            <button onClick={(e) => { e.stopPropagation(); handleCreateShareLink(); }}
+              className="w-full py-2 rounded-xl text-sm font-bold"
+              style={{ background:"#e74c3c", color:"white" }}>
               {t.createLink}
             </button>
-            {shareLink && (
+            {shareUrl && (
               <div className="space-y-2">
-                <p className="text-xs" style={{ color: "#888" }}>{t.shareHint}</p>
-                <div className="flex gap-2 flex-col sm:flex-row">
-                  <input value={shareLink} readOnly className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: "#2a2a2a", color: "#5dade2", border: "1px solid #444" }} />
-                  <button onClick={copyLink} className="px-3 py-2 rounded-lg text-xs font-bold" style={{ background: "#1a2a3a", color: "#5dade2" }}>
+                <p className="text-xs" style={{ color:"#888" }}>{t.shareHint}</p>
+                <div className="flex gap-2">
+                  <input readOnly value={shareUrl} className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
+                    style={{ background:"#1a1a1a", border:"1px solid #444", color:"#aaa" }} />
+                  <button onClick={handleCopy} className="px-3 py-2 rounded-xl text-xs font-bold"
+                    style={{ background:"#27ae60", color:"white" }}>
                     {copied ? t.copied : t.copy}
                   </button>
                 </div>
@@ -1554,12 +1384,50 @@ export default function TravelPlanner() {
           </div>
         </CollapsibleSection>
 
+        {/* Save & Load Plans */}
+        <CollapsibleSection title={`💾 ${t.savePlans}`} badge={savedPlans.length}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
+                  className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+                <button onClick={handleSavePlan} className="px-4 py-2 rounded-xl text-sm font-bold"
+                  style={{ background: locations.length===0?"#444":"#e74c3c", color:"white" }}
+                  disabled={locations.length===0}>
+                  {saveFeedback ? t.saved : t.save}
+                </button>
+              </div>
+              {locations.length===0 && <p className="text-xs" style={{ color:"#666" }}>{t.addFirst}</p>}
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold" style={{ color:"#888" }}>{t.savedPlans}</h3>
+              {savedPlans.length===0 ? (
+                <p className="text-xs" style={{ color:"#666" }}>{t.noPlans}</p>
+              ) : savedPlans.map(plan => (
+                <div key={plan.id} className="flex items-center justify-between rounded-xl px-3 py-2"
+                  style={{ background:"#1a1a1a", border:"1px solid #333" }}>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color:"#f0ece0" }}>{plan.name}</p>
+                    <p className="text-xs" style={{ color:"#666" }}>{CITIES[plan.cityId]?.name || plan.cityId} · {plan.locations?.length || 0} Orte</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleLoadPlan(plan)} className="text-xs px-2 py-1 rounded-lg font-bold"
+                      style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>{t.load}</button>
+                    <button onClick={() => handleDeletePlan(plan.id)} className="text-xs px-2 py-1 rounded-lg"
+                      style={{ background:"#2a1a1a", color:"#e74c3c", border:"1px solid #7a2d2d" }}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CollapsibleSection>
+
         {/* Footer */}
-        <div className="text-center py-8">
-          <p className="text-xs" style={{ color: "#333" }}>{t.footerText}</p>
+        <div className="text-center py-6">
+          <p className="text-xs" style={{ color:"#555" }}>{t.footerText}</p>
         </div>
       </div>
     </div>
   );
 }
-
