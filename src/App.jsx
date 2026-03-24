@@ -1092,7 +1092,7 @@ export default function TravelPlanner() {
             </h1>
             <div className="flex items-center gap-2">
               <button onClick={() => setLang(l => l === "de" ? "en" : "de")} className="px-2 py-1 rounded-lg text-xs font-bold" style={{ background: "#2a2a2a", color: "#aaa", border: "1px solid #444" }}>
-                {lang === "de" ? "EN" : "DE"}
+                {lang === "de" ? "🇩🇪 DE" : "🇬🇧 EN"}
               </button>
               <button onClick={() => setShowApiInput(v => !v)} className="text-xs px-2 py-1 rounded-lg" style={{ background: apiKey ? "#1a2a1a" : "#2a1a1a", color: apiKey ? "#6dbf6d" : "#e74c3c", border: `1px solid ${apiKey ? "#2d5a2d" : "#7a2d2d"}` }}>
                 {apiKey ? t.apiActive : t.apiMissing}
