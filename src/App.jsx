@@ -1045,11 +1045,11 @@ export default function App() {
         <div className="flex items-center gap-2">
           <span className="text-2xl">🗺️</span>
           <span className="font-black text-lg" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.appName}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a1a", color:"#666", border:"1px solid #333" }}>v3.0</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a1a", color:"#666", border:"1px solid #333" }}>v3.1</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setLang(l => l==="de"?"en":"de")} className="text-xs px-2 py-1 rounded-lg" style={{ background:"#222", color:"#888", border:"1px solid #444" }}>
-            {lang==="de"?"EN":"DE"}
+            {lang==="de" ? "🇩🇪 DE" : "🇬🇧 EN"}
           </button>
           <button onClick={() => setShowApiSection(v => !v)} className="text-xs px-2 py-1 rounded-lg" style={{ background: apiKey?"#1a2a1a":"#2a1a1a", color: apiKey?"#27ae60":"#e74c3c", border:`1px solid ${apiKey?"#2d5a2d":"#7a2d2d"}` }}>
             {apiKey ? t.apiActive : t.apiMissing}
@@ -1229,11 +1229,11 @@ export default function App() {
         {locations.length > 0 && (
           <div className="space-y-4">
             <div className="flex gap-2 rounded-xl p-1" style={{ background:"#1a1a1a", border:"1px solid #333" }}>
-              {["route","timeline"].map(tab => (
+              {["route","compare","timeline"].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
                   style={{ background: activeTab===tab?"#e74c3c":"transparent", color: activeTab===tab?"white":"#666" }}>
-                  {tab==="route" ? t.route : t.timeline}
+                  {tab==="route" ? t.route : tab==="compare" ? "Vergleich" : t.timeline}
                 </button>
               ))}
             </div>
@@ -1267,7 +1267,20 @@ export default function App() {
             )}
 
             {/* Timeline Tab */}
-            {activeTab==="timeline" && (
+            {activeTab==="compare" && (()=>{
+                const locs=filteredLocations.map(l=>l.loc||l);
+                if(locs.length<2)return <p className="text-xs text-center py-4" style={{color:"#666"}}>{t.noRouteHint}</p>;
+                const shortestRoute=(()=>{const rem=[...locs];const res=[rem.shift()];while(rem.length>0){const last=res[res.length-1];let minD=Infinity,minI=0;rem.forEach((l,i)=>{const d=haversineDistance(last.lat||0,last.lng||0,l.lat||0,l.lng||0);if(d<minD){minD=d;minI=i;}});res.push(rem.splice(minI,1)[0]);}return res;})();
+                const cheapestRoute=[...locs].sort((a,b)=>{const ca=getEntryCost(a.name,city);const cb=getEntryCost(b.name,city);return(ca?.min??999)-(cb?.min??999);});
+                const calcDist=r=>r.reduce((s,l,i)=>i===0?s:s+haversineDistance(r[i-1].lat||0,r[i-1].lng||0,l.lat||0,l.lng||0),0);
+                const calcCost=r=>r.reduce((s,l)=>{const c=getEntryCost(l.name,city);return s+(c?.min??0);},0);
+                const RouteCard=({title,color,badge,route})=>(<div className="rounded-2xl p-4 space-y-3" style={{background:"#1a1a2a",border:`2px solid ${color}`}}><div className="flex items-center justify-between"><span className="font-black text-sm" style={{color,fontFamily:"Georgia,serif"}}>{title}</span><span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{background:color+"33",color}}>{badge}</span></div><div className="flex gap-4"><div><p className="text-xs" style={{color:"#888"}}>Distanz</p><p className="font-bold text-sm" style={{color:"#5dade2"}}>{calcDist(route).toFixed(1)} km</p></div><div><p className="text-xs" style={{color:"#888"}}>Eintritt</p><p className="font-bold text-sm" style={{color:"#27ae60"}}>ab {calcCost(route)} EUR</p></div><div><p className="text-xs" style={{color:"#888"}}>Stopps</p><p className="font-bold text-sm" style={{color:"#f39c12"}}>{route.length}</p></div></div><div className="space-y-1.5">{route.map((l,i)=>{const c=getEntryCost(l.name,city);return(<div key={l.id||i} className="flex items-center gap-2"><span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{background:color,color:"white"}}>{i+1}</span><span className="text-xs flex-1" style={{color:"#ccc"}}>{l.icon} {l.name}</span>{c&&<span className="text-xs" style={{color:"#27ae60"}}>{c.min===0?"Frei":c.currency+c.min}</span>}</div>);})}</div></div>);
+                const dSaved=Math.abs(calcDist(cheapestRoute)-calcDist(shortestRoute)).toFixed(1);
+                const cSaved=Math.abs(calcCost(shortestRoute)-calcCost(cheapestRoute)).toFixed(0);
+                return(<div className="space-y-3"><p className="text-xs font-semibold" style={{color:"#888"}}>Vergleich fuer {locs.length} Orte:</p><RouteCard title="Kuerzeste Route" color="#5dade2" badge="Weniger laufen" route={shortestRoute}/><RouteCard title="Guenstigste Route" color="#27ae60" badge="Weniger ausgeben" route={cheapestRoute}/><div className="rounded-xl p-3" style={{background:"#2a2a1a",border:"1px solid #5a5a2d"}}><p className="text-xs font-bold" style={{color:"#f39c12"}}>Tipp</p><p className="text-xs mt-1" style={{color:"#aaa"}}>Kuerzeste Route spart {dSaved} km. Guenstigste Route spart {cSaved} EUR Eintritt.</p></div></div>);
+              })()}
+
+              {activeTab==="timeline" && (
               <div className="space-y-4">
                 {timelineByDay.length === 0 ? (
                   <p className="text-xs text-center" style={{ color:"#666" }}>Keine Orte geplant.</p>
