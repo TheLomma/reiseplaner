@@ -1,5 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 
+// Leaflet laden
+if (typeof window !== "undefined" && !window.L) {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(link);
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  document.head.appendChild(script);
+}
+
 // ── City Database ──
 const CITIES = {
   paris: {
@@ -453,7 +464,7 @@ const TRANSLATIONS = {
     apiSave: "Speichern",
     apiSaved: "✅ Gespeichert!",
     apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.2 · Powered by KI",
+    footerText: "Reiseplaner v2.3 · Powered by KI",
     noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
     errorEmpty: "Bitte gib einen Link ein.",
     errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
@@ -534,7 +545,7 @@ const TRANSLATIONS = {
     apiSave: "Save",
     apiSaved: "✅ Saved!",
     apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.2 · Powered by AI",
+    footerText: "Travel Planner v2.3 · Powered by AI",
     noRouteHint: "Add at least 2 places for a route.",
     errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized. Tip: Enter an API key!",
@@ -642,6 +653,8 @@ Extrahiere (antworte NUR mit JSON):
   const data = await res.json();
   return JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g, "").trim());
 }
+
+// ── Weather Widget entfernt ──
 
 async function geocodeCity(name) {
   try {
@@ -806,7 +819,107 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
   );
 }
 
-function Timeline({ locations }) {
+// ── Mini-Karte ──
+  function MiniMap({ locations, city }) {
+    const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
+    const markersRef = useRef([]);
+
+    useEffect(() => {
+      if (!window.L) return;
+      const L = window.L;
+      if (!mapInstanceRef.current) {
+        mapInstanceRef.current = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false })
+          .setView([city.lat, city.lng], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap"
+        }).addTo(mapInstanceRef.current);
+      } else {
+        mapInstanceRef.current.setView([city.lat, city.lng], 13);
+      }
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      if (locations.length > 0) {
+        locations.forEach((loc, i) => {
+          if (!loc.lat || !loc.lng) return;
+          const icon = L.divIcon({
+            html: `<div style="background:#c0392b;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;border:2px solid #fff;box-shadow:0 2px 6px #0008">${i + 1}</div>`,
+            className: "", iconSize: [24, 24], iconAnchor: [12, 12]
+          });
+          const marker = L.marker([loc.lat, loc.lng], { icon })
+            .addTo(mapInstanceRef.current)
+            .bindPopup(`<b>${loc.name}</b><br><small>${loc.area}</small>`);
+          markersRef.current.push(marker);
+        });
+        if (locations.length === 1) {
+          mapInstanceRef.current.setView([locations[0].lat, locations[0].lng], 15);
+        } else {
+          const bounds = L.latLngBounds(locations.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]));
+          mapInstanceRef.current.fitBounds(bounds, { padding: [30, 30] });
+        }
+      }
+    }, [locations, city]);
+
+    useEffect(() => {
+      if (mapInstanceRef.current) {
+        setTimeout(() => mapInstanceRef.current.invalidateSize(), 100);
+      }
+    });
+
+    return (
+      <div>
+        <div ref={mapRef} style={{ height: "260px", borderRadius: "12px", overflow: "hidden", border: "1px solid #333" }} />
+        {locations.length === 0 && (
+          <p className="text-xs text-center mt-2" style={{ color: "#555" }}>Füge Orte hinzu, um sie auf der Karte zu sehen.</p>
+        )}
+      </div>
+    );
+  }
+
+  // ── Tages-Übersicht ──
+  function DayOverview({ locations, days, city, t, onTabChange }) {
+    const dayStats = days.map(day => {
+      const dayLocs = locations.filter(l => l.day === day);
+      if (dayLocs.length === 0) return null;
+      const totalMin = dayLocs.reduce((sum, loc) => sum + Math.round((parseFloat(loc.duration) || 1) * 60), 0);
+      const totalCost = dayLocs.reduce((sum, loc) => {
+        const cost = getEntryCost(loc.name, city);
+        return sum + (cost ? cost.max : 0);
+      }, 0);
+      const mapsUrl = dayLocs.length >= 2
+        ? `https://www.google.com/maps/dir/${dayLocs.map(l => `${l.lat},${l.lng}`).join("/")}`
+        : null;
+      return { day, locs: dayLocs, totalMin, totalCost, mapsUrl };
+    }).filter(Boolean);
+
+    if (dayStats.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        {dayStats.map(({ day, locs, totalMin, totalCost, mapsUrl }) => (
+          <div key={day} className="rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#c0392b", color: "#fff" }}>{day.slice(0, 2)}</span>
+              <span className="text-xs" style={{ color: "#888" }}>📍 {locs.length} {t.places}</span>
+              <span className="text-xs" style={{ color: "#888" }}>⏱ {Math.floor(totalMin / 60)}h {totalMin % 60 > 0 ? `${totalMin % 60}m` : ""}</span>
+              {totalCost > 0 && <span className="text-xs" style={{ color: "#f39c12" }}>💰 ~{totalCost.toFixed(0)} €</span>}
+            </div>
+            <div className="flex gap-2">
+              {mapsUrl && (
+                <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-xs px-3 py-1 rounded-lg font-semibold"
+                  style={{ background: "#1a2a1a", color: "#6dbf6d", border: "1px solid #2d5a2d" }}>
+                  🗺 Route
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function Timeline({ locations }) {
   let currentMinutes = 9 * 60;
   const items = locations.map((loc) => {
     const durationMin = Math.round((parseFloat(loc.duration) || 1) * 60);
@@ -1132,6 +1245,7 @@ export default function TravelPlanner() {
           </div>
           <div className="mt-4">
             <CitySelector currentCityId={currentCityId} onSelectCity={handleSelectCity} onAddCustomCity={handleAddCustomCity} t={t} />
+            
           </div>
           {showApiInput && (
             <div className="mt-4 p-4 rounded-xl space-y-2" style={{ background: "#1a1a1a", border: "1px solid #444" }}>
@@ -1210,11 +1324,11 @@ export default function TravelPlanner() {
 
         {/* Tabs */}
         <div className="flex gap-2">
-          {["places", "route", "timeline"].map(tab => (
+          {["places", "map", "route", "timeline"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className="px-4 py-2 rounded-xl text-sm font-bold transition-all"
               style={activeTab === tab ? { background: "#c0392b", color: "#fff" } : { background: "#2a2a2a", color: "#888", border: "1px solid #444" }}>
-              {tab === "places" ? `📍 ${t.places}` : tab === "route" ? `🗺 ${t.route}` : `⏰ ${t.timeline}`}
+              {tab === "places" ? `📍 ${t.places}` : tab === "map" ? `🗺 Karte` : tab === "route" ? `🗺 ${t.route}` : `⏰ ${t.timeline}`}
             </button>
           ))}
         </div>
@@ -1241,7 +1355,10 @@ export default function TravelPlanner() {
                 ))}
               </div>
             </div>
-            {filteredLocations.length === 0 ? (
+            {locations.length > 0 && (
+                <DayOverview locations={locations} days={DAYS_CURRENT} city={currentCity} t={t} />
+              )}
+              {filteredLocations.length === 0 ? (
               <p className="text-center py-8 text-sm" style={{ color: "#555" }}>{t.addFirst}</p>
             ) : (
               <div className="space-y-1">
@@ -1271,7 +1388,14 @@ export default function TravelPlanner() {
         )}
 
         {/* Route Tab */}
-        {activeTab === "route" && (
+        {activeTab === "map" && (
+            <div className="space-y-3">
+              <h2 className="font-black text-lg" style={{ color: "#e74c3c", fontFamily: "Georgia,serif" }}>🗺 Karte</h2>
+              <MiniMap locations={locations} city={currentCity} />
+            </div>
+          )}
+
+          {activeTab === "route" && (
           <div className="space-y-4">
             <div>
               <label className="text-xs font-bold tracking-wider mb-2 block" style={{ color: "#888" }}>{t.travelMode}</label>
