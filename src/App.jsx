@@ -464,7 +464,7 @@ const TRANSLATIONS = {
     apiSave: "Speichern",
     apiSaved: "✅ Gespeichert!",
     apiDelete: "🗑️ Key löschen",
-    footerText: "Reiseplaner v2.3 · Powered by KI",
+    footerText: "Reiseplaner v2.4 · Powered by KI",
     noRouteHint: "Füge mindestens 2 Orte hinzu für eine Route.",
     errorEmpty: "Bitte gib einen Link ein.",
     errorNotFound: "Link nicht erkannt. Tipp: API-Key eingeben!",
@@ -545,7 +545,7 @@ const TRANSLATIONS = {
     apiSave: "Save",
     apiSaved: "✅ Saved!",
     apiDelete: "🗑️ Delete key",
-    footerText: "Travel Planner v2.3 · Powered by AI",
+    footerText: "Travel Planner v2.4 · Powered by AI",
     noRouteHint: "Add at least 2 places for a route.",
     errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized. Tip: Enter an API key!",
@@ -605,7 +605,14 @@ function getOpeningInfo(name, day, city) {
   return { isOpen, hours: info.hours, note: info.note };
 }
 
-// ── Travel time calculation (Haversine) ──
+// ── Metro line helper ──
+  function getMetroLine(loc1, loc2, city) {
+    const lines = city?.metroLines || {};
+    const key = `${loc1.area} -> ${loc2.area}`;
+    return lines[key] || null;
+  }
+
+  // ── Travel time calculation (Haversine) ──
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1542,3 +1549,4 @@ export default function TravelPlanner() {
     </div>
   );
 }
+
