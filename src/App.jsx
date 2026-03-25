@@ -523,7 +523,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.4",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.5",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -556,7 +556,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.4",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.5",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1133,7 +1133,7 @@ function BudgetTracker({ locations, city, t }) {
   );
 }
 
-function SavedPlans({ locations, cityId, tripDays, locationDays, locationNotes, t }) {
+function SavedPlans({ locations, cityId, tripDays, locationDays, locationNotes, t, onLoad }) {
   const { th } = useTheme();
   const [plans, setPlans] = useState(() => {
       const raw = safeJsonParse(localStorage.getItem("travelPlans_v2"), []);
@@ -1174,7 +1174,7 @@ function SavedPlans({ locations, cityId, tripDays, locationDays, locationNotes, 
             <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.text }}>{p.name}</div>
             <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{CITIES[p.cityId]?.name || p.cityId} · {p.locations?.length||0} {t.places}</div>
           </div>
-          <button onClick={() => { /* load plan */ }}
+          <button onClick={() => onLoad && onLoad(p)}
             style={{ padding:"4px 10px", borderRadius:8, background:th.accentLight, color:th.accent,
               border:`1px solid ${th.border}`, cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
             {t.load}
@@ -1681,10 +1681,21 @@ export default function App() {
         {/* SAVED PLANS */}
         <CollapsibleSection title={`💾 ${t.savedPlans}`} defaultOpen={false}>
           <SavedPlans
-            locations={locations} cityId={cityId}
-            tripDays={tripDays} locationDays={locationDays} locationNotes={locationNotes}
-            t={t}
-          />
+              locations={locations} cityId={cityId}
+              tripDays={tripDays} locationDays={locationDays} locationNotes={locationNotes}
+              t={t}
+              onLoad={(p) => {
+                const plan = normalizePlan(p);
+                if (!plan) return;
+                setCityId(plan.cityId);
+                setLocations(plan.locations.map(l => ({ ...l, id: l.id ?? Date.now() + Math.random() })));
+                setLocationDays(plan.locationDays);
+                setLocationNotes(plan.locationNotes);
+                setStartDate(plan.startDate);
+                setNumDays(plan.numDays);
+                setFilterDay(null);
+              }}
+            />
         </CollapsibleSection>
 
         {/* FOOTER */}
