@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-// ── THEME TOKENS ──────────────────────────────────────────────
 const THEMES = {
   dark: {
     bg: "#0f1117", surface: "#1a1d27", card: "#1e2130", cardHover: "#252840",
@@ -36,42 +35,20 @@ const THEMES = {
   }
 };
 
-// Global CSS injected once
 if (typeof window !== "undefined" && !document.getElementById("app-theme-styles")) {
   const s = document.createElement("style");
   s.id = "app-theme-styles";
   s.textContent = `
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes skeletonPulse {
-      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
-    }
-    @keyframes markerBounce {
-      0%,100% { transform: translateY(0) scale(1); }
-      40%      { transform: translateY(-10px) scale(1.1); }
-      60%      { transform: translateY(-5px) scale(1.05); }
-    }
-    @keyframes markerPop {
-      0%   { transform: scale(0); opacity: 0; }
-      70%  { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes fadeSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes markerBounce { 0%,100%{transform:translateY(0) scale(1)} 40%{transform:translateY(-10px) scale(1.1)} 60%{transform:translateY(-5px) scale(1.05)} }
+    @keyframes markerPop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
+    @keyframes spin { to{transform:rotate(360deg)} }
     .card-anim { animation: fadeSlideIn 0.35s cubic-bezier(.22,1,.36,1) both; }
     .skeleton-anim { animation: skeletonPulse 1.4s ease-in-out infinite; }
-    .app-card-hover {
-      transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s, background 0.2s;
-    }
-    .app-card-hover:hover {
-      transform: translateY(-2px);
-    }
-    .theme-toggle-btn {
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-    }
+    .app-card-hover { transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s, background 0.2s; }
+    .app-card-hover:hover { transform: translateY(-2px); }
+    .theme-toggle-btn { transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
     .tab-btn { transition: background 0.15s, color 0.15s; }
     .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; }
     .btn-primary:hover { transform: translateY(-1px); }
@@ -95,8 +72,9 @@ if (typeof window !== "undefined") {
   }
 }
 
-// ── THEME CONTEXT ─────────────────────────────────────────────
-const ThemeCtx = typeof window !== "undefined" ? (window.__ThemeCtx || (window.__ThemeCtx = { listeners: [], current: "dark" })) : { listeners: [], current: "dark" };
+const ThemeCtx = typeof window !== "undefined"
+  ? (window.__ThemeCtx || (window.__ThemeCtx = { listeners: [], current: "dark" }))
+  : { listeners: [], current: "dark" };
 
 function useTheme() {
   const [mode, setMode] = useState(() => ThemeCtx.current);
@@ -113,44 +91,28 @@ function toggleTheme() {
   ThemeCtx.listeners.forEach(fn => fn(ThemeCtx.current));
 }
 
-// ── LOADING SPINNER ────────────────────────────────────────────
 function Spinner({ size = 20, color }) {
-  const { mode, th } = useTheme();
-
+  const { th } = useTheme();
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      border: `2px solid ${th.border}`,
-      borderTopColor: color || th.accent,
-      animation: "spin 0.7s linear infinite",
-      display: "inline-block", flexShrink: 0,
+      border: `2px solid ${th.border}`, borderTopColor: color || th.accent,
+      animation: "spin 0.7s linear infinite", display: "inline-block", flexShrink: 0,
     }} />
   );
 }
 
-// ── SKELETON CARD ──────────────────────────────────────────────
 function SkeletonCard({ th }) {
   const bar = (w, h = 10, mt = 0) => (
-    <div className="skeleton-anim" style={{
-      width: w, height: h, borderRadius: 6,
-      background: th.skeletonShine, marginTop: mt,
-    }} />
+    <div className="skeleton-anim" style={{ width: w, height: h, borderRadius: 6, background: th.skeletonShine, marginTop: mt }} />
   );
   return (
-    <div className="app-card-hover" style={{
-      background: th.card, border: `1px solid ${th.border}`,
-      borderRadius: 14, padding: "12px 14px",
-    }}>
+    <div className="app-card-hover" style={{ background: th.card, border: `1px solid ${th.border}`, borderRadius: 14, padding: "12px 14px" }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <div className="skeleton-anim" style={{ width: 36, height: 36, borderRadius: "50%", background: th.skeletonShine }} />
-        <div style={{ flex: 1 }}>
-          {bar("60%", 12)}
-          {bar("40%", 8, 6)}
-        </div>
+        <div style={{ flex: 1 }}>{bar("60%", 12)}{bar("40%", 8, 6)}</div>
       </div>
-      {bar("90%", 8, 12)}
-      {bar("75%", 8, 6)}
-      {bar("50%", 8, 6)}
+      {bar("90%", 8, 12)}{bar("75%", 8, 6)}{bar("50%", 8, 6)}
     </div>
   );
 }
@@ -170,7 +132,7 @@ const CITIES = {
     id: "paris", name: "Paris", emoji: "🗼", country: "🇫🇷",
     lat: 48.8566, lng: 2.3522, timezone: "Europe/Paris",
     sampleLocations: [
-      { id: 1, name: "Eiffelturm", type: "Sehenswürdigkeit", address: "Champ de Mars, 5 Av. Anatole France, 75007 Paris", lat: 48.8584, lng: 2.2945, area: "7. Arrondissement", duration: "1,5 Std.", icon: "✈️" },
+      { id: 1, name: "Eiffelturm", type: "Sehenswürdigkeit", address: "Champ de Mars, 75007 Paris", lat: 48.8584, lng: 2.2945, area: "7. Arrondissement", duration: "1,5 Std.", icon: "✈️" },
       { id: 2, name: "Arc de Triomphe", type: "Sehenswürdigkeit", address: "Pl. Charles de Gaulle, 75008 Paris", lat: 48.8738, lng: 2.295, area: "8. Arrondissement", duration: "1 Std.", icon: "🏛️" },
       { id: 3, name: "Le Grand Véfour", type: "Restaurant", address: "17 Rue de Beaujolais, 75001 Paris", lat: 48.8637, lng: 2.337, area: "1. Arrondissement", duration: "2 Std.", icon: "🍽️" },
     ],
@@ -185,45 +147,32 @@ const CITIES = {
       "Arc de Triomphe": { min: 13.00, max: 13.00, currency: "€", note: "Erwachsene" },
       "Le Grand Véfour": { min: 80.00, max: 350.00, currency: "€", note: "Mittagsmenü–À la carte" },
       "Louvre": { min: 22.00, max: 22.00, currency: "€", note: "Erwachsene" },
-      "Musée d'Orsay": { min: 16.00, max: 16.00, currency: "€", note: "Erwachsene" },
       "Sacré-Cœur": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
-      "Notre-Dame": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
-      "Palais Royal": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
     },
     ratings: {
       "Eiffelturm": { stars: 4.8, reviews: 284000, price: "€€", badge: "Weltbekannt" },
       "Arc de Triomphe": { stars: 4.7, reviews: 98000, price: "€€", badge: "Muss man gesehen haben" },
       "Le Grand Véfour": { stars: 4.5, reviews: 1200, price: "€€€€", badge: "Michelin-Stern" },
       "Louvre": { stars: 4.7, reviews: 312000, price: "€€", badge: "Weltbekannt" },
-      "Musée d'Orsay": { stars: 4.8, reviews: 76000, price: "€€", badge: "Top-Museum" },
       "Sacré-Cœur": { stars: 4.8, reviews: 134000, price: "Kostenlos", badge: "Geheimtipp" },
-      "Notre-Dame": { stars: 4.8, reviews: 220000, price: "Kostenlos", badge: "Ikone" },
-      "Palais Royal": { stars: 4.6, reviews: 42000, price: "Kostenlos", badge: "Verstecktes Juwel" },
     },
     locationInfo: {
-      "Eiffelturm": { short: "Wahrzeichen von Paris, 330m hoch, 1889 erbaut.", highlights: ["Aussichtsplattform im 2. & 3. Stock", "Abends Lichtshow zur vollen Stunde", "Champ de Mars Picknick davor"] },
-      "Arc de Triomphe": { short: "Triumphbogen am Place Charles de Gaulle, 1836 fertiggestellt.", highlights: ["Dachterrasse mit Panoramablick", "Grab des Unbekannten Soldaten", "Blick auf die Champs-Élysées"] },
-      "Le Grand Véfour": { short: "Eines der ältesten Restaurants von Paris, seit 1784.", highlights: ["Historisches Interieur aus dem 18. Jhd.", "Sternküche", "Stammsitz von Napoleon & Victor Hugo"] },
-      "Louvre": { short: "Größtes Kunstmuseum der Welt.", highlights: ["Mona Lisa (Saal 711)", "Venus von Milo", "Glaspyramide im Innenhof"] },
-      "Musée d'Orsay": { short: "Impressionismus-Museum im ehemaligen Bahnhof.", highlights: ["Van Goghs Sternennacht", "Monets Seerosen-Serie", "Architektur des alten Bahnhofs"] },
-      "Sacré-Cœur": { short: "Weiße Basilika auf dem Montmartre-Hügel.", highlights: ["Panoramablick über Paris", "Künstlerviertel Montmartre", "Place du Tertre"] },
-      "Notre-Dame": { short: "Gotische Kathedrale aus dem 12. Jhd.", highlights: ["Gotische Architektur & Rosenfenster", "Türme & Wasserspeier", "Île de la Cité"] },
-      "Palais Royal": { short: "Historischer Palast mit Arkadengängen.", highlights: ["Jardin du Palais Royal", "Les Deux Plateaux", "Luxusboutiquen"] },
+      "Eiffelturm": { short: "Wahrzeichen von Paris, 330m hoch, 1889 erbaut.", highlights: ["Aussichtsplattform im 2. & 3. Stock", "Abends Lichtshow", "Champ de Mars Picknick"] },
+      "Arc de Triomphe": { short: "Triumphbogen am Place Charles de Gaulle.", highlights: ["Dachterrasse mit Panoramablick", "Grab des Unbekannten Soldaten", "Champs-Élysées"] },
+      "Le Grand Véfour": { short: "Eines der ältesten Restaurants von Paris, seit 1784.", highlights: ["Historisches Interieur", "Sternküche", "Napoleon & Victor Hugo"] },
+      "Louvre": { short: "Größtes Kunstmuseum der Welt.", highlights: ["Mona Lisa", "Venus von Milo", "Glaspyramide"] },
+      "Sacré-Cœur": { short: "Weiße Basilika auf dem Montmartre-Hügel.", highlights: ["Panoramablick über Paris", "Künstlerviertel", "Place du Tertre"] },
     },
     openingHours: {
       "Eiffelturm": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–23:45" },
       "Arc de Triomphe": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "10:00–23:00" },
       "Le Grand Véfour": { mo: true, di: true, mi: true, do: true, fr: true, sa: false, so: false, hours: "12:00–14:00, 19:30–22:00", note: "Sa & So geschlossen" },
       "Louvre": { mo: false, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–18:00", note: "Mo geschlossen" },
-      "Musée d'Orsay": { mo: false, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:30–18:00", note: "Mo geschlossen" },
       "Sacré-Cœur": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "06:00–22:30" },
-      "Notre-Dame": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "08:00–19:00" },
-      "Palais Royal": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "08:00–20:30" },
     },
     metroLines: {
       "7. Arrondissement -> 8. Arrondissement": { line: "M6", time: "12 min", stops: 3 },
       "8. Arrondissement -> 1. Arrondissement": { line: "M1", time: "18 min", stops: 5 },
-      "1. Arrondissement -> 7. Arrondissement": { line: "M14", time: "22 min", stops: 6 },
     },
   },
   london: {
@@ -236,7 +185,7 @@ const CITIES = {
     ],
     demoLinks: ["https://maps.google.com/?q=tower+of+london", "https://maps.google.com/?q=big+ben", "https://maps.google.com/?q=borough+market"],
     linkMatchers: [
-      { pattern: /tower.*london|tower\+of/i, locationIndex: 0 },
+      { pattern: /tower.*london/i, locationIndex: 0 },
       { pattern: /big.*ben|westminster/i, locationIndex: 1 },
       { pattern: /borough.*market/i, locationIndex: 2 },
     ],
@@ -251,14 +200,50 @@ const CITIES = {
       "Borough Market": { stars: 4.6, reviews: 67000, price: "€€", badge: "Foodie-Paradies" },
     },
     locationInfo: {
-      "Tower of London": { short: "Historische Festung an der Themse, seit 1066.", highlights: ["Kronjuwelen besichtigen", "Beefeater-Führung", "Raben des Towers"] },
-      "Big Ben": { short: "Berühmter Uhrenturm am Palace of Westminster.", highlights: ["Fotomotiv #1 in London", "Westminster Bridge", "Houses of Parliament"] },
-      "Borough Market": { short: "Ältester Lebensmittelmarkt Londons.", highlights: ["Street Food aus aller Welt", "Frische lokale Produkte", "Atmosphäre unter Eisenbahn-Bögen"] },
+      "Tower of London": { short: "Historische Festung an der Themse, seit 1066.", highlights: ["Kronjuwelen", "Beefeater-Führung", "Raben des Towers"] },
+      "Big Ben": { short: "Berühmter Uhrenturm am Palace of Westminster.", highlights: ["Fotomotiv #1", "Westminster Bridge", "Houses of Parliament"] },
+      "Borough Market": { short: "Ältester Lebensmittelmarkt Londons.", highlights: ["Street Food", "Frische Produkte", "Eisenbahn-Bögen"] },
     },
     openingHours: {
       "Tower of London": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–17:30" },
       "Big Ben": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Außen immer sichtbar" },
       "Borough Market": { mo: false, di: true, mi: true, do: true, fr: true, sa: true, so: false, hours: "10:00–17:00", note: "Mo & So geschlossen" },
+    },
+    metroLines: {},
+  },
+  berlin: {
+    id: "berlin", name: "Berlin", emoji: "🐻", country: "🇩🇪",
+    lat: 52.5200, lng: 13.4050, timezone: "Europe/Berlin",
+    sampleLocations: [
+      { id: 1, name: "Brandenburger Tor", type: "Sehenswürdigkeit", address: "Pariser Platz, 10117 Berlin", lat: 52.5163, lng: 13.3777, area: "Mitte", duration: "0,5 Std.", icon: "🏛️" },
+      { id: 2, name: "Museumsinsel", type: "Museum", address: "10178 Berlin", lat: 52.5169, lng: 13.4019, area: "Mitte", duration: "3 Std.", icon: "🏛️" },
+      { id: 3, name: "East Side Gallery", type: "Sehenswürdigkeit", address: "Mühlenstr. 3-100, 10243 Berlin", lat: 52.5053, lng: 13.4395, area: "Friedrichshain", duration: "1 Std.", icon: "🎨" },
+    ],
+    demoLinks: ["https://maps.google.com/?q=brandenburger+tor", "https://maps.google.com/?q=museumsinsel+berlin", "https://maps.google.com/?q=east+side+gallery"],
+    linkMatchers: [
+      { pattern: /brandenburger|brandenburg/i, locationIndex: 0 },
+      { pattern: /museumsinsel/i, locationIndex: 1 },
+      { pattern: /east.*side|gallery/i, locationIndex: 2 },
+    ],
+    entryCosts: {
+      "Brandenburger Tor": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
+      "Museumsinsel": { min: 12, max: 22, currency: "€", note: "Einzeln / Kombi" },
+      "East Side Gallery": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
+    },
+    ratings: {
+      "Brandenburger Tor": { stars: 4.8, reviews: 180000, price: "Kostenlos", badge: "Symbol der Einheit" },
+      "Museumsinsel": { stars: 4.7, reviews: 95000, price: "€€", badge: "UNESCO Welterbe" },
+      "East Side Gallery": { stars: 4.6, reviews: 72000, price: "Kostenlos", badge: "Street Art" },
+    },
+    locationInfo: {
+      "Brandenburger Tor": { short: "Symbol der deutschen Wiedervereinigung.", highlights: ["Pariser Platz", "Foto-Hotspot", "Nah am Reichstag"] },
+      "Museumsinsel": { short: "Fünf weltberühmte Museen auf einer Insel.", highlights: ["Pergamonmuseum", "Nofretete-Büste", "Alte Nationalgalerie"] },
+      "East Side Gallery": { short: "Längste Open-Air-Galerie der Welt.", highlights: ["Bruderkuss-Gemälde", "1,3 km Mauer-Kunst", "Spree-Ufer"] },
+    },
+    openingHours: {
+      "Brandenburger Tor": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
+      "Museumsinsel": { mo: false, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "10:00–18:00", note: "Mo teilw. geschlossen" },
+      "East Side Gallery": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
     },
     metroLines: {},
   },
@@ -278,7 +263,7 @@ const CITIES = {
     ],
     entryCosts: {
       "Kolosseum": { min: 16, max: 22, currency: "€", note: "Erwachsene" },
-      "Vatikan": { min: 17, max: 17, currency: "€", note: "Museen, Erwachsene" },
+      "Vatikan": { min: 17, max: 17, currency: "€", note: "Museen" },
       "Trevi-Brunnen": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
     },
     ratings: {
@@ -287,9 +272,9 @@ const CITIES = {
       "Trevi-Brunnen": { stars: 4.7, reviews: 280000, price: "Kostenlos", badge: "Romantisch" },
     },
     locationInfo: {
-      "Kolosseum": { short: "Antikes Amphitheater, erbaut 70-80 n.Chr.", highlights: ["Arena & Untergeschosse", "Palatin-Hügel Kombiticket", "Sonnenuntergang-Blick"] },
-      "Vatikan": { short: "Kleinster Staat der Welt mit Sixtinischer Kapelle.", highlights: ["Sixtinische Kapelle", "Petersdom & Kuppel", "Raffael-Stanzen"] },
-      "Trevi-Brunnen": { short: "Größter Barockbrunnen Roms.", highlights: ["Münze werfen für Rückkehr", "Abends beleuchtet", "Gelato nebenan"] },
+      "Kolosseum": { short: "Antikes Amphitheater, erbaut 70–80 n.Chr.", highlights: ["Arena & Untergeschosse", "Palatin-Hügel", "Sonnenuntergang-Blick"] },
+      "Vatikan": { short: "Kleinster Staat der Welt mit Sixtinischer Kapelle.", highlights: ["Sixtinische Kapelle", "Petersdom", "Raffael-Stanzen"] },
+      "Trevi-Brunnen": { short: "Größter Barockbrunnen Roms.", highlights: ["Münze werfen", "Abends beleuchtet", "Gelato nebenan"] },
     },
     openingHours: {
       "Kolosseum": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–19:00" },
@@ -339,7 +324,7 @@ const CITIES = {
     lat: 52.3676, lng: 4.9041, timezone: "Europe/Amsterdam",
     sampleLocations: [
       { id: 1, name: "Rijksmuseum", type: "Museum", address: "Museumstraat 1, 1071 XX Amsterdam", lat: 52.3600, lng: 4.8852, area: "Museumplein", duration: "2,5 Std.", icon: "🎨" },
-      { id: 2, name: "Anne-Frank-Haus", type: "Museum", address: "Prinsengracht 263-267, 1016 GV Amsterdam", lat: 52.3752, lng: 4.8840, area: "Jordaan", duration: "1,5 Std.", icon: "📖" },
+      { id: 2, name: "Anne-Frank-Haus", type: "Museum", address: "Prinsengracht 263-267, Amsterdam", lat: 52.3752, lng: 4.8840, area: "Jordaan", duration: "1,5 Std.", icon: "📖" },
       { id: 3, name: "Vondelpark", type: "Park", address: "1071 AA Amsterdam", lat: 52.3580, lng: 4.8686, area: "Oud-Zuid", duration: "1 Std.", icon: "🌳" },
     ],
     demoLinks: ["https://maps.google.com/?q=rijksmuseum", "https://maps.google.com/?q=anne+frank+haus", "https://maps.google.com/?q=vondelpark"],
@@ -359,50 +344,14 @@ const CITIES = {
       "Vondelpark": { stars: 4.7, reviews: 120000, price: "Kostenlos", badge: "Oase" },
     },
     locationInfo: {
-      "Rijksmuseum": { short: "Niederländisches Nationalmuseum mit Rembrandts Nachtwache.", highlights: ["Nachtwache von Rembrandt", "Delfter Blau Sammlung", "Museumsgarten"] },
-      "Anne-Frank-Haus": { short: "Versteck der Familie Frank im Zweiten Weltkrieg.", highlights: ["Originales Hinterhaus", "Tagebuch-Ausstellung", "Tickets früh buchen!"] },
-      "Vondelpark": { short: "Größter Stadtpark Amsterdams.", highlights: ["Open-Air-Theater im Sommer", "Cafés & Spielplätze", "Joggen & Radfahren"] },
+      "Rijksmuseum": { short: "Niederländisches Nationalmuseum mit Rembrandts Nachtwache.", highlights: ["Nachtwache", "Delfter Blau", "Museumsgarten"] },
+      "Anne-Frank-Haus": { short: "Versteck der Familie Frank im Zweiten Weltkrieg.", highlights: ["Originales Hinterhaus", "Tagebuch-Ausstellung", "Früh buchen!"] },
+      "Vondelpark": { short: "Größter Stadtpark Amsterdams.", highlights: ["Open-Air-Theater", "Cafés & Spielplätze", "Joggen & Radfahren"] },
     },
     openingHours: {
       "Rijksmuseum": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–17:00" },
       "Anne-Frank-Haus": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–22:00" },
       "Vondelpark": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer geöffnet" },
-    },
-    metroLines: {},
-  },
-  berlin: {
-    id: "berlin", name: "Berlin", emoji: "🐻", country: "🇩🇪",
-    lat: 52.5200, lng: 13.4050, timezone: "Europe/Berlin",
-    sampleLocations: [
-      { id: 1, name: "Brandenburger Tor", type: "Sehenswürdigkeit", address: "Pariser Platz, 10117 Berlin", lat: 52.5163, lng: 13.3777, area: "Mitte", duration: "0,5 Std.", icon: "🏛️" },
-      { id: 2, name: "Museumsinsel", type: "Museum", address: "10178 Berlin", lat: 52.5169, lng: 13.4019, area: "Mitte", duration: "3 Std.", icon: "🏛️" },
-      { id: 3, name: "East Side Gallery", type: "Sehenswürdigkeit", address: "Mühlenstr. 3-100, 10243 Berlin", lat: 52.5053, lng: 13.4395, area: "Friedrichshain", duration: "1 Std.", icon: "🎨" },
-    ],
-    demoLinks: ["https://maps.google.com/?q=brandenburger+tor", "https://maps.google.com/?q=museumsinsel+berlin", "https://maps.google.com/?q=east+side+gallery"],
-    linkMatchers: [
-      { pattern: /brandenburger|brandenburg/i, locationIndex: 0 },
-      { pattern: /museumsinsel/i, locationIndex: 1 },
-      { pattern: /east.*side|gallery/i, locationIndex: 2 },
-    ],
-    entryCosts: {
-      "Brandenburger Tor": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
-      "Museumsinsel": { min: 12, max: 22, currency: "€", note: "Einzeln / Kombi" },
-      "East Side Gallery": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
-    },
-    ratings: {
-      "Brandenburger Tor": { stars: 4.8, reviews: 180000, price: "Kostenlos", badge: "Symbol der Einheit" },
-      "Museumsinsel": { stars: 4.7, reviews: 95000, price: "€€", badge: "UNESCO Welterbe" },
-      "East Side Gallery": { stars: 4.6, reviews: 72000, price: "Kostenlos", badge: "Street Art" },
-    },
-    locationInfo: {
-      "Brandenburger Tor": { short: "Symbol der deutschen Wiedervereinigung.", highlights: ["Pariser Platz Atmosphäre", "Foto-Hotspot", "Nah am Reichstag"] },
-      "Museumsinsel": { short: "Fünf weltberühmte Museen auf einer Insel.", highlights: ["Pergamonmuseum", "Nofretete-Büste", "Alte Nationalgalerie"] },
-      "East Side Gallery": { short: "Längste Open-Air-Galerie der Welt.", highlights: ["Bruderkuss-Gemälde", "1,3 km Mauer-Kunst", "Spree-Ufer Spaziergang"] },
-    },
-    openingHours: {
-      "Brandenburger Tor": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
-      "Museumsinsel": { mo: false, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "10:00–18:00", note: "Mo teilw. geschlossen" },
-      "East Side Gallery": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
     },
     metroLines: {},
   },
@@ -421,7 +370,7 @@ const CITIES = {
       { pattern: /naschmarkt/i, locationIndex: 2 },
     ],
     entryCosts: {
-      "Schloss Schönbrunn": { min: 24, max: 29, currency: "€", note: "Imperial Tour / Grand Tour" },
+      "Schloss Schönbrunn": { min: 24, max: 29, currency: "€", note: "Imperial / Grand Tour" },
       "Stephansdom": { min: 0, max: 6, currency: "€", note: "Kirche frei / Turm 6€" },
       "Naschmarkt": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
     },
@@ -431,9 +380,9 @@ const CITIES = {
       "Naschmarkt": { stars: 4.5, reviews: 55000, price: "€€", badge: "Kulinarisch" },
     },
     locationInfo: {
-      "Schloss Schönbrunn": { short: "Kaiserliche Sommerresidenz der Habsburger.", highlights: ["Prunkräume besichtigen", "Schlossgarten & Gloriette", "Tiergarten (ältester Zoo der Welt)"] },
-      "Stephansdom": { short: "Gotische Kathedrale im Herzen Wiens.", highlights: ["Südturm besteigen (343 Stufen)", "Katakomben-Führung", "Pummerin-Glocke"] },
-      "Naschmarkt": { short: "Wiens beliebtester Markt seit dem 16. Jhd.", highlights: ["Internationale Küche", "Flohmarkt am Samstag", "Wiener Kaffeehäuser nebenan"] },
+      "Schloss Schönbrunn": { short: "Kaiserliche Sommerresidenz der Habsburger.", highlights: ["Prunkräume", "Schlossgarten & Gloriette", "Ältester Zoo der Welt"] },
+      "Stephansdom": { short: "Gotische Kathedrale im Herzen Wiens.", highlights: ["Südturm (343 Stufen)", "Katakomben-Führung", "Pummerin-Glocke"] },
+      "Naschmarkt": { short: "Wiens beliebtester Markt seit dem 16. Jhd.", highlights: ["Internationale Küche", "Flohmarkt am Samstag", "Kaffeehäuser"] },
     },
     openingHours: {
       "Schloss Schönbrunn": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "09:00–17:00" },
@@ -450,11 +399,11 @@ const CITIES = {
       { id: 2, name: "Prager Burg", type: "Sehenswürdigkeit", address: "Hradčany, 119 08 Praha", lat: 50.0911, lng: 14.4003, area: "Hradschin", duration: "2,5 Std.", icon: "🏰" },
       { id: 3, name: "Altstädter Ring", type: "Platz", address: "Staroměstské nám., 110 00 Praha", lat: 50.0873, lng: 14.4213, area: "Altstadt", duration: "1 Std.", icon: "⏰" },
     ],
-    demoLinks: ["https://maps.google.com/?q=karlsbrücke+prag", "https://maps.google.com/?q=prager+burg", "https://maps.google.com/?q=altstädter+ring+prag"],
+    demoLinks: ["https://maps.google.com/?q=karlsbruecke+prag", "https://maps.google.com/?q=prager+burg", "https://maps.google.com/?q=altstadter+ring+prag"],
     linkMatchers: [
-      { pattern: /karls.*brücke|charles.*bridge|karluv/i, locationIndex: 0 },
+      { pattern: /karls.*br[üu]cke|charles.*bridge|karluv/i, locationIndex: 0 },
       { pattern: /prager.*burg|prague.*castle|hrad/i, locationIndex: 1 },
-      { pattern: /altstädter|old.*town.*square|staromest/i, locationIndex: 2 },
+      { pattern: /altstädter|altstadter|old.*town.*square|staromest/i, locationIndex: 2 },
     ],
     entryCosts: {
       "Karlsbrücke": { min: 0, max: 0, currency: "€", note: "Eintritt frei" },
@@ -467,9 +416,9 @@ const CITIES = {
       "Altstädter Ring": { stars: 4.7, reviews: 110000, price: "Kostenlos", badge: "Astronomische Uhr" },
     },
     locationInfo: {
-      "Karlsbrücke": { short: "Gotische Steinbrücke über die Moldau, 1402 fertiggestellt.", highlights: ["30 Barockskulpturen", "Frühmorgens ohne Massen", "Straßenkünstler"] },
-      "Prager Burg": { short: "Größte geschlossene Burganlage der Welt.", highlights: ["Veitsdom", "Goldenes Gässchen", "Panoramablick über Prag"] },
-      "Altstädter Ring": { short: "Mittelalterlicher Marktplatz mit Astronomischer Uhr.", highlights: ["Astronomische Uhr (jede volle Stunde)", "Teynkirche", "Weihnachtsmarkt im Winter"] },
+      "Karlsbrücke": { short: "Gotische Steinbrücke über die Moldau, 1402 fertiggestellt.", highlights: ["30 Barockskulpturen", "Frühmorgens besuchen", "Straßenkünstler"] },
+      "Prager Burg": { short: "Größte geschlossene Burganlage der Welt.", highlights: ["Veitsdom", "Goldenes Gässchen", "Panoramablick"] },
+      "Altstädter Ring": { short: "Mittelalterlicher Marktplatz mit Astronomischer Uhr.", highlights: ["Uhr zur vollen Stunde", "Teynkirche", "Weihnachtsmarkt"] },
     },
     openingHours: {
       "Karlsbrücke": { mo: true, di: true, mi: true, do: true, fr: true, sa: true, so: true, hours: "Immer zugänglich" },
@@ -484,7 +433,7 @@ const CITIES = {
     sampleLocations: [
       { id: 1, name: "Torre de Belém", type: "Sehenswürdigkeit", address: "Av. Brasília, 1400-038 Lisboa", lat: 38.6916, lng: -9.2160, area: "Belém", duration: "1 Std.", icon: "🏰" },
       { id: 2, name: "Alfama", type: "Stadtviertel", address: "Alfama, Lisboa", lat: 38.7114, lng: -9.1300, area: "Alfama", duration: "2 Std.", icon: "🏘️" },
-      { id: 3, name: "Pastéis de Belém", type: "Café", address: "R. de Belém 84-92, 1300-085 Lisboa", lat: 38.6976, lng: -9.2030, area: "Belém", duration: "0,5 Std.", icon: "🥮" },
+      { id: 3, name: "Pastéis de Belém", type: "Café", address: "R. de Belém 84-92, Lisboa", lat: 38.6976, lng: -9.2030, area: "Belém", duration: "0,5 Std.", icon: "🥮" },
     ],
     demoLinks: ["https://maps.google.com/?q=torre+de+belem", "https://maps.google.com/?q=alfama+lissabon", "https://maps.google.com/?q=pasteis+de+belem"],
     linkMatchers: [
@@ -539,7 +488,7 @@ const CITIES = {
       "Times Square": { stars: 4.5, reviews: 220000, price: "Kostenlos", badge: "Elektrisierend" },
     },
     locationInfo: {
-      "Freiheitsstatue": { short: "Geschenk Frankreichs an die USA, 1886 eingeweiht.", highlights: ["Fähre ab Battery Park", "Krone nur mit Voranmeldung", "Ellis Island Museum"] },
+      "Freiheitsstatue": { short: "Geschenk Frankreichs an die USA, 1886 eingeweiht.", highlights: ["Fähre ab Battery Park", "Krone mit Voranmeldung", "Ellis Island Museum"] },
       "Central Park": { short: "Ikonischer Stadtpark mitten in Manhattan.", highlights: ["Bethesda Fountain", "Bow Bridge", "Strawberry Fields"] },
       "Times Square": { short: "Das leuchtende Herz von Manhattan.", highlights: ["Broadway-Theater", "Neon-Reklamen bei Nacht", "TKTS für günstige Tickets"] },
     },
@@ -552,17 +501,18 @@ const CITIES = {
   },
 };
 
-const CITY_ORDER = ["paris", "london", "rom", "barcelona", "amsterdam", "berlin", "wien", "prag", "lissabon", "new_york"];
+const CITY_ORDER = ["paris","london","berlin","rom","barcelona","amsterdam","wien","prag","lissabon","new_york"];
 
 const TRANSLATIONS = {
   de: {
     appName: "Reiseplaner", addPlace: "Ort hinzufügen", insertLink: "LINK EINFÜGEN",
     linkPlaceholder: "https://maps.google.com/ oder Website-URL", analyze: "Analysieren",
-    analyzing: "Analyse", visitDay: "BESUCHSTAG", demo: "Demo-Beispiele:", myPlaces: "Alle Orte",
-    allDays: "Alle Tage", dragHint: "↕ ziehen", route: "Route", timeline: "Timeline", pdf: "PDF",
+    analyzing: "Analyse...", visitDay: "BESUCHSTAG", demo: "Demo-Beispiele:",
+    myPlaces: "Alle Orte", allDays: "Alle Tage", dragHint: "↕ ziehen",
+    route: "Route", timeline: "Timeline", pdf: "PDF",
     travelMode: "FORTBEWEGUNG", walking: "🚶 Zu Fuß", transit: "🚇 ÖPNV", driving: "🚗 Auto",
     openInMaps: "In Google Maps öffnen", stops: "Stopps", timelineTitle: "TAGESPLAN – TIMELINE",
-    transfer: "+20 Min. Transfer", infoShow: "▼ Info", infoHide: "▲ Info ausblenden",
+    transfer: "+20 Min. Transfer", infoShow: "▼ Info", infoHide: "▲ Ausblenden",
     closedDay: "Geschlossen", unknownHours: "⏰ Öffnungszeiten unbekannt", reviews: "Bewertungen",
     budgetTitle: "Budget-Tracker", budgetTotal: "Gesamt", budgetExtras: "+ Extras:",
     budgetNote: "* Schätzungen.", savePlans: "Reisepläne", savedPlans: "Gespeicherte Pläne",
@@ -573,24 +523,27 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.2",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.3",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
-    errorNotFound: "Link nicht erkannt.", days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
+    errorNotFound: "Link nicht erkannt.",
+    days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
     admission: "Eintritt", free: "Kostenlos", close: "Schließen", places: "Orte",
-    selectCity: "Stadt wählen", customCity: "✨ Andere Stadt", customCityPlaceholder: "Stadtname",
-    customCityAdd: "Hinzufügen", customCityHint: "Eigene Stadt.", switchCity: "Stadt wechseln",
-    currentCity: "Aktuelle Stadt", helpButton: "❓", cityNoDemo: "Keine Demo-Daten.",
+    selectCity: "Stadt wählen", customCity: "✨ Andere Stadt",
+    customCityPlaceholder: "Stadtname", customCityAdd: "Hinzufügen",
+    switchCity: "Stadt wechseln", currentCity: "Aktuelle Stadt",
+    helpButton: "❓", cityNoDemo: "Keine Demo-Daten.",
     travelTime: "Reisezeit", walkingTime: "zu Fuß", transitTime: "mit ÖPNV",
     notePlaceholder: "Notiz (z.B. Tickets vorbuchen!)", noteLabel: "📝 Notiz", noteHide: "📝 Ausblenden",
   },
   en: {
     appName: "Travel Planner", addPlace: "Add Place", insertLink: "INSERT LINK",
     linkPlaceholder: "https://maps.google.com/ or website URL", analyze: "Analyze",
-    analyzing: "Analyzing", visitDay: "VISIT DAY", demo: "Demo examples:", myPlaces: "All Places",
-    allDays: "All Days", dragHint: "↕ drag", route: "Route", timeline: "Timeline", pdf: "PDF",
+    analyzing: "Analyzing...", visitDay: "VISIT DAY", demo: "Demo examples:",
+    myPlaces: "All Places", allDays: "All Days", dragHint: "↕ drag",
+    route: "Route", timeline: "Timeline", pdf: "PDF",
     travelMode: "TRAVEL MODE", walking: "🚶 Walking", transit: "🚇 Transit", driving: "🚗 Car",
     openInMaps: "Open in Google Maps", stops: "Stops", timelineTitle: "DAY PLAN – TIMELINE",
-    transfer: "+20 min transfer", infoShow: "▼ Info", infoHide: "▲ Hide info",
+    transfer: "+20 min transfer", infoShow: "▼ Info", infoHide: "▲ Hide",
     closedDay: "Closed", unknownHours: "⏰ Hours unknown", reviews: "reviews",
     budgetTitle: "Budget Tracker", budgetTotal: "Total", budgetExtras: "+ Extras:",
     budgetNote: "* Estimates.", savePlans: "Travel Plans", savedPlans: "Saved Plans",
@@ -601,19 +554,24 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.2",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.3",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
-    errorNotFound: "Link not recognized.", days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    errorNotFound: "Link not recognized.",
+    days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
     admission: "Admission", free: "Free", close: "Close", places: "Places",
-    selectCity: "Select City", customCity: "✨ Other City", customCityPlaceholder: "City name",
-    customCityAdd: "Add", customCityHint: "Custom city.", switchCity: "Switch City",
-    currentCity: "Current City", helpButton: "❓", cityNoDemo: "No demo data.",
+    selectCity: "Select City", customCity: "✨ Other City",
+    customCityPlaceholder: "City name", customCityAdd: "Add",
+    switchCity: "Switch City", currentCity: "Current City",
+    helpButton: "❓", cityNoDemo: "No demo data.",
     travelTime: "Travel time", walkingTime: "walking", transitTime: "by transit",
     notePlaceholder: "Note (e.g. Book tickets!)", noteLabel: "📝 Note", noteHide: "📝 Hide",
   }
 };
 
-const DAY_KEY_MAP = { "Montag":"mo","Dienstag":"di","Mittwoch":"mi","Donnerstag":"do","Freitag":"fr","Samstag":"sa","Sonntag":"so","Monday":"mo","Tuesday":"di","Wednesday":"mi","Thursday":"do","Friday":"fr","Saturday":"sa","Sunday":"so" };
+const DAY_KEY_MAP = {
+  "Montag":"mo","Dienstag":"di","Mittwoch":"mi","Donnerstag":"do","Freitag":"fr","Samstag":"sa","Sonntag":"so",
+  "Monday":"mo","Tuesday":"di","Wednesday":"mi","Thursday":"do","Friday":"fr","Saturday":"sa","Sunday":"so"
+};
 
 function getWeekdayKey(dateStr) {
   const keys = ["so","mo","di","mi","do","fr","sa"];
@@ -637,7 +595,7 @@ function generateTripDays(startDate, numDays) {
   for (let i = 0; i < numDays; i++) {
     const d = new Date(base);
     d.setDate(base.getDate() + i);
-    days.push(d.toISOString().slice(0, 10));
+    days.push(d.toISOString().slice(0,10));
   }
   return days;
 }
@@ -651,7 +609,7 @@ function normalizePlan(raw) {
   const id = raw.id ?? Date.now();
   const name = String(raw.name ?? "").trim() || "Untitled";
   const cityId = raw.cityId ?? raw.city ?? "paris";
-  const startDate = raw.startDate ?? raw.tripStart ?? new Date().toISOString().slice(0, 10);
+  const startDate = raw.startDate ?? raw.tripStart ?? new Date().toISOString().slice(0,10);
   const numDays = Number(raw.numDays ?? raw.tripLen ?? 4) || 4;
   const tripDays = Array.isArray(raw.tripDays) && raw.tripDays.length ? raw.tripDays : generateTripDays(startDate, numDays);
   const locations = Array.isArray(raw.locations) ? raw.locations : [];
@@ -708,7 +666,7 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 function calcTravelTime(loc1, loc2) {
-  if (!loc1.lat||!loc1.lng||!loc2.lat||!loc2.lng) return null;
+  if (!loc1?.lat||!loc1?.lng||!loc2?.lat||!loc2?.lng) return null;
   const dist = haversineDistance(loc1.lat,loc1.lng,loc2.lat,loc2.lng);
   const walkDist = dist*1.3;
   const walkMin = Math.round((walkDist/4.5)*60);
@@ -723,13 +681,12 @@ function TravelTimeBadge({ from, to }) {
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"4px 0" }}>
       <div style={{
-        display:"flex", alignItems:"center", gap:10,
-        padding:"4px 12px", borderRadius:20, fontSize:"0.7rem",
-        background: th.tag, border:`1px solid ${th.border}`
+        display:"flex", alignItems:"center", gap:10, padding:"4px 12px",
+        borderRadius:20, fontSize:"0.7rem", background:th.tag, border:`1px solid ${th.border}`
       }}>
-        <span style={{ color: th.textFaint }}>{travel.distKm} km</span>
-        <span style={{ color: th.info }}>🚶 {travel.walkMin} Min.</span>
-        <span style={{ color: th.gold }}>🚇 {travel.transitMin} Min.</span>
+        <span style={{ color:th.textFaint }}>{travel.distKm} km</span>
+        <span style={{ color:th.info }}>🚶 {travel.walkMin} Min.</span>
+        <span style={{ color:th.gold }}>🚇 {travel.transitMin} Min.</span>
       </div>
     </div>
   );
@@ -753,7 +710,7 @@ async function geocodeCity(name) {
   try {
     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=de`);
     const data = await res.json();
-    if (data.results && data.results.length > 0) {
+    if (data.results?.length > 0) {
       const r = data.results[0];
       return { lat:r.latitude, lng:r.longitude, timezone:r.timezone, fullName:r.name, country:r.country_code };
     }
@@ -766,24 +723,24 @@ function CollapsibleSection({ title, badge, rightContent, children, defaultOpen=
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="app-card-hover" style={{
-      background: th.surface, border: `1px solid ${th.border}`,
-      borderRadius: 16, overflow: "hidden",
-      boxShadow: th.shadow,
+      background:th.surface, border:`1px solid ${th.border}`,
+      borderRadius:16, overflow:"hidden", boxShadow:th.shadow,
     }}>
-      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between gap-2"
-        style={{ padding: "12px 16px", borderBottom: open ? `1px solid ${th.border}` : "none",
-          background: th.card, cursor: "pointer" }}>
-        <h2 className="font-black flex items-center gap-2 text-left"
-          style={{ color: th.accent, fontFamily: "system-ui,sans-serif", fontSize: "0.9rem", letterSpacing: "-0.01em" }}>
+      <button onClick={() => setOpen(v => !v)}
+        style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+          gap:8, padding:"12px 16px", borderBottom: open ? `1px solid ${th.border}` : "none",
+          background:th.card, cursor:"pointer", border:"none" }}>
+        <h2 style={{ color:th.accent, fontFamily:"system-ui,sans-serif", fontSize:"0.9rem",
+          fontWeight:900, letterSpacing:"-0.01em", margin:0, display:"flex", alignItems:"center", gap:8 }}>
           {title}
-          {badge !== undefined && <span className="text-xs font-normal" style={{ color: th.textFaint }}>({badge})</span>}
+          {badge !== undefined && <span style={{ color:th.textFaint, fontSize:"0.75rem", fontWeight:400 }}>({badge})</span>}
         </h2>
-        <div className="flex items-center gap-2">
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           {rightContent}
-          <span className="text-xs" style={{ color: th.textFaint }}>{open ? "▲" : "▼"}</span>
+          <span style={{ color:th.textFaint, fontSize:"0.75rem" }}>{open ? "▲" : "▼"}</span>
         </div>
       </button>
-      {open && <div style={{ padding: "14px 16px" }}>{children}</div>}
+      {open && <div style={{ padding:"14px 16px" }}>{children}</div>}
     </div>
   );
 }
@@ -792,36 +749,22 @@ function StarRating({ stars }) {
   const { th } = useTheme();
   const full = Math.floor(stars);
   return (
-    <span className="inline-flex items-center gap-0.5">
+    <span style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
       {Array.from({length:5}).map((_,i) => (
-        <span key={i} style={{ color: i<full ? th.gold : th.textFaint, fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
+        <span key={i} style={{ color:i<full?th.gold:th.textFaint, fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
       ))}
-      <span className="ml-1 text-xs font-bold" style={{ color: th.gold }}>{stars}</span>
+      <span style={{ marginLeft:4, fontSize:"0.75rem", fontWeight:700, color:th.gold }}>{stars}</span>
     </span>
   );
 }
 
 function MetroTag({ line, time }) {
   const { th } = useTheme();
-  const map = {
-    M1: { bg: th.goldBg, fg: th.text, bd: th.border },
-    M6: { bg: th.successBg, fg: th.success, bd: th.border },
-    M14: { bg: th.accentLight, fg: th.accent, bd: th.border },
-  };
-  const c = map[line] || { bg: th.tag, fg: th.textMuted, bd: th.border };
   return (
     <span style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 6,
-      padding: "2px 10px",
-      borderRadius: 999,
-      fontSize: "0.72rem",
-      fontWeight: 800,
-      background: c.bg,
-      color: c.fg,
-      border: `1px solid ${c.bd}`,
-      whiteSpace: "nowrap",
+      display:"inline-flex", alignItems:"center", gap:6,
+      padding:"2px 10px", borderRadius:999, fontSize:"0.72rem", fontWeight:800,
+      background:th.tag, color:th.accent, border:`1px solid ${th.border}`, whiteSpace:"nowrap",
     }}>
       🚇 {line} · {time}
     </span>
@@ -833,866 +776,913 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
   const openInfo = day ? getOpeningInfo(loc.name, day, city) : null;
   const locInfo = getLocationInfo(loc.name, city);
   const rating = getRating(loc.name, city);
+  const cost = getEntryCost(loc.name, city);
   const [showInfo, setShowInfo] = useState(false);
   const [showNote, setShowNote] = useState(!!loc.note);
 
+  const isClosed = openInfo && !openInfo.isOpen;
+  const cardBorder = isClosed ? th.warning : th.border;
+
   return (
     <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
-      className="card-anim app-card-hover relative"
+      className="card-anim app-card-hover"
       style={{
-        background: isDragging ? th.accentLight : th.card,
-        border: isDragging ? `2px dashed ${th.accent}` : `1px solid ${th.border}`,
-        borderRadius: 14, padding: "10px 12px",
-        opacity: isDragging ? 0.55 : 1, cursor: "grab",
-        boxShadow: isDragging ? th.shadowHover : th.shadow,
+        background:th.card, border:`1px solid ${cardBorder}`,
+        borderRadius:14, padding:"10px 12px", cursor:"grab", opacity:isDragging?0.5:1,
+        boxShadow: isClosed ? `0 0 0 1px ${th.warning}22` : th.shadow,
       }}>
-      <div style={{
-        position:"absolute", top:8, left:10,
-        width:22, height:22, borderRadius:"50%",
-        background: th.accent, color: th.surface,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        fontSize:"0.7rem", fontWeight:700, flexShrink:0,
-      }}>{index+1}</div>
-      <button onClick={onRemove} style={{
-        position:"absolute", top:6, right:8,
-        background:"none", border:"none", cursor:"pointer",
-        color: th.textMuted, fontSize:"1.1rem", lineHeight:1,
-        padding:2,
-      }}>×</button>
-      <div style={{ paddingLeft:30, paddingRight:16, display:"flex", flexDirection:"column", gap:3 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:"1.4rem" }}>{loc.icon}</span>
-          <div>
-            <p style={{ fontWeight:700, fontSize:"0.85rem", color: th.text, margin:0 }}>{loc.name}</p>
-            <p style={{ fontSize:"0.72rem", fontWeight:600, color: th.accent, margin:0 }}>{loc.type}</p>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+        <div style={{
+          width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center",
+          justifyContent:"center", fontSize:"1.1rem", flexShrink:0,
+          background:th.accentLight, border:`1px solid ${th.border}`,
+        }}>{loc.icon || "📍"}</div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
+            <span style={{ fontWeight:700, fontSize:"0.875rem", color:th.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              {loc.name}
+            </span>
+            <button onClick={() => onRemove(loc.id)}
+              style={{ color:th.textFaint, background:"none", border:"none", cursor:"pointer", padding:"0 2px", fontSize:"1rem", flexShrink:0 }}>×</button>
           </div>
-        </div>
-        <p style={{ fontSize:"0.7rem", color: th.textMuted, fontStyle:"italic", margin:0 }}>{loc.address}</p>
-        {rating && (
-          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap", marginTop:2 }}>
-            <StarRating stars={rating.stars} />
-            <span style={{ fontSize:"0.7rem", color: th.textFaint }}>({rating.reviews.toLocaleString("de-DE")})</span>
-            <span style={{
-              fontSize:"0.68rem", padding:"2px 7px", borderRadius:20,
-              fontWeight:600, background: th.accentLight,
-              color: th.accent, border:`1px solid ${th.border}`
-            }}>{rating.badge}</span>
+          <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:2 }}>
+            {loc.type}{loc.area ? ` · ${loc.area}` : ""}{loc.duration ? ` · ⏱ ${loc.duration}` : ""}
           </div>
-        )}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4 }}>
-          <span style={{
-            fontSize:"0.7rem", padding:"2px 8px", borderRadius:20,
-            background: th.infoBg, color: th.info, border:`1px solid ${th.border}`
-          }}>📍 {loc.area}</span>
-          <span style={{ fontSize:"0.7rem", color: th.textMuted }}>⏱ {loc.duration}</span>
-        </div>
-        {day && availableDays && onDayChange ? (
-          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
-            <span style={{ fontSize:"0.7rem", color: th.accent }}>📅</span>
-            <select value={day} onChange={(e) => onDayChange(loc.id, e.target.value)}
-              style={{
-                fontSize:"0.7rem", fontWeight:600, borderRadius:8,
-                padding:"2px 6px", cursor:"pointer", border:`1px solid ${th.border}`,
-                background: th.input, color: th.accent, appearance:"auto"
-              }}>
-              {availableDays.map(d => (
-                <option key={d} value={d}>{getDayLabel ? getDayLabel(d) : d}</option>
-              ))}
-            </select>
-          </div>
-        ) : day ? (
-          <p style={{ fontSize:"0.7rem", marginTop:4, fontWeight:600, color: th.accent }}>📅 {day}</p>
-        ) : null}
-        {openInfo ? (
-          <div style={{
-            marginTop:6, borderRadius:8, padding:"5px 8px",
-            display:"flex", alignItems:"flex-start", gap:6,
-            background: openInfo.isOpen ? th.successBg : th.warningBg,
-            border: `1px solid ${openInfo.isOpen ? th.success : th.warning}`,
-          }}>
-            <span style={{ fontSize:"0.7rem", marginTop:1 }}>{openInfo.isOpen ? "✅" : "⚠️"}</span>
-            <div>
-              <p style={{ fontSize:"0.7rem", fontWeight:600, margin:0,
-                color: openInfo.isOpen ? th.success : th.warning }}>
-                {openInfo.isOpen ? `Geöffnet · ${openInfo.hours}` : "Geschlossen an diesem Tag"}
-              </p>
-              {openInfo.note && <p style={{ fontSize:"0.68rem", color: th.textMuted, fontStyle:"italic", margin:0 }}>{openInfo.note}</p>}
+          {rating && (
+            <div style={{ marginTop:4, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+              <StarRating stars={rating.stars} />
+              <span style={{ fontSize:"0.68rem", color:th.textFaint }}>{rating.reviews.toLocaleString()} {t.reviews}</span>
+              {rating.badge && (
+                <span style={{ fontSize:"0.65rem", padding:"1px 6px", borderRadius:6,
+                  background:th.accentLight, color:th.accent, fontWeight:700 }}>{rating.badge}</span>
+              )}
             </div>
-          </div>
-        ) : (
-          <div style={{ marginTop:6, borderRadius:8, padding:"5px 8px",
-            background: th.tag, border:`1px solid ${th.border}` }}>
-            <p style={{ fontSize:"0.68rem", color: th.textFaint, fontStyle:"italic", margin:0 }}>⏰ Öffnungszeiten unbekannt</p>
-          </div>
-        )}
-        {locInfo && (
-          <div style={{ marginTop:6 }}>
-            <button onClick={() => setShowInfo(v => !v)}
-              style={{ fontSize:"0.7rem", fontWeight:600, background:"none", border:"none",
-                cursor:"pointer", padding:0, color: showInfo ? th.warning : th.info,
-                display:"flex", alignItems:"center", gap:4 }}>
-              {showInfo ? "▲ Info ausblenden" : "▼ Info & Highlights"}
-            </button>
-            {showInfo && (
-              <div style={{ marginTop:6, borderRadius:8, padding:"8px 10px",
-                background: th.infoBg, border:`1px solid ${th.border}` }}>
-                <p style={{ fontSize:"0.7rem", color: th.textMuted, margin:"0 0 6px 0" }}>{locInfo.short}</p>
-                <ul style={{ margin:0, padding:0, listStyle:"none" }}>
-                  {locInfo.highlights.map((h,i) => (
-                    <li key={i} style={{ fontSize:"0.7rem", color: th.info,
-                      display:"flex", alignItems:"flex-start", gap:5, marginBottom:3 }}>
-                      <span style={{ color: th.accent, flexShrink:0 }}>✦</span> {h}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-        <div style={{ marginTop:6 }}>
-          <button onClick={() => setShowNote(v => !v)}
-            style={{ fontSize:"0.7rem", fontWeight:600, background:"none", border:"none",
-              cursor:"pointer", padding:0, color: showNote ? th.warning : th.success,
-              display:"flex", alignItems:"center", gap:4 }}>
-            {showNote ? (t?.noteHide || "📝 Ausblenden") : (t?.noteLabel || "📝 Notiz")}
-            {loc.note && !showNote && <span style={{ color: th.success, marginLeft:4 }}>●</span>}
-          </button>
-          {showNote && (
-            <textarea
-              value={loc.note || ""}
-              onChange={(e) => onNoteChange && onNoteChange(loc.id, e.target.value)}
-              placeholder={t?.notePlaceholder || "Notiz eingeben"}
-              rows={2}
-              style={{
-                width:"100%", marginTop:6, borderRadius:8, padding:"6px 10px",
-                fontSize:"0.7rem", resize:"none", outline:"none",
-                background: th.successBg, color: th.text,
-                border:`1px solid ${th.success}`,
-              }}
-            />
+          )}
+          {cost && (
+            <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:3 }}>
+              💰 {t.admission}: {cost.min === 0 && cost.max === 0 ? <span style={{ color:th.success }}>{t.free}</span>
+                : `${cost.currency}${cost.min}${cost.max !== cost.min ? `–${cost.currency}${cost.max}` : ""}`}
+              {cost.note ? <span style={{ color:th.textFaint }}> ({cost.note})</span> : null}
+            </div>
+          )}
+          {openInfo && (
+            <div style={{ fontSize:"0.7rem", marginTop:3,
+              color: openInfo.isOpen ? th.success : th.warning }}>
+              {openInfo.isOpen ? `✅ ${openInfo.hours}` : `❌ ${t.closedDay}`}
+              {openInfo.note ? <span style={{ color:th.textFaint }}> – {openInfo.note}</span> : null}
+            </div>
+          )}
+          {isClosed && (
+            <div style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:6, marginTop:4,
+              background:th.warningBg, color:th.warning, fontWeight:600 }}>
+              ⚠️ {loc.name} {t.warningClosed}
+            </div>
           )}
         </div>
       </div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:8, alignItems:"center" }}>
+        {availableDays && availableDays.length > 0 && (
+          <select value={day || ""} onChange={e => onDayChange(loc.id, e.target.value || null)}
+            style={{ fontSize:"0.7rem", padding:"3px 6px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
+              cursor:"pointer", maxWidth:130 }}>
+            <option value="">{t.allDays}</option>
+            {availableDays.map(d => (
+              <option key={d} value={d}>{getDayLabel ? getDayLabel(d) : d}</option>
+            ))}
+          </select>
+        )}
+        {locInfo && (
+          <button onClick={() => setShowInfo(v => !v)}
+            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, cursor:"pointer",
+              background:showInfo?th.accentLight:"transparent", color:showInfo?th.accent:th.textMuted,
+              border:`1px solid ${th.border}` }}>
+            {showInfo ? t.infoHide : t.infoShow}
+          </button>
+        )}
+        <button onClick={() => setShowNote(v => !v)}
+          style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, cursor:"pointer",
+            background:showNote?th.accentLight:"transparent", color:showNote?th.accent:th.textMuted,
+            border:`1px solid ${th.border}` }}>
+          {showNote ? t.noteHide : t.noteLabel}
+        </button>
+        <a href={`https://maps.google.com/?q=${encodeURIComponent(loc.name)}`} target="_blank" rel="noreferrer"
+          style={{ fontSize:"0.68rem", color:th.info, textDecoration:"none" }}>🗺 Maps</a>
+        <span style={{ marginLeft:"auto", fontSize:"0.68rem", color:th.textFaint, cursor:"grab" }}>{t.dragHint}</span>
+      </div>
+      {showInfo && locInfo && (
+        <div style={{ marginTop:8, padding:"8px 10px", borderRadius:10,
+          background:th.surface, border:`1px solid ${th.border}`, fontSize:"0.72rem" }}>
+          <div style={{ color:th.textMuted, marginBottom:6 }}>{locInfo.short}</div>
+          {locInfo.highlights?.map((h,i) => (
+            <div key={i} style={{ color:th.text, marginBottom:3 }}>✓ {h}</div>
+          ))}
+        </div>
+      )}
+      {showNote && (
+        <textarea value={loc.note || ""} onChange={e => onNoteChange(loc.id, e.target.value)}
+          placeholder={t.notePlaceholder} rows={2}
+          style={{ marginTop:8, width:"100%", fontSize:"0.72rem", padding:"6px 8px",
+            borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
+            resize:"vertical", fontFamily:"inherit" }} />
+      )}
+    </div>
+  );
+}
+
+function MapView({ locations, city }) {
+  const { th } = useTheme();
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const init = () => {
+      if (!window.L) { setTimeout(init, 300); return; }
+      if (mapInstance.current) {
+        try { mapInstance.current.remove(); } catch {}
+        mapInstance.current = null;
+      }
+      const center = city ? [city.lat, city.lng] : [48.8566, 2.3522];
+      mapInstance.current = window.L.map(mapRef.current, { zoomControl: true }).setView(center, 13);
+      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+      }).addTo(mapInstance.current);
+
+      const locs = locations && locations.length > 0 ? locations : (city?.sampleLocations || []);
+      locs.forEach((loc, i) => {
+        if (!loc.lat || !loc.lng) return;
+        const icon = window.L.divIcon({
+          html: `<div style="background:${th.accent};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);animation:markerPop 0.4s ease both;animation-delay:${i*0.08}s">${i+1}</div>`,
+          className: "", iconSize: [28,28], iconAnchor: [14,14]
+        });
+        window.L.marker([loc.lat, loc.lng], { icon })
+          .addTo(mapInstance.current)
+          .bindPopup(`<b>${loc.name}</b><br/>${loc.address||""}`);
+      });
+
+      if (locs.length > 1) {
+        const bounds = locs.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
+        if (bounds.length > 1) {
+          try { mapInstance.current.fitBounds(bounds, { padding: [30,30] }); } catch {}
+        }
+      }
+    };
+    init();
+    return () => {
+      if (mapInstance.current) {
+        try { mapInstance.current.remove(); } catch {}
+        mapInstance.current = null;
+      }
+    };
+  }, [locations, city]);
+
+  return (
+    <div ref={mapRef} style={{
+      width:"100%", height:320, borderRadius:12, overflow:"hidden",
+      border:`1px solid ${th.border}`, background:th.card
+    }} />
+  );
+}
+
+function RouteView({ locations, city, travelMode, t }) {
+  const { th } = useTheme();
+  const locs = locations.filter(l => l.lat && l.lng);
+  if (locs.length < 2) return (
+    <div style={{ textAlign:"center", color:th.textFaint, fontSize:"0.8rem", padding:"20px 0" }}>
+      {t.noRouteHint}
+    </div>
+  );
+  let totalWalk = 0, totalTransit = 0, totalDist = 0;
+  const segments = [];
+  for (let i = 0; i < locs.length - 1; i++) {
+    const travel = calcTravelTime(locs[i], locs[i+1]);
+    if (travel) {
+      totalWalk += travel.walkMin;
+      totalTransit += travel.transitMin;
+      totalDist += travel.distKm;
+      segments.push(travel);
+    } else {
+      segments.push(null);
+    }
+  }
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ display:"flex", gap:12, padding:"8px 12px", borderRadius:12,
+        background:th.surface, border:`1px solid ${th.border}`, flexWrap:"wrap" }}>
+        <span style={{ fontSize:"0.72rem", color:th.textMuted }}>
+          📍 {locs.length} {t.stops} · {totalDist.toFixed(1)} km
+        </span>
+        <span style={{ fontSize:"0.72rem", color:th.info }}>🚶 {totalWalk} Min. gesamt</span>
+        <span style={{ fontSize:"0.72rem", color:th.gold }}>🚇 {totalTransit} Min. gesamt</span>
+      </div>
+      {locs.map((loc, i) => {
+        const seg = segments[i];
+        const metro = i < locs.length - 1 ? getMetroLine(loc, locs[i+1], city) : null;
+        return (
+          <div key={loc.id}>
+            <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
+                <div style={{ width:28, height:28, borderRadius:"50%", background:th.accent,
+                  color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:"0.75rem", fontWeight:800 }}>{i+1}</div>
+                {i < locs.length - 1 && <div style={{ width:2, height:32, background:th.border, margin:"4px 0" }} />}
+              </div>
+              <div style={{ flex:1, paddingBottom:4 }}>
+                <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{loc.icon} {loc.name}</div>
+                <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.area || loc.address}</div>
+              </div>
+            </div>
+            {seg && i < locs.length - 1 && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, paddingLeft:38, paddingBottom:4 }}>
+                <div style={{ fontSize:"0.68rem", color:th.textFaint,
+                  display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+                  <span style={{ color:th.info }}>🚶 {seg.walkMin} Min.</span>
+                  <span style={{ color:th.gold }}>🚇 {seg.transitMin} Min.</span>
+                  <span>({seg.distKm} km)</span>
+                  {metro && <MetroTag line={metro.line} time={metro.time} />}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TimelineView({ locations, day, city, travelMode, t }) {
+  const { th } = useTheme();
+  const filtered = day ? locations.filter(l => l._day === day) : locations;
+  if (filtered.length === 0) return (
+    <div style={{ textAlign:"center", color:th.textFaint, fontSize:"0.8rem", padding:"20px 0" }}>
+      {t.noRouteHint}
+    </div>
+  );
+  let time = 9 * 60;
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+      {filtered.map((loc, i) => {
+        const startH = Math.floor(time/60);
+        const startM = time % 60;
+        const durMatch = (loc.duration||"").match(/[\d,.]+/);
+        const durMin = durMatch ? Math.round(parseFloat(durMatch[0].replace(",","."))*60) : 60;
+        time += durMin;
+        const endH = Math.floor(time/60);
+        const endM = time % 60;
+        const travel = i < filtered.length-1 ? calcTravelTime(loc, filtered[i+1]) : null;
+        const transferMin = travelMode === "walking" ? travel?.walkMin : travel?.transitMin;
+        time += transferMin || 20;
+        return (
+          <div key={loc.id}>
+            <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
+                <div style={{
+                  width:32, height:32, borderRadius:"50%", background:th.accent,
+                  color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:"0.8rem", fontWeight:800
+                }}>{i+1}</div>
+                {i < filtered.length-1 && <div style={{ width:2, flex:1, minHeight:30, background:th.border, margin:"4px 0" }} />}
+              </div>
+              <div style={{ flex:1, paddingBottom:12 }}>
+                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:2 }}>
+                  {String(startH).padStart(2,"0")}:{String(startM).padStart(2,"0")} – {String(endH).padStart(2,"0")}:{String(endM).padStart(2,"0")}
+                </div>
+                <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{loc.icon} {loc.name}</div>
+                <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.area} · {loc.duration}</div>
+                {travel && i < filtered.length-1 && (
+                  <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:4 }}>
+                    → {travelMode === "walking" ? `🚶 ${travel.walkMin} Min.` : `🚇 ${travel.transitMin} Min.`} ({travel.distKm} km)
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function BudgetTracker({ locations, city, t }) {
+  const { th } = useTheme();
+  const [extras, setExtras] = useState([{ label:"Hotel", amount:150 }, { label:"Essen", amount:80 }]);
+  const [newLabel, setNewLabel] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+
+  const locationCosts = locations.map(loc => {
+    const c = getEntryCost(loc.name, city);
+    return c ? { name:loc.name, cost:c } : null;
+  }).filter(Boolean);
+
+  const locTotal = locationCosts.reduce((s,l) => s + (l.cost.min+l.cost.max)/2, 0);
+  const extTotal = extras.reduce((s,e) => s + (Number(e.amount)||0), 0);
+  const total = locTotal + extTotal;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      {locationCosts.length === 0 && (
+        <div style={{ color:th.textFaint, fontSize:"0.8rem" }}>{t.addFirst}</div>
+      )}
+      {locationCosts.map((l,i) => (
+        <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"6px 10px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
+          <span style={{ fontSize:"0.8rem", color:th.text }}>{l.name}</span>
+          <span style={{ fontSize:"0.8rem", fontWeight:700, color:th.accent }}>
+            {l.cost.min === 0 && l.cost.max === 0 ? <span style={{ color:th.success }}>{t.free}</span>
+              : `${l.cost.currency}${Math.round((l.cost.min+l.cost.max)/2)}`}
+          </span>
+        </div>
+      ))}
+      <div style={{ fontSize:"0.75rem", color:th.textMuted, marginTop:4 }}>{t.budgetExtras}</div>
+      {extras.map((e,i) => (
+        <div key={i} style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <input value={e.label} onChange={ev => setExtras(ex => ex.map((x,j) => j===i?{...x,label:ev.target.value}:x))}
+            style={{ flex:1, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <input type="number" value={e.amount} onChange={ev => setExtras(ex => ex.map((x,j) => j===i?{...x,amount:ev.target.value}:x))}
+            style={{ width:70, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <button onClick={() => setExtras(ex => ex.filter((_,j) => j!==i))}
+            style={{ color:th.warning, background:"none", border:"none", cursor:"pointer", fontSize:"1rem" }}>×</button>
+        </div>
+      ))}
+      <div style={{ display:"flex", gap:8 }}>
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Label"
+          style={{ flex:1, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+        <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="€"
+          style={{ width:70, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+        <button onClick={() => { if(newLabel) { setExtras(ex => [...ex,{label:newLabel,amount:Number(newAmount)||0}]); setNewLabel(""); setNewAmount(""); } }}
+          className="btn-primary"
+          style={{ padding:"4px 10px", borderRadius:8, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>+</button>
+      </div>
+      <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderRadius:10,
+        background:th.accentLight, border:`1px solid ${th.border}`, marginTop:4 }}>
+        <span style={{ fontWeight:800, color:th.accent }}>{t.budgetTotal}</span>
+        <span style={{ fontWeight:800, color:th.accent }}>€{Math.round(total)}</span>
+      </div>
+      <div style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.budgetNote}</div>
+    </div>
+  );
+}
+
+function SavedPlans({ locations, cityId, tripDays, locationDays, locationNotes, t }) {
+  const { th } = useTheme();
+  const [plans, setPlans] = useState(() => {
+      const raw = safeJsonParse(localStorage.getItem("travelPlans_v2"), []);
+      return (Array.isArray(raw) ? raw : []).filter(Boolean);
+    });
+  const [planName, setPlanName] = useState("");
+  const [savedMsg, setSavedMsg] = useState(false);
+
+  const save = () => {
+    if (!planName.trim()) return;
+    const plan = { id:Date.now(), name:planName.trim(), cityId, tripDays, locations, locationDays, locationNotes };
+    const next = [plan, ...plans.slice(0,9)];
+    setPlans(next);
+    localStorage.setItem("travelPlans_v2", JSON.stringify(next));
+    setSavedMsg(true);
+    setTimeout(() => setSavedMsg(false), 2000);
+    setPlanName("");
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      <div style={{ display:"flex", gap:8 }}>
+        <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
+          style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+        <button onClick={save} className="btn-primary"
+          style={{ padding:"6px 14px", borderRadius:10, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
+          {savedMsg ? t.saved : t.save}
+        </button>
+      </div>
+      {(plans || []).filter(Boolean).length === 0 ? (
+        <div style={{ color:th.textFaint, fontSize:"0.8rem" }}>{t.noPlans}</div>
+      ) : (plans || []).filter(Boolean).map(p => (
+        <div key={p.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"8px 12px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
+          <div>
+            <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.text }}>{p.name}</div>
+            <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{CITIES[p.cityId]?.name || p.cityId} · {p.locations?.length||0} {t.places}</div>
+          </div>
+          <button onClick={() => { /* load plan */ }}
+            style={{ padding:"4px 10px", borderRadius:8, background:th.accentLight, color:th.accent,
+              border:`1px solid ${th.border}`, cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
+            {t.load}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SharePanel({ locations, cityId, t }) {
+  const { th } = useTheme();
+  const [link, setLink] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const createLink = () => {
+    const data = { cityId, locs: locations.map(l => ({ n:l.name, t:l.type, a:l.area })) };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    setLink(`${window.location.origin}?plan=${encoded}`);
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      <button onClick={createLink} className="btn-primary"
+        style={{ padding:"8px 16px", borderRadius:10, background:th.accent, color:"white",
+          border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
+        {t.createLink}
+      </button>
+      {link && (
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <div style={{ flex:1, fontSize:"0.72rem", padding:"6px 10px", borderRadius:10,
+            background:th.input, color:th.textMuted, border:`1px solid ${th.inputBorder}`,
+            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{link}</div>
+          <button onClick={copyLink} className="btn-primary"
+            style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
+              border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700, whiteSpace:"nowrap" }}>
+            {copied ? t.copied : t.copy}
+          </button>
+        </div>
+      )}
+      <div style={{ fontSize:"0.7rem", color:th.textFaint }}>{t.shareHint}</div>
     </div>
   );
 }
 
 export default function App() {
   const { mode, th } = useTheme();
-  const [lang, setLang] = useState("de");
+  const lang = "de";
   const t = TRANSLATIONS[lang];
+
   const [cityId, setCityId] = useState("paris");
+  const [customCities, setCustomCities] = useState({});
   const [customCityName, setCustomCityName] = useState("");
-  const [customCityInput, setCustomCityInput] = useState("");
   const [showCityPicker, setShowCityPicker] = useState(false);
-  const city = CITIES[cityId] || null;
+  const [addingCustom, setAddingCustom] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+
+  const allCities = { ...CITIES, ...customCities };
+  const city = allCities[cityId] || CITIES.paris;
 
   const [locations, setLocations] = useState([]);
   const [locationDays, setLocationDays] = useState({});
   const [locationNotes, setLocationNotes] = useState({});
   const [linkInput, setLinkInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [skeletonVisible, setSkeletonVisible] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
-  const [apiKey, setApiKey] = useState(() => {
-    try { return localStorage.getItem("openai_api_key") || ""; } catch { return ""; }
-  });
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiKeySaved, setApiKeySaved] = useState(false);
-  const [showApiSection, setShowApiSection] = useState(false);
-  const [activeTab, setActiveTab] = useState("route");
+  const [filterDay, setFilterDay] = useState(null);
   const [travelMode, setTravelMode] = useState("transit");
-  const [filterDay, setFilterDay] = useState("all");
+  const [viewTab, setViewTab] = useState("route");
   const [dragIdx, setDragIdx] = useState(null);
-  const [shareUrl, setShareUrl] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [planName, setPlanName] = useState("");
-  const [savedPlans, setSavedPlans] = useState(() => {
-    try {
-      const raw = safeJsonParse(localStorage.getItem("travel_plans") || "[]", []);
-      const arr = Array.isArray(raw) ? raw : [];
-      return arr.map(normalizePlan).filter(Boolean);
-    } catch {
-      return [];
-    }
-  });
-  const [saveFeedback, setSaveFeedback] = useState(false);
-  const [warnings, setWarnings] = useState([]);
-  const [tripStartDate, setTripStartDate] = useState(() => new Date().toISOString().slice(0,10));
-  const [tripNumDays, setTripNumDays] = useState(3);
-  const [budgetExtras, setBudgetExtras] = useState(0);
-  const mapRef = useRef(null);
-  const mapInstance = useRef(null);
-  const markersRef = useRef([]);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("oai_key") || "");
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiSaved, setApiSaved] = useState(false);
+  const [showApiPanel, setShowApiPanel] = useState(false);
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
 
-  const tripDays = generateTripDays(tripStartDate, tripNumDays);
+  const today = new Date().toISOString().slice(0,10);
+  const [startDate, setStartDate] = useState(today);
+  const [numDays, setNumDays] = useState(4);
+  const tripDays = generateTripDays(startDate, numDays);
 
-  const getDayLabel = (dateStr) => {
-    if (!dateStr) return "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return formatDateLabel(dateStr, lang);
-    return dateStr;
-  };
+  const getDayLabel = (d) => formatDateLabel(d, lang);
 
-  const locationsWithDays = locations.map(loc => ({
-    ...loc,
-    note: locationNotes[loc.id] ?? loc.note ?? "",
-    day: locationDays[loc.id] ?? tripDays[0],
+  const locWithDays = locations.map(l => ({
+    ...l,
+    _day: locationDays[l.id] || null,
+    note: locationNotes[l.id] || "",
   }));
 
-  const filteredLocations = filterDay === "all"
-    ? locationsWithDays
-    : locationsWithDays.filter(l => l.day === filterDay);
+  const filteredLocs = filterDay
+    ? locWithDays.filter(l => l._day === filterDay)
+    : locWithDays;
 
-  useEffect(() => {
-    const newWarnings = [];
-    locationsWithDays.forEach(loc => {
-      if (loc.day) {
-        const info = getOpeningInfo(loc.name, loc.day, city);
-        if (info && !info.isOpen) {
-          newWarnings.push(loc.name);
-        }
-      }
-    });
-    setWarnings(newWarnings);
-  }, [locationsWithDays, city]);
+  const closedWarnings = locWithDays.filter(l => {
+    if (!l._day) return false;
+    const info = getOpeningInfo(l.name, l._day, city);
+    return info && !info.isOpen;
+  });
 
-  useEffect(() => {
-    if (activeTab !== "route") return;
-    const interval = setInterval(() => {
-      if (!mapRef.current || !window.L) return;
-      clearInterval(interval);
-      if (!mapInstance.current) {
-        const cityData = city || { lat: 48.8566, lng: 2.3522 };
-        mapInstance.current = window.L.map(mapRef.current).setView([cityData.lat, cityData.lng], 13);
-        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap"
-        }).addTo(mapInstance.current);
-      }
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-      const locs = filteredLocations.filter(l => l.lat && l.lng);
-      locs.forEach((loc, i) => {
-        const icon = window.L.divIcon({
-          html: `<div style="background:#e74c3c;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)">${i+1}</div>`,
-          className:"", iconSize:[28,28], iconAnchor:[14,14]
-        });
-        const marker = window.L.marker([loc.lat, loc.lng], { icon })
-          .addTo(mapInstance.current)
-          .bindPopup(`<b>${loc.name}</b><br>${loc.type}<br>${loc.area}`);
-        markersRef.current.push(marker);
-      });
-      if (locs.length > 1) {
-        const coords = locs.map(l => [l.lat, l.lng]);
-        const poly = window.L.polyline(coords, { color:"#e74c3c", weight:2, dashArray:"6,6" }).addTo(mapInstance.current);
-        markersRef.current.push(poly);
-        mapInstance.current.fitBounds(poly.getBounds(), { padding:[30,30] });
-      } else if (locs.length === 1) {
-        mapInstance.current.setView([locs[0].lat, locs[0].lng], 14);
-      }
-    }, 300);
-    return () => clearInterval(interval);
-  }, [activeTab, filteredLocations, city]);
+  const analyzeLink = async () => {
+    const url = linkInput.trim();
+    if (!url) { setError(t.errorEmpty); return; }
+    setError("");
+    setAnalyzing(true);
+    setSkeletonVisible(true);
 
-  const handleAddDemo = () => {
-    if (!city) return;
-    const demo = city.sampleLocations;
-    const newLocs = demo.filter(d => !locations.find(l => l.name === d.name));
-    if (newLocs.length === 0) return;
-    const added = newLocs.map((l, i) => ({ ...l, id: Date.now() + i }));
-    setLocations(prev => [...prev, ...added]);
-    const days = {};
-    added.forEach((l,i) => { days[l.id] = tripDays[i % tripDays.length]; });
-    setLocationDays(prev => ({ ...prev, ...days }));
-  };
-
-  const handleAnalyze = async () => {
-    if (!linkInput.trim()) { setError(t.errorEmpty); return; }
-    setError(""); setLoading(true);
-    try {
-      if (city) {
-        for (const matcher of city.linkMatchers) {
-          if (matcher.pattern.test(linkInput)) {
-            const loc = { ...city.sampleLocations[matcher.locationIndex], id: Date.now() };
-            setLocations(prev => [...prev, loc]);
-            setLocationDays(prev => ({ ...prev, [loc.id]: tripDays[0] }));
-            setLinkInput(""); setLoading(false); return;
-          }
-        }
-      }
-      if (apiKey) {
-        const cityName = city?.name || customCityName || "der Stadt";
-        const result = await analyzeWithAI(linkInput, apiKey, cityName);
-        const loc = { ...result, id: Date.now() };
-        setLocations(prev => [...prev, loc]);
-        setLocationDays(prev => ({ ...prev, [loc.id]: tripDays[0] }));
+    if (apiKey) {
+      try {
+        const result = await analyzeWithAI(url, apiKey, city.name);
+        const newLoc = { ...result, id: Date.now() };
+        setLocations(prev => [...prev, newLoc]);
         setLinkInput("");
-      } else {
-        setError(t.errorNotFound);
+        setSkeletonVisible(false);
+        setAnalyzing(false);
+        return;
+      } catch (e) {
+        console.warn("AI failed, falling back:", e);
       }
-    } catch (e) {
-      setError("Fehler: " + e.message);
     }
-    setLoading(false);
+
+    await new Promise(r => setTimeout(r, 900));
+    const matcher = city.linkMatchers?.find(m => m.pattern.test(url));
+    if (matcher) {
+      const sample = city.sampleLocations[matcher.locationIndex];
+      if (sample) {
+        setLocations(prev => [...prev, { ...sample, id: Date.now() }]);
+        setLinkInput("");
+        setSkeletonVisible(false);
+        setAnalyzing(false);
+        return;
+      }
+    }
+    setError(t.errorNotFound);
     setSkeletonVisible(false);
+    setAnalyzing(false);
   };
 
-  const handleRemove = (id) => {
+  const addDemo = (idx) => {
+    const sample = city.sampleLocations[idx];
+    if (!sample) return;
+    if (locations.find(l => l.name === sample.name)) return;
+    setLocations(prev => [...prev, { ...sample, id: Date.now() }]);
+  };
+
+  const removeLocation = (id) => {
     setLocations(prev => prev.filter(l => l.id !== id));
-    setLocationDays(prev => { const n = { ...prev }; delete n[id]; return n; });
-    setLocationNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
+    setLocationDays(prev => { const n = {...prev}; delete n[id]; return n; });
+    setLocationNotes(prev => { const n = {...prev}; delete n[id]; return n; });
   };
 
-  const handleDayChange = (id, day) => {
-    setLocationDays(prev => ({ ...prev, [id]: day }));
-  };
-
-  const handleNoteChange = (id, note) => {
-    setLocationNotes(prev => ({ ...prev, [id]: note }));
-  };
+  const handleDayChange = (id, day) => setLocationDays(prev => ({ ...prev, [id]: day || null }));
+  const handleNoteChange = (id, note) => setLocationNotes(prev => ({ ...prev, [id]: note }));
 
   const handleDragStart = (i) => setDragIdx(i);
-  const handleDragOver = (e, i) => {
-    e.preventDefault();
+  const handleDragOver = (e, i) => { e.preventDefault(); };
+  const handleDrop = (i) => {
     if (dragIdx === null || dragIdx === i) return;
-    setLocations(prev => {
-      const arr = [...prev];
-      const [removed] = arr.splice(dragIdx, 1);
-      arr.splice(i, 0, removed);
-      return arr;
-    });
-    setDragIdx(i);
-  };
-  const handleDrop = () => setDragIdx(null);
-
-  const handleSavePlan = () => {
-    if (!planName.trim() || locations.length === 0) return;
-    const plan = { id: Date.now(), name: planName, cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
-    const updated = [...savedPlans, plan];
-    // normalize & persist
-    const normalized = updated.map(normalizePlan).filter(Boolean);
-    setSavedPlans(normalized);
-    localStorage.setItem("travel_plans", JSON.stringify(normalized));
-    setPlanName(""); setSaveFeedback(true);
-    setTimeout(() => setSaveFeedback(false), 2000);
+    const next = [...locations];
+    const [moved] = next.splice(dragIdx, 1);
+    next.splice(i, 0, moved);
+    setLocations(next);
+    setDragIdx(null);
   };
 
-  const handleLoadPlan = (plan) => {
-    setCityId(plan.cityId || "paris");
-    setLocations(plan.locations || []);
-    setLocationDays(plan.locationDays || {});
-    setLocationNotes(plan.locationNotes || {});
-    setTripStartDate(plan.tripStartDate || new Date().toISOString().slice(0,10));
-    setTripNumDays(plan.tripNumDays || 3);
-  };
-
-  const handleDeletePlan = (id) => {
-    const updated = savedPlans.filter(p => p.id !== id);
-    setSavedPlans(updated);
-    localStorage.setItem("travel_plans", JSON.stringify(updated));
-  };
-
-  const handleCreateShareLink = () => {
-    const data = { cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    const url = `${window.location.origin}${window.location.pathname}?plan=${encoded}`;
-    setShareUrl(url);
-  };
-
-  const handleSaveMapImage = () => {
-    if (!mapRef.current) return;
-    const canvas = mapRef.current.querySelector('canvas');
-    if (canvas) {
-      const link = document.createElement('a');
-      link.download = 'reisekarte.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } else {
-      alert('Karte konnte nicht gespeichert werden. Bitte warte bis die Karte geladen ist.');
-    }
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true); setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get("plan");
-    if (plan) {
-      try {
-        const data = JSON.parse(decodeURIComponent(escape(atob(plan))));
-        setCityId(data.cityId || "paris");
-        setLocations(data.locations || []);
-        setLocationDays(data.locationDays || {});
-        setLocationNotes(data.locationNotes || {});
-        setTripStartDate(data.tripStartDate || new Date().toISOString().slice(0,10));
-        setTripNumDays(data.tripNumDays || 3);
-      } catch {}
-    }
-  }, []);
-
-  const handleSaveApiKey = () => {
-    localStorage.setItem("openai_api_key", apiKeyInput);
-    setApiKey(apiKeyInput); setApiKeySaved(true);
-    setTimeout(() => setApiKeySaved(false), 2000);
-  };
-
-  const handleDeleteApiKey = () => {
-    localStorage.removeItem("openai_api_key");
-    setApiKey(""); setApiKeyInput("");
-  };
-
-  const handleAddCustomCity = async () => {
-    if (!customCityInput.trim()) return;
-    const geo = await geocodeCity(customCityInput);
-    if (geo) {
-      setCustomCityName(geo.fullName || customCityInput);
-      setCityId("custom_" + customCityInput.toLowerCase().replace(/\s+/g,"_"));
-    } else {
-      setCustomCityName(customCityInput);
-      setCityId("custom_" + customCityInput.toLowerCase().replace(/\s+/g,"_"));
-    }
+  const addCustomCity = async () => {
+    const name = customCityName.trim();
+    if (!name) return;
+    setGeocoding(true);
+    const geo = await geocodeCity(name);
+    const id = name.toLowerCase().replace(/\s+/g,"_");
+    const newCity = {
+      id, name, emoji:"🌍", country: geo?.country || "🌐",
+      lat: geo?.lat || 48.8566, lng: geo?.lng || 2.3522,
+      timezone: geo?.timezone || "Europe/Berlin",
+      sampleLocations: [], demoLinks: [], linkMatchers: [],
+      entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {},
+    };
+    setCustomCities(prev => ({ ...prev, [id]: newCity }));
+    setCityId(id);
+    setCustomCityName("");
+    setAddingCustom(false);
     setShowCityPicker(false);
-    setLocations([]);
-    setLocationDays({});
-    setLocationNotes({});
+    setGeocoding(false);
   };
 
-  const totalBudgetMin = locationsWithDays.reduce((sum, loc) => {
-    const cost = getEntryCost(loc.name, city);
-    return sum + (cost ? cost.min : 0);
-  }, 0) + Number(budgetExtras);
-
-  const totalBudgetMax = locationsWithDays.reduce((sum, loc) => {
-    const cost = getEntryCost(loc.name, city);
-    return sum + (cost ? cost.max : 0);
-  }, 0) + Number(budgetExtras);
-
-  const cityData = CITIES[cityId];
-  const displayCityName = cityData ? `${cityData.emoji} ${cityData.name}` : `✨ ${customCityName}`;
-
-  const timelineByDay = tripDays.map(day => ({
-    day,
-    locs: locationsWithDays.filter(l => l.day === day),
-  })).filter(d => d.locs.length > 0);
-
-  const googleMapsUrl = () => {
-    const locs = filteredLocations.filter(l => l.lat && l.lng);
-    if (locs.length === 0) return "#";
-    if (locs.length === 1) return `https://www.google.com/maps/search/?api=1&query=${locs[0].lat},${locs[0].lng}`;
-    const waypoints = locs.slice(1, -1).map(l => `${l.lat},${l.lng}`).join("|");
-    const origin = `${locs[0].lat},${locs[0].lng}`;
-    const destination = `${locs[locs.length-1].lat},${locs[locs.length-1].lng}`;
-    const mode = travelMode === "driving" ? "driving" : travelMode === "walking" ? "walking" : "transit";
-    return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints?`&waypoints=${waypoints}`:""}&travelmode=${mode}`;
+  const saveApiKey = () => {
+    localStorage.setItem("oai_key", apiKeyInput);
+    setApiKey(apiKeyInput);
+    setApiSaved(true);
+    setTimeout(() => setApiSaved(false), 2000);
   };
 
   return (
-    <div style={{ minHeight:"100vh", background: th.bg, color: th.text, fontFamily:"system-ui,sans-serif", transition:"background 0.3s, color 0.3s" }}>
-      {/* Header */}
-      <div style={{ position:"sticky", top:0, zIndex:50, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", background: th.navBg, borderBottom:`1px solid ${th.border}`, backdropFilter:"blur(12px)" }}>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🗺️</span>
-          <span style={{ fontWeight:900, fontSize:"1.1rem", color: th.accent, fontFamily:"system-ui,sans-serif" }}>{t.appName}</span>
-          <span style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:999, background: th.tag, color: th.textFaint, border:`1px solid ${th.border}` }}>v3.2</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setLang(l => l==="de"?"en":"de")} className="text-xs px-2 py-1 rounded-lg" style={{ background:"#222", color:"#888", border:"1px solid #444" }}>
-            {lang==="de" ? "🇩🇪 DE" : "🇬🇧 EN"}
+    <div style={{ minHeight:"100vh", background:th.bg, transition:"background 0.3s" }}>
+      {/* NAVBAR */}
+      <div style={{
+        position:"sticky", top:0, zIndex:100,
+        background:th.navBg, backdropFilter:"blur(12px)",
+        borderBottom:`1px solid ${th.border}`,
+        padding:"0 16px", height:52,
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+      }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:"1.3rem" }}>{city.emoji}</span>
+          <span style={{ fontWeight:900, fontSize:"0.95rem", color:th.accent }}>{t.appName}</span>
+          <button onClick={() => setShowCityPicker(v => !v)}
+            style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
+              background:th.accentLight, color:th.accent, border:`1px solid ${th.border}`,
+              cursor:"pointer", fontWeight:700 }}>
+            {city.country} {city.name}
           </button>
-          <button onClick={() => setShowApiSection(v => !v)} className="text-xs px-2 py-1 rounded-lg" style={{ background: apiKey?"#1a2a1a":"#2a1a1a", color: apiKey?"#27ae60":"#e74c3c", border:`1px solid ${apiKey?"#2d5a2d":"#7a2d2d"}` }}>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <button onClick={() => setShowApiPanel(v => !v)}
+            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8,
+              background:apiKey?th.successBg:th.warningBg, color:apiKey?th.success:th.warning,
+              border:`1px solid ${apiKey?th.success:th.warning}22`, cursor:"pointer" }}>
             {apiKey ? t.apiActive : t.apiMissing}
+          </button>
+          <button onClick={toggleTheme} className="theme-toggle-btn"
+            style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${th.border}`,
+              background:th.card, color:th.text, cursor:"pointer", fontSize:"1rem",
+              display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {mode === "dark" ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-
-        {/* API Key Section */}
-        {showApiSection && (
-          <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
-            <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.apiTitle}</h2>
-            <p className="text-xs" style={{ color:"#888" }}>{t.apiHint}</p>
-            <div className="flex gap-2">
-              <input value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} placeholder="sk-" type="password"
-                className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
-                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
-              <button onClick={handleSaveApiKey} className="px-3 py-2 rounded-xl text-sm font-bold" style={{ background:"#e74c3c", color:"white" }}>
-                {apiKeySaved ? t.apiSaved : t.apiSave}
-              </button>
+      {/* CITY PICKER */}
+      {showCityPicker && (
+        <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center" }}
+          onClick={() => setShowCityPicker(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:20,
+              padding:20, width:"min(400px,92vw)", maxHeight:"80vh", overflowY:"auto",
+              boxShadow:th.shadow }}>
+            <h3 style={{ color:th.accent, fontWeight:900, margin:"0 0 14px", fontSize:"1rem" }}>{t.selectCity}</h3>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              {CITY_ORDER.map(cid => {
+                const c = allCities[cid];
+                if (!c) return null;
+                const active = cid === cityId;
+                return (
+                  <button key={cid} onClick={() => { setCityId(cid); setShowCityPicker(false); }}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
+                      borderRadius:12, border:`1px solid ${active?th.accent:th.border}`,
+                      background:active?th.accentLight:th.card, cursor:"pointer",
+                      color:active?th.accent:th.text, fontWeight:active?800:500, fontSize:"0.82rem" }}>
+                    <span style={{ fontSize:"1.2rem" }}>{c.emoji}</span>
+                    <span>{c.name}</span>
+                  </button>
+                );
+              })}
+              {Object.keys(customCities).map(cid => {
+                const c = customCities[cid];
+                const active = cid === cityId;
+                return (
+                  <button key={cid} onClick={() => { setCityId(cid); setShowCityPicker(false); }}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
+                      borderRadius:12, border:`1px solid ${active?th.accent:th.border}`,
+                      background:active?th.accentLight:th.card, cursor:"pointer",
+                      color:active?th.accent:th.text, fontWeight:active?800:500, fontSize:"0.82rem" }}>
+                    <span style={{ fontSize:"1.2rem" }}>{c.emoji}</span>
+                    <span>{c.name}</span>
+                  </button>
+                );
+              })}
             </div>
+            <div style={{ marginTop:12 }}>
+              {!addingCustom ? (
+                <button onClick={() => setAddingCustom(true)}
+                  style={{ width:"100%", padding:"8px", borderRadius:10, border:`1px dashed ${th.border}`,
+                    background:"transparent", color:th.textMuted, cursor:"pointer", fontSize:"0.8rem" }}>
+                  {t.customCity}
+                </button>
+              ) : (
+                <div style={{ display:"flex", gap:8 }}>
+                  <input value={customCityName} onChange={e => setCustomCityName(e.target.value)}
+                    placeholder={t.customCityPlaceholder} onKeyDown={e => e.key==="Enter" && addCustomCity()}
+                    style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
+                      background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+                  <button onClick={addCustomCity} disabled={geocoding}
+                    style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
+                      border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
+                    {geocoding ? "..." : t.customCityAdd}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* API PANEL */}
+      {showApiPanel && (
+        <div style={{ margin:"8px 16px", padding:"12px 16px", borderRadius:14,
+          background:th.card, border:`1px solid ${th.border}`, boxShadow:th.shadow }}>
+          <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.accent, marginBottom:8 }}>{t.apiTitle}</div>
+          <div style={{ display:"flex", gap:8 }}>
+            <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)}
+              placeholder="sk-..." style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
+                background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+            <button onClick={saveApiKey} className="btn-primary"
+              style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
+                border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
+              {apiSaved ? t.apiSaved : t.apiSave}
+            </button>
             {apiKey && (
-              <button onClick={handleDeleteApiKey} style={{ fontSize:"0.75rem", color: th.textMuted, background:"none", border:"none", cursor:"pointer" }}>{t.apiDelete}</button>
+              <button onClick={() => { localStorage.removeItem("oai_key"); setApiKey(""); setApiKeyInput(""); }}
+                style={{ padding:"6px 10px", borderRadius:10, background:th.warningBg, color:th.warning,
+                  border:`1px solid ${th.warning}22`, cursor:"pointer", fontSize:"0.8rem" }}>
+                {t.apiDelete}
+              </button>
             )}
           </div>
+          <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:6 }}>{t.apiHint}</div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <div style={{ maxWidth:700, margin:"0 auto", padding:"16px", display:"flex", flexDirection:"column", gap:14 }}>
+
+        {/* CLOSED WARNINGS */}
+        {closedWarnings.length > 0 && (
+          <div style={{ padding:"10px 14px", borderRadius:12, background:th.warningBg,
+            border:`1px solid ${th.warning}44`, color:th.warning, fontSize:"0.8rem", fontWeight:600 }}>
+            ⚠️ {t.warningTitle}: {closedWarnings.map(l => l.name).join(", ")} {t.warningClosed}
+            <div style={{ fontWeight:400, fontSize:"0.72rem", marginTop:4, color:th.warning }}>{t.warningHint}</div>
+          </div>
         )}
 
-        {/* Warnings */}
-        {warnings.length > 0 && (
-          <div className="rounded-2xl p-4" style={{ background:"#2a1a1a", border:"1px solid #7a2d2d" }}>
-            <p className="font-bold text-sm mb-2" style={{ color:"#e74c3c" }}>⚠️ {t.warningTitle}</p>
-            {warnings.map(w => (
-              <p key={w} className="text-xs" style={{ color:"#e74c3c" }}>• {w} {t.warningClosed}</p>
-            ))}
-            <p className="text-xs mt-1" style={{ color:"#888" }}>{t.warningHint}</p>
-          </div>
-        )}
-
-        {/* City Picker */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
-          <div className="flex items-center justify-between">
-            <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.currentCity}: {displayCityName}</h2>
-            <button onClick={() => setShowCityPicker(v => !v)} className="text-xs px-3 py-1 rounded-lg font-bold" style={{ background:"#1a1a1a", color:"#e74c3c", border:"1px solid #e74c3c" }}>
-              {t.switchCity}
-            </button>
-          </div>
-          {showCityPicker && (
-            <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2">
-                {CITY_ORDER.map(id => (
-                  <button key={id} onClick={() => { setCityId(id); setShowCityPicker(false); setLocations([]); setLocationDays({}); setLocationNotes({}); }}
-                    className="rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center gap-1 transition-all"
-                    style={{ background: cityId===id ? th.accentLight : th.card, border: cityId===id ? `2px solid ${th.accent}` : `1px solid ${th.border}`, color: cityId===id ? th.accent : th.textMuted, borderRadius:10, padding:"8px 4px", fontSize:"0.75rem", fontWeight:700, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
-                    <span className="text-xl">{CITIES[id].emoji}</span>
-                    <span>{CITIES[id].name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <input value={customCityInput} onChange={e => setCustomCityInput(e.target.value)} placeholder={t.customCityPlaceholder}
-                  className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
-                  style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
-                <button onClick={handleAddCustomCity} className="px-3 py-2 rounded-xl text-sm font-bold" style={{ background:"#e74c3c", color:"white" }}>
-                  {t.customCityAdd}
-                </button>
-              </div>
+        {/* TRIP SETTINGS */}
+        <CollapsibleSection title="🗓 Reisezeitraum" defaultOpen={true}>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>Startdatum</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                style={{ fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
+                  background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
-          )}
-        </div>
-
-        {/* Trip Settings */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
-          <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>📅 Reisezeitraum</h2>
-          <div className="flex gap-3 flex-wrap">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs" style={{ color:"#888" }}>Startdatum</label>
-              <input type="date" value={tripStartDate} onChange={e => setTripStartDate(e.target.value)}
-                className="rounded-xl px-3 py-2 text-sm focus:outline-none"
-                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>Reisetage</label>
+              <input type="number" min={1} max={30} value={numDays} onChange={e => setNumDays(Math.max(1,parseInt(e.target.value)||1))}
+                style={{ width:70, fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
+                  background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs" style={{ color:"#888" }}>Anzahl Tage</label>
-              <input type="number" min={1} max={14} value={tripNumDays} onChange={e => setTripNumDays(Number(e.target.value))}
-                className="rounded-xl px-3 py-2 text-sm focus:outline-none w-20"
-                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
+            <div style={{ fontSize:"0.72rem", color:th.textMuted, alignSelf:"flex-end", paddingBottom:6 }}>
+              {tripDays.length} Tage · {getDayLabel(tripDays[0])} – {getDayLabel(tripDays[tripDays.length-1])}
             </div>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {tripDays.map(d => (
-              <span key={d} style={{ fontSize:"0.72rem", padding:"2px 8px", borderRadius:999, background: th.tag, color: th.accent, border:`1px solid ${th.border}` }}>
-                {formatDateLabel(d, lang)}
-              </span>
-            ))}
-          </div>
-        </div>
+        </CollapsibleSection>
 
-        {/* Add Place */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ background:"#222", border:"1px solid #444" }}>
-          <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>➕ {t.addPlace}</h2>
-          <div className="flex gap-2">
-            <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
-              onKeyDown={e => e.key==="Enter" && handleAnalyze()}
-              placeholder={t.linkPlaceholder}
-              className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
-              style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
-            <button onClick={handleAnalyze} disabled={loading}
-              className="px-4 py-2 rounded-xl text-sm font-bold"
-              style={{ background: loading?"#444":"#e74c3c", color:"white", minWidth:80 }}>
-              {loading ? t.analyzing : t.analyze}
-            </button>
-          </div>
-          {error && <p style={{ fontSize:"0.75rem", color: th.warning, marginTop:4 }}>{error}</p>}
-          {city && (
-            <div>
-              <p style={{ fontSize:"0.75rem", marginBottom:8, color: th.textFaint }}>{t.demo}</p>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {city.demoLinks.map((link, i) => (
-                  <button key={i} onClick={() => setLinkInput(link)}
-                    className="text-xs px-2 py-1 rounded-lg"
-                    style={{ background:"#1a1a1a", color:"#5dade2", border:"1px solid #2d5a7a" }}>
-                    Demo {i+1}
-                  </button>
-                ))}
-              </div>
-              <button onClick={handleAddDemo} className="text-xs px-3 py-1.5 rounded-lg font-bold w-full"
-                style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>
-                ⚡ Alle Demo-Orte laden
+        {/* ADD PLACE */}
+        <CollapsibleSection title={`➕ ${t.addPlace}`} defaultOpen={true}>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <div style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:700, letterSpacing:"0.05em" }}>{t.insertLink}</div>
+            <div style={{ display:"flex", gap:8 }}>
+              <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && analyzeLink()}
+                placeholder={t.linkPlaceholder}
+                style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:12,
+                  background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
+                  outline:"none" }} />
+              <button onClick={analyzeLink} disabled={analyzing} className="btn-primary"
+                style={{ padding:"8px 16px", borderRadius:12, background:th.accent, color:"white",
+                  border:"none", cursor:"pointer", fontSize:"0.82rem", fontWeight:800,
+                  display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+                {analyzing ? <><Spinner size={14} color="white" /> {t.analyzing}</> : t.analyze}
               </button>
             </div>
-          )}
-        </div>
-
-        {/* Locations */}
-        {locations.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>
-                📍 {t.myPlaces} <span style={{ fontSize:"0.75rem", fontWeight:400, color: th.textFaint }}>({locations.length})</span>
-              </h2>
-              <div className="flex gap-1 flex-wrap">
-                <button onClick={() => setFilterDay("all")}
-                  className="text-xs px-2 py-1 rounded-lg font-medium"
-                  style={{ background: filterDay==="all"?"#e74c3c":"#222", color: filterDay==="all"?"white":"#888", border:"1px solid #444" }}>
-                  {t.allDays}
-                </button>
-                {tripDays.map(d => (
-                  <button key={d} onClick={() => setFilterDay(d)}
-                    className="text-xs px-2 py-1 rounded-lg font-medium"
-                    style={{ fontSize:"0.75rem", padding:"4px 10px", borderRadius:8, fontWeight:500, background: filterDay===d ? th.accent : th.tag, color: filterDay===d ? "#fff" : th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer" }}>
-                    {formatDateLabel(d, lang)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p style={{ fontSize:"0.72rem", color: th.textFaint }}>{t.dragHint}</p>
-            <div className="space-y-2">
-              {filteredLocations.map((loc, i) => (
-                <div key={loc.id}>
-                  <LocationCard
-                    loc={loc} day={loc.day} index={i} city={city} t={t} getDayLabel={getDayLabel}
-                    availableDays={tripDays} onDayChange={handleDayChange} onNoteChange={handleNoteChange}
-                    onRemove={() => handleRemove(loc.id)}
-                    isDragging={dragIdx === locations.indexOf(locations.find(l => l.id===loc.id))}
-                    onDragStart={() => handleDragStart(locations.indexOf(locations.find(l => l.id===loc.id)))}
-                    onDragOver={(e) => handleDragOver(e, locations.indexOf(locations.find(l => l.id===loc.id)))}
-                    onDrop={handleDrop}
-                  />
-                  {i < filteredLocations.length-1 && <TravelTimeBadge from={filteredLocations[i]} to={filteredLocations[i+1]} />}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Tabs */}
-        {locations.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex gap-2 rounded-xl p-1" style={{ background: th.card, border:`1px solid ${th.border}`, borderRadius:12, padding:4, display:"flex", gap:4 }}>
-              {["route","compare","timeline"].map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                  style={{ flex:1, padding:"8px", borderRadius:8, fontSize:"0.875rem", fontWeight:700, background: activeTab===tab ? th.accent : "transparent", color: activeTab===tab ? "#fff" : th.textMuted, border:"none", cursor:"pointer" }}>
-                  {tab==="route" ? t.route : tab==="compare" ? "Vergleich" : t.timeline}
-                </button>
-              ))}
-            </div>
-
-            {/* Route Tab */}
-            {activeTab==="route" && (
-              <div className="space-y-3">
-                <div className="flex gap-2 flex-wrap">
-                  {["walking","transit","driving"].map(mode => (
-                    <button key={mode} onClick={() => setTravelMode(mode)}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                      style={{ fontSize:"0.75rem", padding:"6px 12px", borderRadius:8, fontWeight:500, background: travelMode===mode ? th.accent : th.tag, color: travelMode===mode ? "#fff" : th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer" }}>
-                      {t[mode]}
+            {error && <div style={{ fontSize:"0.75rem", color:th.warning }}>{error}</div>}
+            {skeletonVisible && <SkeletonCard th={th} />}
+            {city.sampleLocations?.length > 0 && (
+              <div>
+                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:6 }}>{t.demo}</div>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                  {city.sampleLocations.map((loc, i) => (
+                    <button key={i} onClick={() => addDemo(i)}
+                      style={{ fontSize:"0.72rem", padding:"4px 10px", borderRadius:20,
+                        background:th.tag, color:th.tagText, border:`1px solid ${th.border}`,
+                        cursor:"pointer" }}>
+                      {loc.icon} {loc.name}
                     </button>
                   ))}
                 </div>
-                <div ref={mapRef} style={{ width:"100%", borderRadius:16, overflow:"hidden", height:320, background: th.card }} />
-                {filteredLocations.length >= 2 ? (
-                  <a href={googleMapsUrl()} target="_blank" rel="noopener noreferrer"
-                    className="block w-full py-3 rounded-xl text-center text-sm font-bold"
-                    style={{ background:"#e74c3c", color:"white" }}>
-                    🗺️ {t.openInMaps}
-                  </a>
-                ) : (
-                  <p className="text-xs text-center" style={{ color:"#666" }}>{t.noRouteHint}
-                  )}
-                  <button onClick={handleSaveMapImage} className="w-full py-2 rounded-xl text-sm font-bold mt-2" style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>📥 Karte als Bild speichern</button>
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Timeline Tab */}
-            {activeTab==="compare" && (()=>{
-                const locs=filteredLocations.map(l=>l.loc||l);
-                if(locs.length<2)return <p style={{fontSize:"0.75rem",textAlign:"center",padding:"16px 0",color:th.textFaint}}>{t.noRouteHint}</p>;
-                const shortestRoute=(()=>{const rem=[...locs];const res=[rem.shift()];while(rem.length>0){const last=res[res.length-1];let minD=Infinity,minI=0;rem.forEach((l,i)=>{const d=haversineDistance(last.lat||0,last.lng||0,l.lat||0,l.lng||0);if(d<minD){minD=d;minI=i;}});res.push(rem.splice(minI,1)[0]);}return res;})();
-                const cheapestRoute=[...locs].sort((a,b)=>{const ca=getEntryCost(a.name,city);const cb=getEntryCost(b.name,city);return(ca?.min??999)-(cb?.min??999);});
-                const calcDist=r=>r.reduce((s,l,i)=>i===0?s:s+haversineDistance(r[i-1].lat||0,r[i-1].lng||0,l.lat||0,l.lng||0),0);
-                const calcCost=r=>r.reduce((s,l)=>{const c=getEntryCost(l.name,city);return s+(c?.min??0);},0);
-                const RouteCard=({title,color,badge,route})=>(<div style={{background:th.card,border:`2px solid ${color}`,borderRadius:16,padding:16,marginBottom:8}}><div className="flex items-center justify-between"><span style={{fontWeight:900,fontSize:"0.875rem",color}}>{title}</span><span style={{fontSize:"0.72rem",padding:"2px 8px",borderRadius:999,fontWeight:700,background:color+"22",color}}>{badge}</span></div><div className="flex gap-4"><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Distanz</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.info}}>{calcDist(route).toFixed(1)} km</p></div><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Eintritt</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.success}}>ab {calcCost(route)} EUR</p></div><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Stopps</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.gold}}>{route.length}</p></div></div><div className="space-y-1.5">{route.map((l,i)=>{const c=getEntryCost(l.name,city);return(<div key={l.id||i} className="flex items-center gap-2"><span style={{width:20,height:20,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem",fontWeight:700,flexShrink:0,background:color,color:"#fff"}}>{i+1}</span><span style={{fontSize:"0.75rem",flex:1,color:th.text}}>{l.icon} {l.name}</span>{c&&<span style={{fontSize:"0.72rem",color:th.success}}>{c.min===0?"Frei":c.currency+c.min}</span>}</div>);})}</div></div>);
-                const dSaved=Math.abs(calcDist(cheapestRoute)-calcDist(shortestRoute)).toFixed(1);
-                const cSaved=Math.abs(calcCost(shortestRoute)-calcCost(cheapestRoute)).toFixed(0);
-                return(<div className="space-y-3"><p className="text-xs font-semibold" style={{color:"#888"}}>Vergleich fuer {locs.length} Orte:</p><RouteCard title="Kuerzeste Route" color="#5dade2" badge="Weniger laufen" route={shortestRoute}/><RouteCard title="Guenstigste Route" color="#27ae60" badge="Weniger ausgeben" route={cheapestRoute}/><div style={{borderRadius:10,padding:12,background:th.goldBg,border:`1px solid ${th.border}`}}><p style={{fontSize:"0.75rem",fontWeight:700,color:th.gold}}>Tipp</p><p style={{fontSize:"0.75rem",marginTop:4,color:th.textMuted}}>Kuerzeste Route spart {dSaved} km. Guenstigste Route spart {cSaved} EUR Eintritt.</p></div></div>);
-              })()}
-
-              {activeTab==="timeline" && (
-              <div className="space-y-4">
-                {timelineByDay.length === 0 ? (
-                  <p style={{ fontSize:"0.75rem", textAlign:"center", color: th.textFaint }}>Keine Orte geplant.</p>
-                ) : timelineByDay.map(({ day, locs }) => (
-                  <div key={day} className="space-y-2">
-                    <h3 style={{ fontWeight:700, fontSize:"0.875rem", color: th.accent }}>
-                      📅 {formatDateLabel(day, lang)}
-                    </h3>
-                    {locs.map((loc, i) => {
-                      const startMin = 9*60 + locs.slice(0,i).reduce((s,l) => {
-                        const dur = parseFloat((l.duration||"1").replace(",","."));
-                        return s + (isNaN(dur)?60:dur*60) + 20;
-                      }, 0);
-                      const h = Math.floor(startMin/60);
-                      const m = startMin%60;
-                      const cost = getEntryCost(loc.name, city);
-                      return (
-                        <div key={loc.id} className="flex gap-3">
-                          <div className="flex flex-col items-center">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{ background:"#e74c3c", color:"white" }}>{i+1}</div>
-                            {i < locs.length-1 && <div style={{ width:2, flex:1, margin:"4px 0", background: th.border }} />}
-                          </div>
-                          <div style={{ flex:1, borderRadius:10, padding:12, marginBottom:8, background: th.card, border:`1px solid ${th.border}` }}>
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p style={{ fontWeight:700, fontSize:"0.875rem", color: th.text }}>{loc.icon} {loc.name}</p>
-                                <p style={{ fontSize:"0.72rem", color: th.textMuted }}>{String(h).padStart(2,"0")}:{String(m).padStart(2,"0")} Uhr · ⏱ {loc.duration}</p>
-                              </div>
-                              {cost && (
-                                <span style={{ fontSize:"0.72rem", padding:"2px 8px", borderRadius:999, fontWeight:700, background: th.successBg, color: th.success, border:`1px solid ${th.success}` }}>
-                                  {cost.min===0 ? "Frei" : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`}
-                                </span>
-                              )}
-                            </div>
-                            {loc.note && (
-                              <p style={{ fontSize:"0.72rem", marginTop:4, fontStyle:"italic", color: th.success }}>📝 {loc.note}</p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
               </div>
             )}
           </div>
-        )}
+        </CollapsibleSection>
 
-        {/* Budget */}
-        <CollapsibleSection
-          title={`💰 ${t.budgetTitle}`}
+        {/* LOCATIONS */}
+        <CollapsibleSection title={`📍 ${t.myPlaces}`} badge={locations.length} defaultOpen={true}
           rightContent={
-            <span className="text-xs font-bold" style={{ color:"#27ae60" }}>
-              {totalBudgetMin === totalBudgetMax
-                ? `€${totalBudgetMin.toFixed(2)}`
-                : `€${totalBudgetMin.toFixed(2)}–€${totalBudgetMax.toFixed(2)}`}
-            </span>
-          }>
-          <div className="space-y-3">
-            {locationsWithDays.length === 0 ? (
-              <p className="text-xs" style={{ color:"#666" }}>Noch keine Orte hinzugefügt.</p>
-            ) : (
-              <div className="space-y-2">
-                {locationsWithDays.map(loc => {
-                  const cost = getEntryCost(loc.name, city);
-                  return (
-                    <div key={loc.id} className="flex items-center justify-between">
-                      <span style={{ fontSize:"0.875rem", color: th.text }}>{loc.icon} {loc.name}</span>
-                      <span style={{ fontSize:"0.875rem", fontWeight:700, color: th.success }}>
-                        {cost ? (cost.min===0 ? t.free : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`) : "?"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color:"#888" }}>{t.budgetExtras}</span>
-              <input type="number" min={0} value={budgetExtras} onChange={e => setBudgetExtras(Number(e.target.value))}
-                className="w-24 rounded-lg px-2 py-1 text-xs focus:outline-none"
-                style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
-            </div>
-            <div className="rounded-xl p-3" style={{ background:"#1a2a1a", border:"1px solid #2d5a2d" }}>
-              <p className="font-bold text-sm" style={{ color:"#27ae60" }}>
-                {t.budgetTotal}: {totalBudgetMin===totalBudgetMax ? `€${totalBudgetMin.toFixed(2)}` : `€${totalBudgetMin.toFixed(2)} – €${totalBudgetMax.toFixed(2)}`}
-              </p>
-              <p style={{ fontSize:"0.72rem", marginTop:4, color: th.textFaint }}>{t.budgetNote}</p>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Share */}
-        <CollapsibleSection title={`🤝 ${t.share}`}>
-          <div className="space-y-3">
-            <button onClick={(e) => { e.stopPropagation(); handleCreateShareLink(); }}
-              className="w-full py-2 rounded-xl text-sm font-bold"
-              style={{ background:"#e74c3c", color:"white" }}>
-              {t.createLink}
-            </button>
-            {shareUrl && (
-              <div className="space-y-2">
-                <p style={{ fontSize:"0.75rem", color: th.textMuted }}>{t.shareHint}</p>
-                <div className="flex gap-2">
-                  <input readOnly value={shareUrl} className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
-                    style={{ background:"#1a1a1a", border:"1px solid #444", color:"#aaa" }} />
-                  <button onClick={handleCopy} className="px-3 py-2 rounded-xl text-xs font-bold"
-                    style={{ background:"#27ae60", color:"white" }}>
-                    {copied ? t.copied : t.copy}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </CollapsibleSection>
-
-        {/* Save & Load Plans */}
-        <CollapsibleSection title={`💾 ${t.savePlans}`} badge={savedPlans.length}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
-                  className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none"
-                  style={{ background:"#1a1a1a", border:"1px solid #444", color:"#eee" }} />
-                <button onClick={handleSavePlan} className="px-4 py-2 rounded-xl text-sm font-bold"
-                  style={{ background: locations.length===0?"#444":"#e74c3c", color:"white" }}
-                  disabled={locations.length===0}>
-                  {saveFeedback ? t.saved : t.save}
+            <div style={{ display:"flex", gap:6 }}>
+              <button onClick={() => setFilterDay(null)}
+                className="tab-btn"
+                style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
+                  background:!filterDay?th.accent:"transparent",
+                  color:!filterDay?"white":th.textMuted,
+                  border:`1px solid ${!filterDay?th.accent:th.border}`, cursor:"pointer" }}>
+                {t.allDays}
+              </button>
+              {tripDays.map(d => (
+                <button key={d} onClick={() => setFilterDay(d === filterDay ? null : d)}
+                  className="tab-btn"
+                  style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
+                    background:filterDay===d?th.accent:"transparent",
+                    color:filterDay===d?"white":th.textMuted,
+                    border:`1px solid ${filterDay===d?th.accent:th.border}`, cursor:"pointer",
+                    whiteSpace:"nowrap" }}>
+                  {getDayLabel(d)}
                 </button>
-              </div>
-              {locations.length===0 && <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.addFirst}</p>}
-            </div>
-            <div className="space-y-2">
-              <h3 style={{ fontSize:"0.875rem", fontWeight:700, color: th.textMuted }}>{t.savedPlans}</h3>
-              {savedPlans.length===0 ? (
-                <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.noPlans}</p>
-              ) : savedPlans.map(plan => (
-                <div key={plan.id} className="flex items-center justify-between rounded-xl px-3 py-2"
-                  style={{ background: th.card, border:`1px solid ${th.border}`, borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                    <div>
-                      <p style={{ fontSize:"0.875rem", fontWeight:700, color: th.text }}>{plan.name}</p>
-                      <p style={{ fontSize:"0.72rem", color: th.textFaint }}>{CITIES[plan.cityId]?.name || plan.cityId} · {plan.locations?.length || 0} Orte</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleLoadPlan(plan)} className="text-xs px-2 py-1 rounded-lg font-bold"
-                      style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>{t.load}</button>
-                    <button onClick={() => handleDeletePlan(plan.id)} className="text-xs px-2 py-1 rounded-lg"
-                      style={{ background:"#2a1a1a", color:"#e74c3c", border:"1px solid #7a2d2d" }}>✕</button>
-                  </div>
-                </div>
               ))}
             </div>
+          }>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {filteredLocs.length === 0 ? (
+              <div style={{ color:th.textFaint, fontSize:"0.8rem", textAlign:"center", padding:"16px 0" }}>{t.addFirst}</div>
+            ) : filteredLocs.map((loc, i) => (
+              <div key={loc.id}>
+                <LocationCard
+                  loc={loc} day={loc._day} index={i}
+                  onRemove={removeLocation}
+                  onDragStart={() => handleDragStart(i)}
+                  onDragOver={(e) => handleDragOver(e, i)}
+                  onDrop={() => handleDrop(i)}
+                  isDragging={dragIdx === i}
+                  city={city}
+                  onDayChange={handleDayChange}
+                  onNoteChange={handleNoteChange}
+                  availableDays={tripDays}
+                  t={t}
+                  getDayLabel={getDayLabel}
+                />
+                {i < filteredLocs.length - 1 && (
+                  <TravelTimeBadge from={loc} to={filteredLocs[i+1]} />
+                )}
+              </div>
+            ))}
           </div>
         </CollapsibleSection>
 
-        {/* Footer */}
-        <div style={{ textAlign:"center", padding:"24px 0" }}>
-            <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.footerText}</p>
+        {/* MAP */}
+        <CollapsibleSection title="🗺 Karte" defaultOpen={true}>
+          <MapView locations={filteredLocs} city={city} />
+        </CollapsibleSection>
+
+        {/* ROUTE / TIMELINE */}
+        <CollapsibleSection title="📅 Route & Timeline" defaultOpen={false}
+          rightContent={
+            <div style={{ display:"flex", gap:4 }}>
+              {["route","timeline"].map(tab => (
+                <button key={tab} onClick={() => setViewTab(tab)} className="tab-btn"
+                  style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
+                    background:viewTab===tab?th.accent:"transparent",
+                    color:viewTab===tab?"white":th.textMuted,
+                    border:`1px solid ${viewTab===tab?th.accent:th.border}`, cursor:"pointer" }}>
+                  {tab === "route" ? t.route : t.timeline}
+                </button>
+              ))}
+            </div>
+          }>
+          <div>
+            <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+              <span style={{ fontSize:"0.72rem", color:th.textMuted, alignSelf:"center" }}>{t.travelMode}:</span>
+              {[["walking",t.walking],["transit",t.transit],["driving",t.driving]].map(([mode, label]) => (
+                <button key={mode} onClick={() => setTravelMode(mode)} className="tab-btn"
+                  style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
+                    background:travelMode===mode?th.accent:"transparent",
+                    color:travelMode===mode?"white":th.textMuted,
+                    border:`1px solid ${travelMode===mode?th.accent:th.border}`, cursor:"pointer" }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {viewTab === "route" ? (
+              <RouteView locations={filteredLocs} city={city} travelMode={travelMode} t={t} />
+            ) : (
+              <TimelineView locations={filteredLocs} day={filterDay} city={city} travelMode={travelMode} t={t} />
+            )}
+          </div>
+        </CollapsibleSection>
+
+        {/* BUDGET */}
+        <CollapsibleSection title={`💰 ${t.budgetTitle}`} defaultOpen={false}>
+          <BudgetTracker locations={locations} city={city} t={t} />
+        </CollapsibleSection>
+
+        {/* SHARE */}
+        <CollapsibleSection title={`${t.share}`} defaultOpen={false}>
+          <SharePanel locations={locations} cityId={cityId} t={t} />
+        </CollapsibleSection>
+
+        {/* SAVED PLANS */}
+        <CollapsibleSection title={`💾 ${t.savedPlans}`} defaultOpen={false}>
+          <SavedPlans
+            locations={locations} cityId={cityId}
+            tripDays={tripDays} locationDays={locationDays} locationNotes={locationNotes}
+            t={t}
+          />
+        </CollapsibleSection>
+
+        {/* FOOTER */}
+        <div style={{ textAlign:"center", padding:"16px 0 8px",
+          fontSize:"0.72rem", color:th.textFaint, borderTop:`1px solid ${th.border}` }}>
+          {t.footerText} · {city.emoji} {city.name} · {mode === "dark" ? "🌙" : "☀️"}
         </div>
       </div>
     </div>
   );
 }
-
