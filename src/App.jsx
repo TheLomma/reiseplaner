@@ -53,6 +53,14 @@ if (typeof window !== "undefined" && !document.getElementById("app-theme-styles"
     .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; }
     .btn-primary:hover { transform: translateY(-1px); }
     .btn-primary:active { transform: translateY(0); }
+    .marker-pop { animation: markerPop 0.4s ease both; }
+    @media print {
+      body { background: #fff !important; }
+      .no-print { display: none !important; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc !important; border-radius: 8px !important; padding: 10px !important; margin-bottom: 10px !important; background: #fff !important; color: #000 !important; }
+      .print-header { font-size: 1.4rem; font-weight: 900; margin-bottom: 4px; }
+      .print-meta { font-size: 0.8rem; color: #555; margin-bottom: 16px; }
+    }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { border-radius: 3px; }
@@ -523,7 +531,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.5",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.6",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -556,7 +564,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.5",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.6",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1068,6 +1076,59 @@ function TimelineView({ locations, day, city, travelMode, t }) {
   );
 }
 
+function PdfDownloadView({ locations, city, startDate, numDays, getDayLabel, lang, t, th }) {
+  function doDownload() {
+    const cityName = city ? city.name : "";
+    const cityEmoji = city ? city.emoji : "";
+    var rows = locations.map(function(loc, i) {
+      var dayLabel = loc._day ? getDayLabel(loc._day) : "";
+      return "<div style='display:flex;gap:12px;border:1px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:10px'>" +
+        "<div style='width:26px;height:26px;border-radius:50%;background:#6c63ff;color:#fff;font-weight:900;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0'>" + (i+1) + "</div>" +
+        "<div><div style='font-weight:700'>" + (loc.icon || "") + " " + loc.name + "</div>" +
+        "<div style='font-size:0.78rem;color:#666'>" + (loc.type || "") + (loc.area ? " - " + loc.area : "") + (loc.duration ? " - " + loc.duration : "") + "</div>" +
+        (dayLabel ? "<div style='font-size:0.72rem;color:#333'>" + dayLabel + "</div>" : "") +
+        (loc.note ? "<div style='font-size:0.72rem;font-style:italic;color:#555'>" + loc.note + "</div>" : "") +
+        "</div></div>";
+    }).join("");
+    var html = "<!DOCTYPE html><html lang='de'><head><meta charset='utf-8'><title>Reiseplan - " + cityName + "</title>" +
+      "<style>body{font-family:system-ui,sans-serif;padding:40px;max-width:680px;margin:0 auto;color:#111;background:#fff}" +
+      "h1{font-size:1.5rem;font-weight:900;margin:0 0 8px}p.meta{font-size:0.85rem;color:#555;margin:0 0 24px}" +
+      "footer{margin-top:28px;font-size:0.72rem;color:#aaa;border-top:1px solid #eee;padding-top:10px}" +
+      "@media print{body{padding:20px}}</style></head><body>" +
+      "<h1>" + cityEmoji + " " + cityName + " - Reiseplan</h1>" +
+      "<p class='meta'>" + startDate + " - " + numDays + " " + t.labelDaysSuffix + " - " + locations.length + " " + t.places + "</p>" +
+      rows + "<footer>Reiseplaner - " + cityName + " - " + startDate + "</footer></body></html>";
+    var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "Reiseplan-" + (cityName || "reise") + ".html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+      <p style={{ fontSize:"0.82rem", color:th.textMuted, margin:0 }}>
+        {lang === "de"
+          ? "Lade deinen Reiseplan als HTML-Datei herunter. Im Browser oeffnen, dann Strg+P zum Speichern als PDF."
+          : "Download your travel plan as HTML. Open in browser, then Ctrl+P to save as PDF."}
+      </p>
+      {locations.length === 0 ? (
+        <p style={{ fontSize:"0.78rem", color:th.warning }}>{t.addFirst}</p>
+      ) : (
+        <button className="btn-primary" onClick={doDownload}
+          style={{ padding:"12px 24px", borderRadius:12, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontSize:"0.95rem", fontWeight:800,
+            display:"inline-flex", alignItems:"center", gap:8, alignSelf:"flex-start" }}>
+          {lang === "de" ? "Reiseplan herunterladen (.html)" : "Download travel plan (.html)"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function BudgetTracker({ locations, city, t }) {
   const { th } = useTheme();
   const [extras, setExtras] = useState([{ label:"Hotel", amount:150 }, { label:"Essen", amount:80 }]);
@@ -1408,7 +1469,7 @@ export default function App() {
             style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${th.border}`,
               background:th.card, color:th.text, cursor:"pointer", fontSize:"1rem",
               display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {mode === "dark" ? "☀️" : "🌙"}
+            {mode === "dark" ? "🌙" : "☀️"}
           </button>
         </div>
       </div>
@@ -1632,17 +1693,17 @@ export default function App() {
           <MapView locations={filteredLocs} city={city} />
         </CollapsibleSection>
 
-        {/* ROUTE / TIMELINE */}
+        {/* ROUTE / TIMELINE / PDF */}
         <CollapsibleSection title={t.sectionRoute} defaultOpen={false}
           rightContent={
             <div style={{ display:"flex", gap:4 }}>
-              {["route","timeline"].map(tab => (
+              {["route","timeline","pdf"].map(tab => (
                 <button key={tab} onClick={() => setViewTab(tab)} className="tab-btn"
                   style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
                     background:viewTab===tab?th.accent:"transparent",
                     color:viewTab===tab?"white":th.textMuted,
                     border:`1px solid ${viewTab===tab?th.accent:th.border}`, cursor:"pointer" }}>
-                  {tab === "route" ? t.route : t.timeline}
+                  {tab === "route" ? t.route : tab === "timeline" ? t.timeline : t.pdf}
                 </button>
               ))}
             </div>
@@ -1661,10 +1722,52 @@ export default function App() {
               ))}
             </div>
             {viewTab === "route" ? (
-              <RouteView locations={filteredLocs} city={city} travelMode={travelMode} t={t} />
-            ) : (
-              <TimelineView locations={filteredLocs} day={filterDay} city={city} travelMode={travelMode} t={t} />
-            )}
+                <RouteView locations={filteredLocs} city={city} travelMode={travelMode} t={t} />
+              ) : viewTab === "timeline" ? (
+                <TimelineView locations={filteredLocs} day={filterDay} city={city} travelMode={travelMode} t={t} />
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                  <p style={{ fontSize:"0.82rem", color:th.textMuted }}>
+                    {lang==="de" ? "Lädt deinen Reiseplan als HTML-Datei herunter." : "Downloads your travel plan as HTML file."}
+                  </p>
+                  <button className="btn-primary" onClick={() => {
+                    const rows = locations.map((loc,i) => [
+                      '<div style="display:flex;gap:12px;border:1px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:10px">',
+                      '<div style="width:26px;height:26px;border-radius:50%;background:#6c63ff;color:#fff;font-weight:900;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i+1) + '</div>',
+                      '<div><div style="font-weight:700">' + (loc.icon||'') + ' ' + loc.name + '</div>',
+                      '<div style="font-size:0.78rem;color:#666">' + (loc.type||'') + '</div>',
+                      (loc._day ? '<div style="font-size:0.72rem">' + getDayLabel(loc._day) + '</div>' : ''),
+                      '</div></div>'
+                    ].join(''));
+                    const cityName = city ? city.name : '';
+                    const cityEmoji = city ? city.emoji : '';
+                    const html = [
+                      '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">',
+                      '<title>Reiseplan</title>',
+                      '<style>body{font-family:system-ui,sans-serif;padding:40px;max-width:680px;margin:0 auto;color:#111}',
+                      'h1{font-size:1.5rem;font-weight:900;margin:0 0 8px}',
+                      'p.meta{font-size:0.85rem;color:#555;margin:0 0 24px}</style></head><body>',
+                      '<h1>' + cityEmoji + ' ' + cityName + ' \u2013 Reiseplan</h1>',
+                      '<p class="meta">' + startDate + ' \u00b7 ' + numDays + ' ' + t.labelDaysSuffix + ' \u00b7 ' + locations.length + ' ' + t.places + '</p>',
+                      rows.join(''),
+                      '</body></html>'
+                    ].join('');
+                    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Reiseplan-' + cityName + '.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }} style={{ padding:"12px 24px", borderRadius:12, background:th.accent, color:"white",
+                    border:"none", cursor:"pointer", fontSize:"0.95rem", fontWeight:800,
+                    display:"inline-flex", alignItems:"center", gap:8 }}>
+                    💾 {lang==="de" ? "Reiseplan herunterladen (.html)" : "Download travel plan (.html)"}
+                  </button>
+                </div>
+              )}
           </div>
         </CollapsibleSection>
 
@@ -1699,7 +1802,19 @@ export default function App() {
         </CollapsibleSection>
 
         {/* FOOTER */}
-        <div style={{ textAlign:"center", padding:"16px 0 8px",
+        <div id="pdf-print-area" style={{ display:"none", fontFamily:"system-ui,sans-serif", padding:24, color:"#000" }}>
+            <h1 style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:4 }}>{city?.emoji} {city?.name} – Reiseplan</h1>
+            <p style={{ fontSize:"0.85rem", color:"#555", marginBottom:16 }}>{startDate} · {numDays} {t.labelDaysSuffix} · {locations.length} {t.places}</p>
+            {locations.map((loc, i) => (
+              <div key={loc.id} style={{ border:"1px solid #ccc", borderRadius:8, padding:"10px 14px", marginBottom:10 }}>
+                <div style={{ fontWeight:700 }}>{i+1}. {loc.name}</div>
+                <div style={{ fontSize:"0.8rem", color:"#555" }}>{loc.type}{loc.area ? ` · ${loc.area}` : ""}{loc.duration ? ` · ⏱ ${loc.duration}` : ""}</div>
+                {loc._day && <div style={{ fontSize:"0.75rem" }}>{getDayLabel(loc._day)}</div>}
+                {loc.note && <div style={{ fontSize:"0.75rem", fontStyle:"italic" }}>{loc.note}</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign:"center", padding:"16px 0 8px",
           fontSize:"0.72rem", color:th.textFaint, borderTop:`1px solid ${th.border}` }}>
           {t.footerText} · {city.emoji} {city.name} · {mode === "dark" ? "🌙" : "☀️"}
         </div>
