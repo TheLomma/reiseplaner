@@ -1,5 +1,88 @@
 import { useState, useEffect, useRef } from "react";
 
+// ── THEME TOKENS ──────────────────────────────────────────────
+const THEMES = {
+  dark: {
+    bg: "#0f1117", surface: "#1a1d27", card: "#1e2130", cardHover: "#252840",
+    border: "#2d3150", borderHover: "#4a5080",
+    text: "#e8eaf6", textMuted: "#8b90b8", textFaint: "#4a4f70",
+    accent: "#6c63ff", accentHover: "#8b84ff", accentLight: "rgba(108,99,255,0.15)",
+    success: "#4caf7d", successBg: "#0d2318",
+    warning: "#ff6b6b", warningBg: "#2a0d0d",
+    info: "#42a5f5", infoBg: "#0a1929",
+    gold: "#ffd700", goldBg: "rgba(255,215,0,0.08)",
+    tag: "#1a2040", tagText: "#7b8cde",
+    input: "#12151f", inputBorder: "#2d3150",
+    navBg: "rgba(15,17,23,0.95)",
+    shadow: "0 4px 24px rgba(0,0,0,0.4)",
+    shadowHover: "0 8px 32px rgba(108,99,255,0.25)",
+    skeleton: "#1e2130", skeletonShine: "#252840",
+  },
+  light: {
+    bg: "#f0f2ff", surface: "#ffffff", card: "#ffffff", cardHover: "#f5f6ff",
+    border: "#dde1f5", borderHover: "#b0b8e8",
+    text: "#1a1d40", textMuted: "#5a5f8a", textFaint: "#9096c0",
+    accent: "#5c52f0", accentHover: "#4840d0", accentLight: "rgba(92,82,240,0.1)",
+    success: "#2e9a5c", successBg: "#eafaf1",
+    warning: "#e53935", warningBg: "#fdecea",
+    info: "#1565c0", infoBg: "#e3f2fd",
+    gold: "#f9a825", goldBg: "rgba(249,168,37,0.1)",
+    tag: "#eef0fc", tagText: "#5c68c8",
+    input: "#f8f9ff", inputBorder: "#dde1f5",
+    navBg: "rgba(240,242,255,0.95)",
+    shadow: "0 4px 20px rgba(90,85,200,0.1)",
+    shadowHover: "0 8px 32px rgba(92,82,240,0.2)",
+    skeleton: "#eef0f8", skeletonShine: "#f5f6ff",
+  }
+};
+
+// Global CSS injected once
+if (typeof window !== "undefined" && !document.getElementById("app-theme-styles")) {
+  const s = document.createElement("style");
+  s.id = "app-theme-styles";
+  s.textContent = `
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes skeletonPulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    @keyframes markerBounce {
+      0%,100% { transform: translateY(0) scale(1); }
+      40%      { transform: translateY(-10px) scale(1.1); }
+      60%      { transform: translateY(-5px) scale(1.05); }
+    }
+    @keyframes markerPop {
+      0%   { transform: scale(0); opacity: 0; }
+      70%  { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .card-anim { animation: fadeSlideIn 0.35s cubic-bezier(.22,1,.36,1) both; }
+    .skeleton-anim { animation: skeletonPulse 1.4s ease-in-out infinite; }
+    .app-card-hover {
+      transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s, background 0.2s;
+    }
+    .app-card-hover:hover {
+      transform: translateY(-2px);
+    }
+    .theme-toggle-btn {
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .tab-btn { transition: background 0.15s, color 0.15s; }
+    .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; }
+    .btn-primary:hover { transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { border-radius: 3px; }
+  `;
+  document.head.appendChild(s);
+}
+
 if (typeof window !== "undefined") {
   let vp = document.querySelector('meta[name="viewport"]');
   if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
@@ -10,6 +93,66 @@ if (typeof window !== "undefined") {
     s.textContent = '* { box-sizing: border-box !important; } body, #root { overflow-x: hidden !important; max-width: 100vw !important; } input, select, textarea { font-size: 16px !important; } button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }';
     document.head.appendChild(s);
   }
+}
+
+// ── THEME CONTEXT ─────────────────────────────────────────────
+const ThemeCtx = typeof window !== "undefined" ? (window.__ThemeCtx || (window.__ThemeCtx = { listeners: [], current: "dark" })) : { listeners: [], current: "dark" };
+
+function useTheme() {
+  const [mode, setMode] = useState(() => ThemeCtx.current);
+  useEffect(() => {
+    const fn = (m) => setMode(m);
+    ThemeCtx.listeners.push(fn);
+    return () => { ThemeCtx.listeners = ThemeCtx.listeners.filter(f => f !== fn); };
+  }, []);
+  return { mode, th: THEMES[mode] };
+}
+
+function toggleTheme() {
+  ThemeCtx.current = ThemeCtx.current === "dark" ? "light" : "dark";
+  ThemeCtx.listeners.forEach(fn => fn(ThemeCtx.current));
+}
+
+// ── LOADING SPINNER ────────────────────────────────────────────
+function Spinner({ size = 20, color }) {
+  const { mode, th } = useTheme();
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      border: `2px solid ${th.border}`,
+      borderTopColor: color || th.accent,
+      animation: "spin 0.7s linear infinite",
+      display: "inline-block", flexShrink: 0,
+    }} />
+  );
+}
+
+// ── SKELETON CARD ──────────────────────────────────────────────
+function SkeletonCard({ th }) {
+  const bar = (w, h = 10, mt = 0) => (
+    <div className="skeleton-anim" style={{
+      width: w, height: h, borderRadius: 6,
+      background: th.skeletonShine, marginTop: mt,
+    }} />
+  );
+  return (
+    <div className="app-card-hover" style={{
+      background: th.card, border: `1px solid ${th.border}`,
+      borderRadius: 14, padding: "12px 14px",
+    }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="skeleton-anim" style={{ width: 36, height: 36, borderRadius: "50%", background: th.skeletonShine }} />
+        <div style={{ flex: 1 }}>
+          {bar("60%", 12)}
+          {bar("40%", 8, 6)}
+        </div>
+      </div>
+      {bar("90%", 8, 12)}
+      {bar("75%", 8, 6)}
+      {bar("50%", 8, 6)}
+    </div>
+  );
 }
 
 if (typeof window !== "undefined" && !window.L) {
@@ -556,14 +699,19 @@ function calcTravelTime(loc1, loc2) {
 }
 
 function TravelTimeBadge({ from, to }) {
+  const { th } = useTheme();
   const travel = calcTravelTime(from, to);
   if (!travel) return null;
   return (
-    <div className="flex items-center justify-center py-1">
-      <div className="flex items-center gap-3 px-3 py-1.5 rounded-full text-xs" style={{ background:"#1a1a2e", border:"1px solid #333" }}>
-        <span style={{ color:"#888" }}>{travel.distKm} km</span>
-        <span style={{ color:"#5dade2" }}>🚶 {travel.walkMin} Min.</span>
-        <span style={{ color:"#f39c12" }}>🚇 {travel.transitMin} Min.</span>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:"4px 0" }}>
+      <div style={{
+        display:"flex", alignItems:"center", gap:10,
+        padding:"4px 12px", borderRadius:20, fontSize:"0.7rem",
+        background: th.tag, border:`1px solid ${th.border}`
+      }}>
+        <span style={{ color: th.textFaint }}>{travel.distKm} km</span>
+        <span style={{ color: th.info }}>🚶 {travel.walkMin} Min.</span>
+        <span style={{ color: th.gold }}>🚇 {travel.transitMin} Min.</span>
       </div>
     </div>
   );
@@ -596,46 +744,74 @@ async function geocodeCity(name) {
 }
 
 function CollapsibleSection({ title, badge, rightContent, children, defaultOpen=false }) {
+  const { th } = useTheme();
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background:"#222", border:"1px solid #444" }}>
-      <button onClick={() => setOpen(v => !v)} className="w-full px-4 py-3 flex items-center justify-between gap-2" style={{ borderBottom: open?"1px solid #444":"none", background:"#1a1a1a", cursor:"pointer" }}>
-        <h2 className="font-black flex items-center gap-2 text-left" style={{ color:"#e74c3c", fontFamily:"Georgia,serif", fontSize:"1rem" }}>
+    <div className="app-card-hover" style={{
+      background: th.surface, border: `1px solid ${th.border}`,
+      borderRadius: 16, overflow: "hidden",
+      boxShadow: th.shadow,
+    }}>
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between gap-2"
+        style={{ padding: "12px 16px", borderBottom: open ? `1px solid ${th.border}` : "none",
+          background: th.card, cursor: "pointer" }}>
+        <h2 className="font-black flex items-center gap-2 text-left"
+          style={{ color: th.accent, fontFamily: "system-ui,sans-serif", fontSize: "0.9rem", letterSpacing: "-0.01em" }}>
           {title}
-          {badge !== undefined && <span className="text-xs font-normal" style={{ color:"#666" }}>({badge})</span>}
+          {badge !== undefined && <span className="text-xs font-normal" style={{ color: th.textFaint }}>({badge})</span>}
         </h2>
         <div className="flex items-center gap-2">
           {rightContent}
-          <span className="text-xs" style={{ color:"#555" }}>{open ? "▲" : "▼"}</span>
+          <span className="text-xs" style={{ color: th.textFaint }}>{open ? "▲" : "▼"}</span>
         </div>
       </button>
-      {open && <div className="p-5">{children}</div>}
+      {open && <div style={{ padding: "14px 16px" }}>{children}</div>}
     </div>
   );
 }
 
 function StarRating({ stars }) {
+  const { th } = useTheme();
   const full = Math.floor(stars);
   return (
     <span className="inline-flex items-center gap-0.5">
       {Array.from({length:5}).map((_,i) => (
-        <span key={i} style={{ color: i<full?"#f39c12":"#444", fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
+        <span key={i} style={{ color: i<full ? th.gold : th.textFaint, fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
       ))}
-      <span className="ml-1 text-xs font-bold" style={{ color:"#f39c12" }}>{stars}</span>
+      <span className="ml-1 text-xs font-bold" style={{ color: th.gold }}>{stars}</span>
     </span>
   );
 }
 
 function MetroTag({ line, time }) {
-  const colors = { M1:"bg-yellow-400 text-yellow-900", M6:"bg-green-500 text-white", M14:"bg-purple-600 text-white" };
+  const { th } = useTheme();
+  const map = {
+    M1: { bg: th.goldBg, fg: th.text, bd: th.border },
+    M6: { bg: th.successBg, fg: th.success, bd: th.border },
+    M14: { bg: th.accentLight, fg: th.accent, bd: th.border },
+  };
+  const c = map[line] || { bg: th.tag, fg: th.textMuted, bd: th.border };
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${colors[line]||"bg-gray-400 text-white"}`}>
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "2px 10px",
+      borderRadius: 999,
+      fontSize: "0.72rem",
+      fontWeight: 800,
+      background: c.bg,
+      color: c.fg,
+      border: `1px solid ${c.bd}`,
+      whiteSpace: "nowrap",
+    }}>
       🚇 {line} · {time}
     </span>
   );
 }
 
 function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays, onNoteChange, t, getDayLabel }) {
+  const { th } = useTheme();
   const openInfo = day ? getOpeningInfo(loc.name, day, city) : null;
   const locInfo = getLocationInfo(loc.name, city);
   const rating = getRating(loc.name, city);
@@ -644,72 +820,110 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
 
   return (
     <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
-      className="relative rounded-xl p-4 transition-all"
-      style={{ background: isDragging?"#3a1a1a":"#2a2a2a", border: isDragging?"2px dashed #e74c3c":"1px solid #444", opacity: isDragging?0.5:1, cursor:"grab" }}>
-      <div className="absolute top-2 left-2 w-7 h-7 bg-red-700 text-white rounded-full flex items-center justify-center text-sm font-bold">{index+1}</div>
-      <button onClick={onRemove} className="absolute top-2 right-2 text-gray-300 hover:text-red-500 text-lg leading-none">×</button>
-      <div className="pl-8 pr-4 flex flex-col">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">{loc.icon}</span>
+      className="card-anim app-card-hover relative"
+      style={{
+        background: isDragging ? th.accentLight : th.card,
+        border: isDragging ? `2px dashed ${th.accent}` : `1px solid ${th.border}`,
+        borderRadius: 14, padding: "10px 12px",
+        opacity: isDragging ? 0.55 : 1, cursor: "grab",
+        boxShadow: isDragging ? th.shadowHover : th.shadow,
+      }}>
+      <div style={{
+        position:"absolute", top:8, left:10,
+        width:22, height:22, borderRadius:"50%",
+        background: th.accent, color: th.surface,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        fontSize:"0.7rem", fontWeight:700, flexShrink:0,
+      }}>{index+1}</div>
+      <button onClick={onRemove} style={{
+        position:"absolute", top:6, right:8,
+        background:"none", border:"none", cursor:"pointer",
+        color: th.textMuted, fontSize:"1.1rem", lineHeight:1,
+        padding:2,
+      }}>×</button>
+      <div style={{ paddingLeft:30, paddingRight:16, display:"flex", flexDirection:"column", gap:3 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:"1.4rem" }}>{loc.icon}</span>
           <div>
-            <p className="font-bold text-sm" style={{ color:"#f0ece0", fontFamily:"Georgia,serif" }}>{loc.name}</p>
-            <p className="text-xs font-semibold" style={{ color:"#e67e22" }}>{loc.type}</p>
+            <p style={{ fontWeight:700, fontSize:"0.85rem", color: th.text, margin:0 }}>{loc.name}</p>
+            <p style={{ fontSize:"0.72rem", fontWeight:600, color: th.accent, margin:0 }}>{loc.type}</p>
           </div>
         </div>
-        <p className="text-xs mb-1" style={{ color:"#888", fontStyle:"italic" }}>{loc.address}</p>
+        <p style={{ fontSize:"0.7rem", color: th.textMuted, fontStyle:"italic", margin:0 }}>{loc.address}</p>
         {rating && (
-          <div className="flex items-center gap-2 flex-wrap mt-1 mb-1">
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap", marginTop:2 }}>
             <StarRating stars={rating.stars} />
-            <span className="text-xs" style={{ color:"#666" }}>({rating.reviews.toLocaleString("de-DE")})</span>
-            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background:"#2a1a3a", color:"#c39bd3", border:"1px solid #6c3483" }}>{rating.badge}</span>
+            <span style={{ fontSize:"0.7rem", color: th.textFaint }}>({rating.reviews.toLocaleString("de-DE")})</span>
+            <span style={{
+              fontSize:"0.68rem", padding:"2px 7px", borderRadius:20,
+              fontWeight:600, background: th.accentLight,
+              color: th.accent, border:`1px solid ${th.border}`
+            }}>{rating.badge}</span>
           </div>
         )}
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a2a3a", color:"#5dade2", border:"1px solid #2d5a7a" }}>📍 {loc.area}</span>
-          <span className="text-xs" style={{ color:"#888" }}>⏱ {loc.duration}</span>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:4 }}>
+          <span style={{
+            fontSize:"0.7rem", padding:"2px 8px", borderRadius:20,
+            background: th.infoBg, color: th.info, border:`1px solid ${th.border}`
+          }}>📍 {loc.area}</span>
+          <span style={{ fontSize:"0.7rem", color: th.textMuted }}>⏱ {loc.duration}</span>
         </div>
         {day && availableDays && onDayChange ? (
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs font-medium" style={{ color:"#9b59b6" }}>📅</span>
+          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
+            <span style={{ fontSize:"0.7rem", color: th.accent }}>📅</span>
             <select value={day} onChange={(e) => onDayChange(loc.id, e.target.value)}
-              className="text-xs font-medium rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
-              style={{ background:"#1a1a2a", color:"#9b59b6", border:"1px solid #6c3483", appearance:"auto" }}>
+              style={{
+                fontSize:"0.7rem", fontWeight:600, borderRadius:8,
+                padding:"2px 6px", cursor:"pointer", border:`1px solid ${th.border}`,
+                background: th.input, color: th.accent, appearance:"auto"
+              }}>
               {availableDays.map(d => (
                 <option key={d} value={d}>{getDayLabel ? getDayLabel(d) : d}</option>
               ))}
             </select>
           </div>
         ) : day ? (
-          <p className="text-xs mt-2 font-medium" style={{ color:"#9b59b6" }}>📅 {day}</p>
+          <p style={{ fontSize:"0.7rem", marginTop:4, fontWeight:600, color: th.accent }}>📅 {day}</p>
         ) : null}
         {openInfo ? (
-          <div className="mt-2 rounded-lg px-2 py-1.5 flex items-start gap-2"
-            style={openInfo.isOpen ? {background:"#1a2a1a",border:"1px solid #2d5a2d"} : {background:"#2a1a1a",border:"1px solid #7a2d2d"}}>
-            <span className="text-xs mt-0.5">{openInfo.isOpen ? "✅" : "⚠️"}</span>
+          <div style={{
+            marginTop:6, borderRadius:8, padding:"5px 8px",
+            display:"flex", alignItems:"flex-start", gap:6,
+            background: openInfo.isOpen ? th.successBg : th.warningBg,
+            border: `1px solid ${openInfo.isOpen ? th.success : th.warning}`,
+          }}>
+            <span style={{ fontSize:"0.7rem", marginTop:1 }}>{openInfo.isOpen ? "✅" : "⚠️"}</span>
             <div>
-              <p className="text-xs font-semibold" style={{ color: openInfo.isOpen?"#6dbf6d":"#e74c3c" }}>
+              <p style={{ fontSize:"0.7rem", fontWeight:600, margin:0,
+                color: openInfo.isOpen ? th.success : th.warning }}>
                 {openInfo.isOpen ? `Geöffnet · ${openInfo.hours}` : "Geschlossen an diesem Tag"}
               </p>
-              {openInfo.note && <p className="text-xs" style={{ color:"#888", fontStyle:"italic" }}>{openInfo.note}</p>}
+              {openInfo.note && <p style={{ fontSize:"0.68rem", color: th.textMuted, fontStyle:"italic", margin:0 }}>{openInfo.note}</p>}
             </div>
           </div>
         ) : (
-          <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background:"#2a2a1a", border:"1px solid #5a5a2d" }}>
-            <p className="text-xs" style={{ color:"#aaa8", fontStyle:"italic" }}>⏰ Öffnungszeiten unbekannt</p>
+          <div style={{ marginTop:6, borderRadius:8, padding:"5px 8px",
+            background: th.tag, border:`1px solid ${th.border}` }}>
+            <p style={{ fontSize:"0.68rem", color: th.textFaint, fontStyle:"italic", margin:0 }}>⏰ Öffnungszeiten unbekannt</p>
           </div>
         )}
         {locInfo && (
-          <div className="mt-2">
-            <button onClick={() => setShowInfo(v => !v)} className="text-xs font-semibold flex items-center gap-1" style={{ color: showInfo?"#e74c3c":"#5dade2" }}>
+          <div style={{ marginTop:6 }}>
+            <button onClick={() => setShowInfo(v => !v)}
+              style={{ fontSize:"0.7rem", fontWeight:600, background:"none", border:"none",
+                cursor:"pointer", padding:0, color: showInfo ? th.warning : th.info,
+                display:"flex", alignItems:"center", gap:4 }}>
               {showInfo ? "▲ Info ausblenden" : "▼ Info & Highlights"}
             </button>
             {showInfo && (
-              <div className="mt-2 rounded-lg p-3 space-y-2" style={{ background:"#1a1a2a", border:"1px solid #2d2d5a" }}>
-                <p className="text-xs" style={{ color:"#ccc" }}>{locInfo.short}</p>
-                <ul className="space-y-1">
+              <div style={{ marginTop:6, borderRadius:8, padding:"8px 10px",
+                background: th.infoBg, border:`1px solid ${th.border}` }}>
+                <p style={{ fontSize:"0.7rem", color: th.textMuted, margin:"0 0 6px 0" }}>{locInfo.short}</p>
+                <ul style={{ margin:0, padding:0, listStyle:"none" }}>
                   {locInfo.highlights.map((h,i) => (
-                    <li key={i} className="text-xs flex items-start gap-1.5" style={{ color:"#5dade2" }}>
-                      <span style={{ color:"#e74c3c", flexShrink:0 }}>✦</span> {h}
+                    <li key={i} style={{ fontSize:"0.7rem", color: th.info,
+                      display:"flex", alignItems:"flex-start", gap:5, marginBottom:3 }}>
+                      <span style={{ color: th.accent, flexShrink:0 }}>✦</span> {h}
                     </li>
                   ))}
                 </ul>
@@ -717,20 +931,26 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
             )}
           </div>
         )}
-        <div className="mt-2">
-          <button onClick={() => setShowNote(v => !v)} className="text-xs font-semibold flex items-center gap-1"
-            style={{ color: showNote?"#e74c3c":"#27ae60" }}>
+        <div style={{ marginTop:6 }}>
+          <button onClick={() => setShowNote(v => !v)}
+            style={{ fontSize:"0.7rem", fontWeight:600, background:"none", border:"none",
+              cursor:"pointer", padding:0, color: showNote ? th.warning : th.success,
+              display:"flex", alignItems:"center", gap:4 }}>
             {showNote ? (t?.noteHide || "📝 Ausblenden") : (t?.noteLabel || "📝 Notiz")}
-            {loc.note && !showNote && <span style={{ color:"#27ae60", marginLeft:4 }}>●</span>}
+            {loc.note && !showNote && <span style={{ color: th.success, marginLeft:4 }}>●</span>}
           </button>
           {showNote && (
             <textarea
               value={loc.note || ""}
               onChange={(e) => onNoteChange && onNoteChange(loc.id, e.target.value)}
               placeholder={t?.notePlaceholder || "Notiz eingeben"}
-              rows={3}
-              className="w-full mt-2 rounded-lg px-3 py-2 text-xs resize-none focus:outline-none"
-              style={{ background:"#1a2a1a", color:"#ccc", border:"1px solid #2d5a2d" }}
+              rows={2}
+              style={{
+                width:"100%", marginTop:6, borderRadius:8, padding:"6px 10px",
+                fontSize:"0.7rem", resize:"none", outline:"none",
+                background: th.successBg, color: th.text,
+                border:`1px solid ${th.success}`,
+              }}
             />
           )}
         </div>
@@ -740,6 +960,7 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
 }
 
 export default function App() {
+  const { mode, th } = useTheme();
   const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
   const [cityId, setCityId] = useState("paris");
@@ -753,8 +974,11 @@ export default function App() {
   const [locationNotes, setLocationNotes] = useState({});
   const [linkInput, setLinkInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
   const [error, setError] = useState("");
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
+  const [apiKey, setApiKey] = useState(() => {
+    try { return localStorage.getItem("openai_api_key") || ""; } catch { return ""; }
+  });
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [showApiSection, setShowApiSection] = useState(false);
@@ -786,9 +1010,9 @@ export default function App() {
   };
 
   const locationsWithDays = locations.map(loc => ({
-    loc,
-    note: locationNotes[loc.id] || loc.note || "",
-    day: locationDays[loc.id] || tripDays[0],
+    ...loc,
+    note: locationNotes[loc.id] ?? loc.note ?? "",
+    day: locationDays[loc.id] ?? tripDays[0],
   }));
 
   const filteredLocations = filterDay === "all"
@@ -850,11 +1074,11 @@ export default function App() {
     const demo = city.sampleLocations;
     const newLocs = demo.filter(d => !locations.find(l => l.name === d.name));
     if (newLocs.length === 0) return;
-    const added = newLocs.map((l,i) => ({ l, id: Date.now()+i }));
-    setLocations(prev => [prev, added]);
+    const added = newLocs.map((l, i) => ({ ...l, id: Date.now() + i }));
+    setLocations(prev => [...prev, ...added]);
     const days = {};
     added.forEach((l,i) => { days[l.id] = tripDays[i % tripDays.length]; });
-    setLocationDays(prev => ({...prev, days}));
+    setLocationDays(prev => ({ ...prev, ...days }));
   };
 
   const handleAnalyze = async () => {
@@ -866,7 +1090,7 @@ export default function App() {
           if (matcher.pattern.test(linkInput)) {
             const loc = { ...city.sampleLocations[matcher.locationIndex], id: Date.now() };
             setLocations(prev => [...prev, loc]);
-            setLocationDays(prev => ({prev, [loc.id]: tripDays[0]}));
+            setLocationDays(prev => ({ ...prev, [loc.id]: tripDays[0] }));
             setLinkInput(""); setLoading(false); return;
           }
         }
@@ -874,8 +1098,8 @@ export default function App() {
       if (apiKey) {
         const cityName = city?.name || customCityName || "der Stadt";
         const result = await analyzeWithAI(linkInput, apiKey, cityName);
-        const loc = { result, id: Date.now() };
-        setLocations(prev => [prev, loc]);
+        const loc = { ...result, id: Date.now() };
+        setLocations(prev => [...prev, loc]);
         setLocationDays(prev => ({prev, [loc.id]: tripDays[0]}));
         setLinkInput("");
       } else {
@@ -885,11 +1109,12 @@ export default function App() {
       setError("Fehler: " + e.message);
     }
     setLoading(false);
+    setSkeletonVisible(false);
   };
 
   const handleRemove = (id) => {
     setLocations(prev => prev.filter(l => l.id !== id));
-    setLocationDays(prev => { const n={prev}; delete n[id]; return n; });
+    setLocationDays(prev => { const n = { ...prev }; delete n[id]; return n; });
     setLocationNotes(prev => { const n={prev}; delete n[id]; return n; });
   };
 
@@ -906,7 +1131,7 @@ export default function App() {
     e.preventDefault();
     if (dragIdx === null || dragIdx === i) return;
     setLocations(prev => {
-      const arr = [prev];
+      const arr = [...prev];
       const [removed] = arr.splice(dragIdx, 1);
       arr.splice(i, 0, removed);
       return arr;
@@ -918,7 +1143,7 @@ export default function App() {
   const handleSavePlan = () => {
     if (!planName.trim() || locations.length === 0) return;
     const plan = { id: Date.now(), name: planName, cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
-    const updated = [savedPlans, plan];
+    const updated = [...savedPlans, plan];
     setSavedPlans(updated);
     localStorage.setItem("travel_plans", JSON.stringify(updated));
     setPlanName(""); setSaveFeedback(true);
@@ -1444,3 +1669,4 @@ export default function App() {
     </div>
   );
 }
+
