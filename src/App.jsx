@@ -543,7 +543,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v4.1",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v4.2",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -576,7 +576,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v4.1",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v4.2",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1017,111 +1017,116 @@ function LocationCard({ loc, index, city, t, lang, tripDays, locationDays, locat
   );
 }
 
-function MapView({ locations, city, th, onExportPng }) {
+function MapView({ locations, city, th }) {
   const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
-  const polylineRef = useRef(null);
+  const [map, setMap] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const { mode } = useTheme();
 
   useEffect(() => {
-    const initMap = () => {
-      if (!window.L || !mapRef.current) return;
-      if (!mapInstanceRef.current) {
-        mapInstanceRef.current = window.L.map(mapRef.current, { zoomControl: true, attributionControl: false });
-        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(mapInstanceRef.current);
-      }
-      const map = mapInstanceRef.current;
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-      if (polylineRef.current) { polylineRef.current.remove(); polylineRef.current = null; }
-
-      const allLocs = locations.length > 0 ? locations : (city?.sampleLocations || []);
-      const centerLat = city?.lat || 48.8566;
-      const centerLng = city?.lng || 2.3522;
-
-      if (allLocs.length === 0) {
-        map.setView([centerLat, centerLng], 13);
-        return;
-      }
-
-      const latlngs = [];
-      allLocs.forEach((loc, i) => {
-        if (!loc.lat || !loc.lng) return;
-        latlngs.push([loc.lat, loc.lng]);
-        const color = DAY_COLORS[i % DAY_COLORS.length];
-        const html = `<div style="background:${color};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid white;animation:markerPop 0.4s ease both">${i+1}</div>`;
-        const icon = window.L.divIcon({ html, className:"", iconSize:[28,28], iconAnchor:[14,14] });
-        const marker = window.L.marker([loc.lat, loc.lng], { icon }).addTo(map);
-        marker.bindPopup(`<b>${loc.icon || ""} ${loc.name}</b><br><small>${loc.type || ""}</small>`);
-        markersRef.current.push(marker);
+    if (!mapRef.current || !window.L) return;
+    if (map) { map.remove(); }
+    const center = city ? [city.lat, city.lng] : [48.8566, 2.3522];
+    const m = window.L.map(mapRef.current, { zoomControl: true, attributionControl: false }).setView(center, 13);
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { crossOrigin: true }).addTo(m);
+    const allLocs = locations.length > 0 ? locations : (city?.sampleLocations || []);
+    allLocs.forEach((loc, i) => {
+      if (!loc.lat || !loc.lng) return;
+      const color = DAY_COLORS[i % DAY_COLORS.length];
+      const icon = window.L.divIcon({
+        className: '',
+        html: `<div style="width:28px;height:28px;border-radius:50%;background:${color};border:2.5px solid white;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,0.35);">${i+1}</div>`,
+        iconSize: [28, 28], iconAnchor: [14, 14]
       });
-
-      if (latlngs.length > 1) {
-        polylineRef.current = window.L.polyline(latlngs, { color:"#c4a882", weight:2, dashArray:"6,6", opacity:0.7 }).addTo(map);
-      }
-
-      if (latlngs.length > 0) {
-        if (latlngs.length === 1) map.setView(latlngs[0], 14);
-        else map.fitBounds(latlngs, { padding:[30,30] });
-      } else {
-        map.setView([centerLat, centerLng], 13);
-      }
-    };
-
-    if (window.L) { initMap(); }
-    else {
-      const interval = setInterval(() => { if (window.L) { clearInterval(interval); initMap(); } }, 300);
-      return () => clearInterval(interval);
+      window.L.marker([loc.lat, loc.lng], { icon }).addTo(m).bindPopup(`<b>${loc.name}</b>`);
+    });
+    if (allLocs.length > 1) {
+      const pts = allLocs.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
+      window.L.polyline(pts, { color: 'rgba(196,168,130,0.85)', weight: 2, dashArray: '8,6' }).addTo(m);
     }
+    if (allLocs.length > 0 && allLocs[0].lat) {
+      const pts = allLocs.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
+      if (pts.length > 1) m.fitBounds(pts, { padding: [30, 30] });
+    }
+    setMap(m);
+    return () => { m.remove(); setMap(null); };
   }, [locations, city]);
 
-  const exportPng = () => {
-    if (!mapInstanceRef.current) return;
-    const map = mapInstanceRef.current;
+  const exportPng = async () => {
+    if (!map || !mapRef.current) return;
+    setExporting(true);
+    await new Promise(r => setTimeout(r, 300));
     const size = map.getSize();
-    const canvas = document.createElement("canvas");
-    canvas.width = size.x; canvas.height = size.y;
-    const ctx = canvas.getContext("2d");
-    const panes = mapRef.current.querySelectorAll(".leaflet-tile-pane canvas, .leaflet-tile-pane img");
-    ctx.fillStyle = "#f0e8d8";
+    const canvas = document.createElement('canvas');
+    canvas.width = size.x || 600;
+    canvas.height = size.y || 400;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#e8dfc8';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    panes.forEach(el => {
-      try {
-        const rect = el.getBoundingClientRect();
-        const mapRect = mapRef.current.getBoundingClientRect();
-        if (el.tagName === "IMG") {
-          ctx.drawImage(el, rect.left - mapRect.left, rect.top - mapRect.top, rect.width, rect.height);
-        }
-      } catch {}
-    });
-    // Draw markers as circles with numbers
+    const mapRect = mapRef.current.getBoundingClientRect();
+    const tiles = Array.from(mapRef.current.querySelectorAll('.leaflet-tile-pane img.leaflet-tile'));
+    await Promise.all(tiles.map(img => new Promise(res => {
+      const p = new Image();
+      p.crossOrigin = 'anonymous';
+      p.onload = () => {
+        const r = img.getBoundingClientRect();
+        try { ctx.drawImage(p, Math.round(r.left - mapRect.left), Math.round(r.top - mapRect.top), Math.round(r.width), Math.round(r.height)); } catch {}
+        res();
+      };
+      p.onerror = () => res();
+      p.src = img.src;
+    })));
+    const W = canvas.width, H = canvas.height;
     const allLocs = locations.length > 0 ? locations : (city?.sampleLocations || []);
+    const pts = allLocs.filter(l => l.lat && l.lng).map(l => map.latLngToContainerPoint([l.lat, l.lng]));
+    if (pts.length > 1) {
+      ctx.beginPath();
+      ctx.setLineDash([8, 6]);
+      ctx.strokeStyle = 'rgba(196,168,130,0.85)';
+      ctx.lineWidth = 2;
+      ctx.moveTo(pts[0].x, pts[0].y);
+      pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     allLocs.forEach((loc, i) => {
       if (!loc.lat || !loc.lng) return;
       const pt = map.latLngToContainerPoint([loc.lat, loc.lng]);
       const color = DAY_COLORS[i % DAY_COLORS.length];
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 13, 0, Math.PI*2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = "white"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(String(i+1), pt.x, pt.y);
+      ctx.beginPath(); ctx.arc(pt.x + 1, pt.y + 2, 14, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 13, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = 'white'; ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), pt.x, pt.y);
     });
-    const link = document.createElement("a");
-    link.download = "reisekarte.png";
-    link.href = canvas.toDataURL("image/png");
+    const lH = 26;
+    ctx.fillStyle = 'rgba(30,26,20,0.82)';
+    ctx.fillRect(0, H - lH, W, lH);
+    ctx.fillStyle = '#ede0c8'; ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('\u2708 ' + (city?.name || '') + ' \u00b7 ' + allLocs.length + ' Orte \u00b7 Reiseplaner v4.2', 10, H - lH / 2);
+    const link = document.createElement('a');
+    link.download = 'reisekarte.png';
+    link.href = canvas.toDataURL('image/png');
     link.click();
+    setExporting(false);
   };
 
   return (
     <div>
-      <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden",
-        border:`1px solid ${th.border}`, background:th.surface }} />
-      <button onClick={exportPng}
-        style={{ marginTop:8, width:"100%", padding:"6px 0", borderRadius:10, fontSize:"0.72rem",
-          background:th.tag, color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer", fontWeight:700 }}>
-        🖼️ Karte als PNG exportieren
+      <div ref={mapRef} style={{ width: '100%', height: 280, borderRadius: 12, overflow: 'hidden',
+        border: `1px solid ${th.border}`, background: th.surface }} />
+      <button onClick={exportPng} disabled={exporting}
+        style={{ marginTop: 8, width: '100%', padding: '8px 0', borderRadius: 10, fontSize: '0.74rem',
+          background: exporting ? th.surface : th.tag,
+          color: exporting ? th.textMuted : th.tagText,
+          border: `1px solid ${th.border}`, cursor: exporting ? 'default' : 'pointer',
+          fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          transition: 'background 0.2s' }}>
+        {exporting ? <><Spinner size={14} /> Exportiere…</> : '🗺️ Karte als PNG exportieren'}
       </button>
     </div>
   );
@@ -1238,7 +1243,340 @@ function SavedPlans({ plans, onSave, onLoad, onDelete, planName, setPlanName, sa
   );
 }
 
-function ApiKeySection({ apiKey, setApiKey, t, th }) {
+// ── TRIP DASHBOARD ────────────────────────────────────────────────────────
+  function TripDashboard({ plans, onLoad, onDelete, onNew, th, lang }) {
+    if (plans.length === 0) return (
+      <div style={{ textAlign:"center", padding:"24px 0", color:th.textMuted, fontSize:"0.82rem" }}>
+        {lang==="de" ? "Noch keine gespeicherten Reisen." : "No saved trips yet."}
+        <br/>
+        <button onClick={onNew} style={{ marginTop:12, padding:"8px 20px", borderRadius:10,
+          background:th.accent, color:"white", border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.82rem" }}>
+          {lang==="de" ? "+ Neue Reise starten" : "+ Start new trip"}
+        </button>
+      </div>
+    );
+    return (
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:12 }}>
+        {plans.map(p => {
+          const city = CITIES[p.cityId];
+          return (
+            <div key={p.id} className="app-card-hover"
+              style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:14,
+                padding:"14px 14px 10px", display:"flex", flexDirection:"column", gap:6, cursor:"pointer" }}
+              onClick={() => onLoad(p)}>
+              <div style={{ fontSize:"2rem", lineHeight:1 }}>{city?.emoji || "✈️"}</div>
+              <div style={{ fontWeight:700, fontSize:"0.88rem", color:th.text }}>{p.name}</div>
+              <div style={{ fontSize:"0.72rem", color:th.textMuted }}>
+                {city?.name || p.cityId} · {p.numDays} {lang==="de" ? "Tage" : "days"}
+              </div>
+              <div style={{ fontSize:"0.68rem", color:th.textFaint }}>
+                📍 {p.locations?.length || 0} {lang==="de" ? "Orte" : "places"}
+              </div>
+              <div style={{ display:"flex", gap:6, marginTop:4 }}>
+                <button onClick={e => { e.stopPropagation(); onLoad(p); }}
+                  style={{ flex:1, padding:"4px 0", borderRadius:8, background:th.accentLight,
+                    color:th.accent, border:`1px solid ${th.accent}`, cursor:"pointer",
+                    fontWeight:700, fontSize:"0.7rem" }}>
+                  {lang==="de" ? "Laden" : "Load"}
+                </button>
+                <button onClick={e => { e.stopPropagation(); onDelete(p.id); }}
+                  style={{ padding:"4px 8px", borderRadius:8, background:th.warningBg,
+                    color:th.warning, border:`1px solid ${th.warning}`, cursor:"pointer", fontSize:"0.7rem" }}>🗑</button>
+              </div>
+            </div>
+          );
+        })}
+        <div className="app-card-hover"
+          style={{ background:th.surface, border:`2px dashed ${th.border}`, borderRadius:14,
+            padding:"14px", display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:8, cursor:"pointer", minHeight:130 }}
+          onClick={onNew}>
+          <div style={{ fontSize:"1.8rem" }}>➕</div>
+          <div style={{ fontSize:"0.78rem", color:th.textMuted, textAlign:"center" }}>
+            {lang==="de" ? "Neue Reise" : "New trip"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── DAY CALENDAR (ZEITSLOTS) ────────────────────────────────────────────
+  function DayCalendar({ locations, locationDays, tripDays, th, lang }) {
+    const HOURS = Array.from({length:15}, (_,i) => i+8); // 08–22
+    const [slots, setSlots] = useState(() => {
+      const init = {};
+      locations.forEach(loc => {
+        const day = locationDays[loc.id];
+        if (day) {
+          if (!init[day]) init[day] = {};
+          // assign default hour if not set
+          const usedHours = Object.values(init[day]).map(Number);
+          let h = 9;
+          while (usedHours.includes(h) && h < 22) h++;
+          init[day][loc.id] = h;
+        }
+      });
+      return init;
+    });
+    const [selDay, setSelDay] = useState(tripDays[0] || "");
+
+    const dayLocs = locations.filter(l => locationDays[l.id] === selDay);
+
+    const assignedHours = slots[selDay] || {};
+
+    const setHour = (locId, hour) => {
+      setSlots(prev => ({ ...prev, [selDay]: { ...(prev[selDay]||{}), [locId]: Number(hour) } }));
+    };
+
+    return (
+      <div>
+        {/* Day selector */}
+        <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:10 }}>
+          {tripDays.map((d,i) => (
+            <button key={d} onClick={() => setSelDay(d)} className="tab-btn"
+              style={{ padding:"3px 10px", borderRadius:8, fontSize:"0.65rem",
+                background: selDay===d ? th.accentLight : th.tag,
+                color: selDay===d ? th.accent : th.textMuted,
+                border:`1px solid ${selDay===d ? th.accent : th.border}`,
+                fontWeight: selDay===d ? 700 : 400 }}>
+              {formatDateLabel(d, lang)}
+            </button>
+          ))}
+        </div>
+        {/* Timeline grid */}
+        <div style={{ position:"relative", overflowX:"auto" }}>
+          <div style={{ display:"grid", gridTemplateColumns:"44px 1fr", gap:0, minWidth:260 }}>
+            {HOURS.map(h => {
+              const locsAtHour = dayLocs.filter(l => (assignedHours[l.id]||9) === h);
+              return (
+                <>
+                  <div key={`h-${h}`} style={{ fontSize:"0.65rem", color:th.textFaint,
+                    paddingRight:8, paddingTop:4, textAlign:"right", height:44,
+                    borderRight:`1px solid ${th.border}`, lineHeight:"44px" }}>
+                    {String(h).padStart(2,"0")}:00
+                  </div>
+                  <div key={`s-${h}`} style={{ minHeight:44, borderBottom:`1px dashed ${th.border}`,
+                    padding:"3px 6px", display:"flex", gap:4, flexWrap:"wrap", alignItems:"flex-start" }}>
+                    {locsAtHour.map(loc => (
+                      <div key={loc.id} style={{ background:th.accentLight, border:`1px solid ${th.accent}`,
+                        borderRadius:8, padding:"2px 8px", fontSize:"0.72rem", color:th.accent,
+                        fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                        {loc.icon} {loc.name}
+                        <select value={assignedHours[loc.id]||9} onChange={e => setHour(loc.id, e.target.value)}
+                          style={{ fontSize:"0.62rem", background:th.input, color:th.text,
+                            border:"none", borderRadius:4, cursor:"pointer", marginLeft:2 }}>
+                          {HOURS.map(hh => <option key={hh} value={hh}>{String(hh).padStart(2,"0")}:00</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })}
+          </div>
+        </div>
+        {dayLocs.length === 0 && (
+          <div style={{ fontSize:"0.78rem", color:th.textMuted, textAlign:"center", padding:"16px 0" }}>
+            {lang==="de" ? "Keine Orte für diesen Tag." : "No places for this day."}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── RECURRING ACTIVITIES ────────────────────────────────────────────────
+  function RecurringActivities({ tripDays, th, lang }) {
+    const PRESETS = lang==="de" ? [
+      { id:"breakfast", icon:"🍳", label:"Frühstück", time:"08:00", days:"täglich" },
+      { id:"dinner", icon:"🍽️", label:"Abendessen", time:"19:00", days:"täglich" },
+      { id:"coffee", icon:"☕", label:"Morgenkaffee", time:"07:30", days:"täglich" },
+      { id:"walk", icon:"🚶", label:"Abendspaziergang", time:"20:00", days:"täglich" },
+    ] : [
+      { id:"breakfast", icon:"🍳", label:"Breakfast", time:"08:00", days:"daily" },
+      { id:"dinner", icon:"🍽️", label:"Dinner", time:"19:00", days:"daily" },
+      { id:"coffee", icon:"☕", label:"Morning coffee", time:"07:30", days:"daily" },
+      { id:"walk", icon:"🚶", label:"Evening walk", time:"20:00", days:"daily" },
+    ];
+    const [active, setActive] = useState({});
+    const [custom, setCustom] = useState("");
+    const [customTime, setCustomTime] = useState("10:00");
+    const [customList, setCustomList] = useState([]);
+
+    const toggle = (id) => setActive(a => ({ ...a, [id]: !a[id] }));
+    const addCustom = () => {
+      if (!custom.trim()) return;
+      setCustomList(c => [...c, { id:`c_${Date.now()}`, icon:"📌", label:custom.trim(), time:customTime, days: lang==="de" ? "täglich" : "daily" }]);
+      setCustom("");
+    };
+
+    const allItems = [...PRESETS, ...customList];
+    const activeItems = allItems.filter(i => active[i.id]);
+
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+          {allItems.map(item => (
+            <button key={item.id} onClick={() => toggle(item.id)}
+              style={{ padding:"6px 14px", borderRadius:20, fontSize:"0.78rem", cursor:"pointer",
+                background: active[item.id] ? th.accentLight : th.surface,
+                color: active[item.id] ? th.accent : th.textMuted,
+                border:`1.5px solid ${active[item.id] ? th.accent : th.border}`,
+                fontWeight: active[item.id] ? 700 : 400, transition:"all 0.15s" }}>
+              {item.icon} {item.label} · {item.time}
+            </button>
+          ))}
+        </div>
+        {/* Custom */}
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+          <input value={custom} onChange={e => setCustom(e.target.value)}
+            onKeyDown={e => e.key==="Enter" && addCustom()}
+            placeholder={lang==="de" ? "Eigene Aktivität..." : "Custom activity..."}
+            style={{ flex:1, minWidth:120, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <input type="time" value={customTime} onChange={e => setCustomTime(e.target.value)}
+            style={{ fontSize:"0.78rem", padding:"5px 8px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <button onClick={addCustom}
+            style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
+              border:"none", cursor:"pointer", fontWeight:700 }}>+</button>
+        </div>
+        {/* Preview */}
+        {activeItems.length > 0 && (
+          <div style={{ marginTop:4 }}>
+            <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:6 }}>
+              {lang==="de" ? `Wird auf alle ${tripDays.length} Reisetage angewendet:` : `Applied to all ${tripDays.length} trip days:`}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+              {activeItems.map(item => (
+                <div key={item.id} style={{ display:"flex", alignItems:"center", gap:8,
+                  padding:"5px 10px", background:th.surface, borderRadius:8, border:`1px solid ${th.border}` }}>
+                  <span style={{ fontSize:"1rem" }}>{item.icon}</span>
+                  <span style={{ fontSize:"0.8rem", color:th.text, fontWeight:600 }}>{item.label}</span>
+                  <span style={{ fontSize:"0.7rem", color:th.textMuted, marginLeft:"auto" }}>⏰ {item.time} · {item.days}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── PRE-DEPARTURE CHECKLIST ─────────────────────────────────────────────
+  function PreDepartureChecklist({ th, lang, city, startDate }) {
+    const DEFAULT_TASKS = lang==="de" ? [
+      { id:"hotel", label:"🏨 Hotel / Unterkunft bestätigt", cat:"Buchung" },
+      { id:"flights", label:"✈️ Flüge / Tickets gebucht", cat:"Buchung" },
+      { id:"transfer", label:"🚌 Transfer / Anreise organisiert", cat:"Buchung" },
+      { id:"insurance", label:"🏥 Reiseversicherung abgeschlossen", cat:"Dokumente" },
+      { id:"passport", label:"🛂 Reisepass gültig (>6 Monate)", cat:"Dokumente" },
+      { id:"visa", label:"📋 Visum beantragt (falls nötig)", cat:"Dokumente" },
+      { id:"currency", label:"💱 Fremdwährung besorgt", cat:"Finanzen" },
+      { id:"notify_bank", label:"💳 Bank über Reise informiert", cat:"Finanzen" },
+      { id:"phone_plan", label:"📱 Roaming / SIM-Karte", cat:"Kommunikation" },
+      { id:"offline_maps", label:"🗺️ Offline-Karten heruntergeladen", cat:"Kommunikation" },
+      { id:"emergency", label:"🆘 Notfallnummern gespeichert", cat:"Sicherheit" },
+      { id:"photos", label:"📸 Dokumente fotografiert", cat:"Sicherheit" },
+    ] : [
+      { id:"hotel", label:"🏨 Hotel / accommodation confirmed", cat:"Booking" },
+      { id:"flights", label:"✈️ Flights / tickets booked", cat:"Booking" },
+      { id:"transfer", label:"🚌 Transfer / arrival organized", cat:"Booking" },
+      { id:"insurance", label:"🏥 Travel insurance taken out", cat:"Documents" },
+      { id:"passport", label:"🛂 Passport valid (>6 months)", cat:"Documents" },
+      { id:"visa", label:"📋 Visa applied (if needed)", cat:"Documents" },
+      { id:"currency", label:"💱 Foreign currency obtained", cat:"Finance" },
+      { id:"notify_bank", label:"💳 Bank notified of travel", cat:"Finance" },
+      { id:"phone_plan", label:"📱 Roaming / SIM card", cat:"Communication" },
+      { id:"offline_maps", label:"🗺️ Offline maps downloaded", cat:"Communication" },
+      { id:"emergency", label:"🆘 Emergency numbers saved", cat:"Safety" },
+      { id:"photos", label:"📸 Documents photographed", cat:"Safety" },
+    ];
+
+    const [checked, setChecked] = useState({});
+    const [customTask, setCustomTask] = useState("");
+    const [customTasks, setCustomTasks] = useState([]);
+
+    const allTasks = [...DEFAULT_TASKS, ...customTasks.map((label,i) => ({ id:`ct_${i}`, label, cat:lang==="de"?"Eigene":"Custom" }))];
+    const cats = [...new Set(allTasks.map(t => t.cat))];
+    const done = allTasks.filter(t => checked[t.id]).length;
+    const pct = allTasks.length ? Math.round((done/allTasks.length)*100) : 0;
+
+    // Days until trip
+    const daysLeft = startDate ? Math.ceil((new Date(startDate+"T12:00:00") - new Date()) / 86400000) : null;
+
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px",
+          background:th.goldBg, borderRadius:10, border:`1px solid ${th.gold}` }}>
+          <span style={{ fontSize:"1.5rem" }}>{city?.emoji || "✈️"}</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:"0.82rem", fontWeight:700, color:th.text }}>
+              {city?.name || ""} {startDate ? `· ${startDate}` : ""}
+            </div>
+            {daysLeft !== null && (
+              <div style={{ fontSize:"0.7rem", color: daysLeft <= 7 ? th.warning : th.textMuted }}>
+                {daysLeft > 0
+                  ? (lang==="de" ? `Noch ${daysLeft} Tage bis zur Abreise` : `${daysLeft} days until departure`)
+                  : (lang==="de" ? "Reise hat begonnen! 🎉" : "Trip has started! 🎉")}
+              </div>
+            )}
+          </div>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:"1.2rem", fontWeight:900, color:th.gold }}>{pct}%</div>
+            <div style={{ fontSize:"0.65rem", color:th.textMuted }}>{done}/{allTasks.length}</div>
+          </div>
+        </div>
+        {/* Progress bar */}
+        <div style={{ height:6, background:th.border, borderRadius:4, overflow:"hidden" }}>
+          <div style={{ height:"100%", width:`${pct}%`, background:pct===100?th.success:th.accent,
+            borderRadius:4, transition:"width 0.4s" }} />
+        </div>
+        {/* Tasks by category */}
+        {cats.map(cat => (
+          <div key={cat}>
+            <div style={{ fontSize:"0.68rem", fontWeight:700, color:th.textMuted,
+              textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>{cat}</div>
+            {allTasks.filter(t => t.cat===cat).map(task => (
+              <label key={task.id} style={{ display:"flex", alignItems:"center", gap:10,
+                padding:"6px 10px", borderRadius:8, cursor:"pointer", marginBottom:3,
+                background: checked[task.id] ? th.successBg : th.surface,
+                border:`1px solid ${checked[task.id] ? th.success : th.border}`,
+                transition:"all 0.15s" }}>
+                <input type="checkbox" checked={!!checked[task.id]}
+                  onChange={() => setChecked(c => ({ ...c, [task.id]: !c[task.id] }))}
+                  style={{ accentColor:th.success, width:15, height:15, cursor:"pointer" }} />
+                <span style={{ fontSize:"0.8rem",
+                  color: checked[task.id] ? th.textFaint : th.text,
+                  textDecoration: checked[task.id] ? "line-through" : "none",
+                  transition:"all 0.15s" }}>{task.label}</span>
+              </label>
+            ))}
+          </div>
+        ))}
+        {/* Custom task */}
+        <div style={{ display:"flex", gap:6, marginTop:4 }}>
+          <input value={customTask} onChange={e => setCustomTask(e.target.value)}
+            onKeyDown={e => { if(e.key==="Enter" && customTask.trim()) { setCustomTasks(c => [...c, customTask.trim()]); setCustomTask(""); } }}
+            placeholder={lang==="de" ? "Eigene Aufgabe..." : "Custom task..."}
+            style={{ flex:1, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
+              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <button onClick={() => { if(customTask.trim()) { setCustomTasks(c => [...c, customTask.trim()]); setCustomTask(""); } }}
+            style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
+              border:"none", cursor:"pointer", fontWeight:700 }}>+</button>
+        </div>
+        {pct===100 && (
+          <div style={{ textAlign:"center", padding:"10px", background:th.successBg,
+            borderRadius:10, border:`1px solid ${th.success}`, fontSize:"0.82rem",
+            color:th.success, fontWeight:700 }}>
+            {lang==="de" ? "✅ Alles erledigt – gute Reise! 🎉" : "✅ All done – have a great trip! 🎉"}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function ApiKeySection({ apiKey, setApiKey, t, th }) {
   const [input, setInput] = useState(apiKey || "");
   const [saved, setSaved] = useState(false);
   const save = () => { setApiKey(input.trim()); localStorage.setItem("openai_key", input.trim()); setSaved(true); setTimeout(() => setSaved(false), 2000); };
@@ -1761,14 +2099,39 @@ export default function App() {
         )}
 
         {/* PACKING LIST */}
-        {locations.length > 0 && (
-          <CollapsibleSection title={lang==="de" ? "Packliste" : "Packing List"} icon="🎒" th={th} defaultOpen={false}>
-            <PackingList locations={locations} numDays={numDays} t={t} lang={lang} />
-          </CollapsibleSection>
-        )}
+          {locations.length > 0 && (
+            <CollapsibleSection title={lang==="de" ? "Packliste" : "Packing List"} icon="🎒" th={th} defaultOpen={false}>
+              <PackingList locations={locations} numDays={numDays} t={t} lang={lang} />
+            </CollapsibleSection>
+          )}
 
-        {/* SAVED PLANS */}
-        <CollapsibleSection title={t.savedPlans} icon="💾" th={th} defaultOpen={false}
+          {/* DAY CALENDAR */}
+          {locations.length > 0 && (
+            <CollapsibleSection title={lang==="de" ? "🕐 Tagesplan mit Zeitslots" : "🕐 Day Schedule"} icon="" th={th} defaultOpen={false}>
+              <DayCalendar locations={locations} locationDays={locationDays} tripDays={tripDays} th={th} lang={lang} />
+            </CollapsibleSection>
+          )}
+
+          {/* RECURRING ACTIVITIES */}
+          <CollapsibleSection title={lang==="de" ? "🔁 Wiederkehrende Aktivitäten" : "🔁 Recurring Activities"} icon="" th={th} defaultOpen={false}>
+            <RecurringActivities tripDays={tripDays} th={th} lang={lang} />
+          </CollapsibleSection>
+
+          {/* PRE-DEPARTURE CHECKLIST */}
+          <CollapsibleSection title={lang==="de" ? "✅ Vor-Abreise-Checkliste" : "✅ Pre-Departure Checklist"} icon="" th={th} defaultOpen={false}>
+            <PreDepartureChecklist th={th} lang={lang} city={city} startDate={startDate} />
+          </CollapsibleSection>
+
+        {/* TRIP DASHBOARD */}
+          <CollapsibleSection title={lang==="de" ? "🗂 Alle Reisen" : "🗂 All Trips"} icon="" th={th} defaultOpen={false}
+            badge={savedPlans.length > 0 ? savedPlans.length : null}>
+            <TripDashboard plans={savedPlans} onLoad={loadPlan} onDelete={deletePlan}
+              onNew={() => { setLocations([]); setLocationDays({}); setLocationNotes({}); }}
+              th={th} lang={lang} />
+          </CollapsibleSection>
+
+          {/* SAVED PLANS */}
+          <CollapsibleSection title={t.savedPlans} icon="💾" th={th} defaultOpen={false}
           badge={savedPlans.length > 0 ? savedPlans.length : null}>
           <SavedPlans plans={savedPlans} onSave={savePlan} onLoad={loadPlan} onDelete={deletePlan}
             planName={planName} setPlanName={setPlanName} saveMsg={saveMsg} t={t} th={th} locations={locations} />
@@ -1794,3 +2157,4 @@ export default function App() {
     </div>
   );
 }
+
