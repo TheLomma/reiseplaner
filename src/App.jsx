@@ -512,6 +512,15 @@ const CITIES = {
   },
 };
 
+const DAY_COLORS = [
+  "#e07b54", "#5b8dd9", "#6abf69", "#d4a84b", "#a66dd4", "#4bb8c4", "#d46d8a", "#7aab7a",
+  "#c4a882", "#8b6a3e", "#5a8fa3", "#c97a5a"
+];
+
+function getDayColor(index) {
+  return DAY_COLORS[index % DAY_COLORS.length];
+}
+
 const CITY_ORDER = ["paris","london","berlin","rom","barcelona","amsterdam","wien","prag","lissabon","new_york"];
 
 const TRANSLATIONS = {
@@ -534,7 +543,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.8",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.9",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -567,7 +576,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.8",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.9",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -689,6 +698,78 @@ function calcTravelTime(loc1, loc2) {
   return { distKm: Math.round(dist*10)/10, walkMin, transitMin };
 }
 
+function PackingList({ locations, numDays, t, lang }) {
+  const { th } = useTheme();
+  const [checked, setChecked] = useState({});
+  const [customItem, setCustomItem] = useState("");
+  const [customItems, setCustomItems] = useState([]);
+
+  const types = locations.map(l => (l.type || "").toLowerCase());
+  const hasMuseum = types.some(t => t.includes("museum"));
+  const hasRestaurant = types.some(t => t.includes("restaurant") || t.includes("café") || t.includes("cafe"));
+  const hasPark = types.some(t => t.includes("park") || t.includes("garten"));
+  const hasChurch = types.some(t => t.includes("kirche") || t.includes("dom") || t.includes("basilika"));
+  const hasMarkt = types.some(t => t.includes("markt"));
+  const longTrip = numDays >= 5;
+
+  const autoItems = [
+    { id: "passport", label: lang==="de" ? "🛂 Reisepass / Ausweis" : "🛂 Passport / ID", always: true },
+    { id: "phone", label: lang==="de" ? "📱 Handy + Ladekabel" : "📱 Phone + charger", always: true },
+    { id: "money", label: lang==="de" ? "💳 Karte + Bargeld" : "💳 Card + cash", always: true },
+    { id: "insurance", label: lang==="de" ? "🏥 Reiseversicherung" : "🏥 Travel insurance", always: true },
+    { id: "clothes", label: lang==="de" ? `👕 Kleidung für ${numDays} Tage` : `👕 Clothes for ${numDays} days`, always: true },
+    { id: "shoes_comfy", label: lang==="de" ? "👟 Bequeme Schuhe" : "👟 Comfortable shoes", cond: hasMuseum || hasPark },
+    { id: "camera", label: lang==="de" ? "📷 Kamera / Powerbank" : "📷 Camera / powerbank", cond: hasMuseum || hasChurch },
+    { id: "smartclothes", label: lang==="de" ? "👔 Schicke Kleidung (Restaurant)" : "👔 Smart clothes (restaurant)", cond: hasRestaurant },
+    { id: "bag_market", label: lang==="de" ? "🛍 Einkaufstasche" : "🛍 Shopping bag", cond: hasMarkt },
+    { id: "sunscreen", label: lang==="de" ? "☀️ Sonnencreme" : "☀️ Sunscreen", cond: hasPark },
+    { id: "dresscode", label: lang==="de" ? "🧣 Schulterbedeckung (Kirche)" : "🧣 Shoulder cover (church)", cond: hasChurch },
+    { id: "adapter", label: lang==="de" ? "🔌 Reiseadapter" : "🔌 Travel adapter", cond: longTrip },
+    { id: "meds", label: lang==="de" ? "💊 Medikamente" : "💊 Medication", cond: longTrip },
+    { id: "guidebook", label: lang==="de" ? "📖 Reiseführer / Offline-Karten" : "📖 Guidebook / offline maps", always: true },
+  ].filter(item => item.always || item.cond);
+
+  const allItems = [...autoItems, ...customItems.map((label, i) => ({ id: `custom_${i}`, label }))];
+  const doneCount = allItems.filter(item => checked[item.id]).length;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+        <span style={{ fontSize:"0.75rem", color:th.textMuted }}>
+          {lang==="de" ? `${doneCount} von ${allItems.length} gepackt` : `${doneCount} of ${allItems.length} packed`}
+        </span>
+        <div style={{ height:6, flex:1, maxWidth:120, background:th.border, borderRadius:4, marginLeft:12, overflow:"hidden" }}>
+          <div style={{ height:"100%", width:`${allItems.length ? (doneCount/allItems.length)*100 : 0}%`,
+            background:th.accent, borderRadius:4, transition:"width 0.3s" }} />
+        </div>
+      </div>
+      {allItems.map(item => (
+        <label key={item.id} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer",
+          padding:"6px 10px", borderRadius:8, background:checked[item.id] ? th.accentLight : th.surface,
+          border:`1px solid ${checked[item.id] ? th.accent : th.border}`, transition:"all 0.15s" }}>
+          <input type="checkbox" checked={!!checked[item.id]}
+            onChange={() => setChecked(c => ({ ...c, [item.id]: !c[item.id] }))}
+            style={{ accentColor:th.accent, width:15, height:15, cursor:"pointer" }} />
+          <span style={{ fontSize:"0.82rem", color:checked[item.id] ? th.textFaint : th.text,
+            textDecoration:checked[item.id] ? "line-through" : "none", transition:"all 0.15s" }}>
+            {item.label}
+          </span>
+        </label>
+      ))}
+      <div style={{ display:"flex", gap:8, marginTop:4 }}>
+        <input value={customItem} onChange={e => setCustomItem(e.target.value)}
+          onKeyDown={e => { if(e.key==="Enter" && customItem.trim()) { setCustomItems(c => [...c, customItem.trim()]); setCustomItem(""); } }}
+          placeholder={lang==="de" ? "Eigenes Item hinzufügen..." : "Add custom item..."}
+          style={{ flex:1, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+        <button onClick={() => { if(customItem.trim()) { setCustomItems(c => [...c, customItem.trim()]); setCustomItem(""); } }}
+          style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontSize:"0.78rem", fontWeight:700 }}>+</button>
+      </div>
+    </div>
+  );
+}
+
 function TravelTimeBadge({ from, to }) {
   const { th } = useTheme();
   const travel = calcTravelTime(from, to);
@@ -725,566 +806,361 @@ async function geocodeCity(name) {
   try {
     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=de`);
     const data = await res.json();
-    if (data.results?.length > 0) {
+    if (data.results && data.results[0]) {
       const r = data.results[0];
-      return { lat:r.latitude, lng:r.longitude, timezone:r.timezone, fullName:r.name, country:r.country_code };
+      return { lat: r.latitude, lng: r.longitude, name: r.name, country: r.country };
     }
-  } catch {}
-  return null;
+    return null;
+  } catch { return null; }
 }
 
-function CollapsibleSection({ title, badge, rightContent, children, defaultOpen=false }) {
-  const { th } = useTheme();
+function CollapsibleSection({ title, icon, children, defaultOpen = false, th, badge }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="app-card-hover" style={{
-      background:th.surface, border:`1px solid ${th.border}`,
-      borderRadius:12, overflow:"hidden", boxShadow:th.shadow,
-      borderLeft:`3px solid ${th.accent}`,
-    }}>
-      <button onClick={() => setOpen(v => !v)}
+    <div style={{ marginBottom: 12 }}>
+      <button onClick={() => setOpen(o => !o)}
         style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
-          gap:8, padding:"12px 16px", borderBottom: open ? `1px solid ${th.border}` : "none",
-          background:th.card, cursor:"pointer", border:"none" }}>
-        <h2 style={{ color:th.accent, fontFamily:"'Playfair Display', Georgia, serif", fontSize:"0.92rem",
-          fontWeight:700, letterSpacing:"0.01em", margin:0, display:"flex", alignItems:"center", gap:8 }}>
-          {title}
-          {badge !== undefined && <span style={{ color:th.textFaint, fontSize:"0.75rem", fontWeight:400 }}>({badge})</span>}
-        </h2>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          {rightContent}
-          <span style={{ color:th.textFaint, fontSize:"0.75rem" }}>{open ? "▲" : "▼"}</span>
-        </div>
+          background:th.surface, border:`1px solid ${th.border}`, borderRadius: open ? "12px 12px 0 0" : 12,
+          padding:"10px 14px", cursor:"pointer", color:th.text, fontWeight:700, fontSize:"0.82rem" }}>
+        <span>{icon} {title} {badge ? <span style={{marginLeft:6,background:th.accent,color:"white",borderRadius:10,padding:"1px 7px",fontSize:"0.7rem"}}>{badge}</span> : null}</span>
+        <span style={{ color:th.textMuted, fontSize:"0.75rem" }}>{open ? "▲" : "▼"}</span>
       </button>
-      {open && <div style={{ padding:"14px 16px" }}>{children}</div>}
+      {open && (
+        <div style={{ background:th.card, border:`1px solid ${th.border}`, borderTop:"none",
+          borderRadius:"0 0 12px 12px", padding:"12px 14px" }}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }
 
-function StarRating({ stars }) {
-  const { th } = useTheme();
+function StarRating({ stars, reviews, price, badge, th }) {
+  if (!stars) return null;
   const full = Math.floor(stars);
+  const half = stars - full >= 0.5;
   return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
-      {Array.from({length:5}).map((_,i) => (
-        <span key={i} style={{ color:i<full?th.gold:th.textFaint, fontSize:"0.7rem" }}>{i<full?"★":"☆"}</span>
-      ))}
-      <span style={{ marginLeft:4, fontSize:"0.75rem", fontWeight:700, color:th.gold }}>{stars}</span>
-    </span>
+    <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap", marginTop:4 }}>
+      <span style={{ color:th.gold, fontSize:"0.8rem" }}>
+        {"★".repeat(full)}{half ? "½" : ""}{"☆".repeat(5-full-(half?1:0))}
+      </span>
+      <span style={{ fontSize:"0.72rem", color:th.textMuted }}>{stars} ({reviews ? (reviews/1000).toFixed(0)+"k" : "-"})</span>
+      {price && <span style={{ fontSize:"0.7rem", color:th.accent, fontWeight:700 }}>{price}</span>}
+      {badge && <span style={{ fontSize:"0.65rem", background:th.goldBg, color:th.gold, borderRadius:8, padding:"1px 7px", fontWeight:700 }}>{badge}</span>}
+    </div>
   );
 }
 
-function MetroTag({ line, time }) {
-  const { th } = useTheme();
+function MetroTag({ line, time, th }) {
+  if (!line) return null;
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:6,
-      padding:"2px 10px", borderRadius:999, fontSize:"0.72rem", fontWeight:800,
-      background:th.tag, color:th.accent, border:`1px solid ${th.border}`, whiteSpace:"nowrap",
-    }}>
+    <span style={{ display:"inline-flex", alignItems:"center", gap:4, background:th.infoBg,
+      color:th.info, borderRadius:8, padding:"2px 8px", fontSize:"0.68rem", fontWeight:700 }}>
       🚇 {line} · {time}
     </span>
   );
 }
 
-function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDrop, isDragging, city, onDayChange, availableDays, onNoteChange, t, getDayLabel }) {
-  const { th } = useTheme();
-  const openInfo = day ? getOpeningInfo(loc.name, day, city) : null;
-  const locInfo = getLocationInfo(loc.name, city);
-  const rating = getRating(loc.name, city);
-  const cost = getEntryCost(loc.name, city);
+function LocationCard({ loc, index, city, t, lang, tripDays, locationDays, locationNotes,
+  onDayChange, onNoteChange, onRemove, onMoveUp, onMoveDown, isFirst, isLast, travelMode, th }) {
   const [showInfo, setShowInfo] = useState(false);
-  const [showNote, setShowNote] = useState(!!loc.note);
-
-  const isClosed = openInfo && !openInfo.isOpen;
-  const cardBorder = isClosed ? th.warning : th.border;
+  const [showNote, setShowNote] = useState(false);
+  const cost = getEntryCost(loc.name, city);
+  const rating = getRating(loc.name, city);
+  const info = getLocationInfo(loc.name, city);
+  const assignedDay = locationDays[loc.id];
+  const note = locationNotes[loc.id] || "";
+  const openInfo = assignedDay ? getOpeningInfo(loc.name, assignedDay, city) : null;
+  const isClosed = openInfo && openInfo.isOpen === false;
+  const dayColor = assignedDay ? getDayColor(tripDays.indexOf(assignedDay)) : th.border;
 
   return (
-    <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
-      className="card-anim app-card-hover"
-      style={{
-        background:th.card, border:`1px solid ${cardBorder}`,
-        borderRadius:10, padding:"10px 12px", cursor:"grab", opacity:isDragging?0.5:1,
-        boxShadow: isClosed ? `0 0 0 1px ${th.warning}22` : th.shadow,
-      }}>
+    <div className="app-card-hover card-anim print-card" style={{
+      background: th.card, border: `2px solid ${isClosed ? th.warning : dayColor}`,
+      borderRadius: 14, padding: "12px 14px", position:"relative"
+    }}>
+      {isClosed && (
+        <div style={{ background:th.warningBg, color:th.warning, borderRadius:8, padding:"4px 10px",
+          fontSize:"0.72rem", fontWeight:700, marginBottom:8 }}>
+          ⚠️ {t.warningTitle}: {loc.name} {t.warningClosed} {t.warningHint}
+        </div>
+      )}
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-        <div style={{
-          width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center",
-          justifyContent:"center", fontSize:"1.1rem", flexShrink:0,
-          background:th.accentLight, border:`1px solid ${th.border}`,
-        }}>{loc.icon || "📍"}</div>
+        <div style={{ fontSize:"1.6rem", lineHeight:1, flexShrink:0 }}>{loc.icon || "📍"}</div>
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-            <span style={{ fontWeight:700, fontSize:"0.875rem", color:th.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-              {loc.name}
-            </span>
-            <button onClick={() => onRemove(loc.id)}
-              style={{ color:th.textFaint, background:"none", border:"none", cursor:"pointer", padding:"0 2px", fontSize:"1rem", flexShrink:0 }}>×</button>
-          </div>
-          <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:2 }}>
-            {loc.type}{loc.area ? ` · ${loc.area}` : ""}{loc.duration ? ` · ⏱ ${loc.duration}` : ""}
-          </div>
-          {rating && (
-            <div style={{ marginTop:4, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-              <StarRating stars={rating.stars} />
-              <span style={{ fontSize:"0.68rem", color:th.textFaint }}>{rating.reviews.toLocaleString()} {t.reviews}</span>
-              {rating.badge && (
-                <span style={{ fontSize:"0.65rem", padding:"1px 6px", borderRadius:6,
-                  background:th.accentLight, color:th.accent, fontWeight:700 }}>{rating.badge}</span>
-              )}
+          <div style={{ fontWeight:700, fontSize:"0.92rem", color:th.text, marginBottom:2 }}>{loc.name}</div>
+          <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{loc.type} · {loc.area}</div>
+          {loc.address && <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:2 }}>{loc.address}</div>}
+          <StarRating stars={rating?.stars} reviews={rating?.reviews} price={rating?.price} badge={rating?.badge} th={th} />
+          {openInfo && (
+            <div style={{ fontSize:"0.7rem", color: openInfo.isOpen ? th.success : th.warning, marginTop:3 }}>
+              {openInfo.isOpen ? "✅" : "❌"} {openInfo.hours} {openInfo.note ? `(${openInfo.note})` : ""}
             </div>
           )}
           {cost && (
-            <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:3 }}>
-              💰 {t.admission}: {cost.min === 0 && cost.max === 0 ? <span style={{ color:th.success }}>{t.free}</span>
-                : `${cost.currency}${cost.min}${cost.max !== cost.min ? `–${cost.currency}${cost.max}` : ""}`}
-              {cost.note ? <span style={{ color:th.textFaint }}> ({cost.note})</span> : null}
+            <div style={{ fontSize:"0.7rem", color:th.gold, marginTop:3 }}>
+              💰 {cost.min === 0 && cost.max === 0 ? t.free : `${cost.currency}${cost.min}${cost.max !== cost.min ? `–${cost.max}` : ""}`}
+              {cost.note ? ` (${cost.note})` : ""}
             </div>
           )}
-          {openInfo && (
-            <div style={{ fontSize:"0.7rem", marginTop:3,
-              color: openInfo.isOpen ? th.success : th.warning }}>
-              {openInfo.isOpen ? `✅ ${openInfo.hours}` : `❌ ${t.closedDay}`}
-              {openInfo.note ? <span style={{ color:th.textFaint }}> – {openInfo.note}</span> : null}
-            </div>
-          )}
-          {isClosed && (
-            <div style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:6, marginTop:4,
-              background:th.warningBg, color:th.warning, fontWeight:600 }}>
-              ⚠️ {loc.name} {t.warningClosed}
-            </div>
-          )}
+          {loc.duration && <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:2 }}>⏱ {loc.duration}</div>}
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:4, flexShrink:0 }}>
+          <button onClick={() => onRemove(loc.id)} style={{ background:"none", border:"none", cursor:"pointer", color:th.textFaint, fontSize:"1rem", padding:2 }}>✕</button>
+          {!isFirst && <button onClick={() => onMoveUp(index)} style={{ background:"none", border:"none", cursor:"pointer", color:th.textMuted, fontSize:"0.9rem", padding:2 }}>▲</button>}
+          {!isLast && <button onClick={() => onMoveDown(index)} style={{ background:"none", border:"none", cursor:"pointer", color:th.textMuted, fontSize:"0.9rem", padding:2 }}>▼</button>}
         </div>
       </div>
-      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:8, alignItems:"center" }}>
-        {availableDays && availableDays.length > 0 && (
-          <select value={day || ""} onChange={e => onDayChange(loc.id, e.target.value || null)}
-            style={{ fontSize:"0.7rem", padding:"3px 6px", borderRadius:8,
-              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
-              cursor:"pointer", maxWidth:130 }}>
-            <option value="">{t.allDays}</option>
-            {availableDays.map(d => (
-              <option key={d} value={d}>{getDayLabel ? getDayLabel(d) : d}</option>
-            ))}
-          </select>
-        )}
-        {locInfo && (
+
+      <div style={{ marginTop:10, display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
+        <select value={assignedDay || ""} onChange={e => onDayChange(loc.id, e.target.value || null)}
+          style={{ fontSize:"0.72rem", padding:"3px 8px", borderRadius:8, background:th.input,
+            color:th.text, border:`1px solid ${assignedDay ? dayColor : th.inputBorder}`, fontWeight:700 }}>
+          <option value="">{t.allDays}</option>
+          {tripDays.map((d, i) => (
+            <option key={d} value={d}>{formatDateLabel(d, lang)} (Tag {i+1})</option>
+          ))}
+        </select>
+        {info && (
           <button onClick={() => setShowInfo(v => !v)}
-            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, cursor:"pointer",
-              background:showInfo?th.accentLight:"transparent", color:showInfo?th.accent:th.textMuted,
-              border:`1px solid ${th.border}` }}>
+            style={{ fontSize:"0.68rem", padding:"3px 10px", borderRadius:8,
+              background: showInfo ? th.accentLight : th.tag, color: showInfo ? th.accent : th.textMuted,
+              border:`1px solid ${showInfo ? th.accent : th.border}`, cursor:"pointer" }}>
             {showInfo ? t.infoHide : t.infoShow}
           </button>
         )}
         <button onClick={() => setShowNote(v => !v)}
-          style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, cursor:"pointer",
-            background:showNote?th.accentLight:"transparent", color:showNote?th.accent:th.textMuted,
-            border:`1px solid ${th.border}` }}>
+          style={{ fontSize:"0.68rem", padding:"3px 10px", borderRadius:8,
+            background: showNote ? th.accentLight : th.tag, color: showNote ? th.accent : th.textMuted,
+            border:`1px solid ${showNote ? th.accent : th.border}`, cursor:"pointer" }}>
           {showNote ? t.noteHide : t.noteLabel}
         </button>
-        <a href={`https://maps.google.com/?q=${encodeURIComponent(loc.name)}`} target="_blank" rel="noreferrer"
+        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.name + " " + (loc.address || ""))}`}
+          target="_blank" rel="noopener noreferrer"
           style={{ fontSize:"0.68rem", color:th.info, textDecoration:"none" }}>🗺 Maps</a>
-        <span style={{ marginLeft:"auto", fontSize:"0.68rem", color:th.textFaint, cursor:"grab" }}>{t.dragHint}</span>
       </div>
-      {showInfo && locInfo && (
-        <div style={{ marginTop:8, padding:"8px 10px", borderRadius:10,
-          background:th.surface, border:`1px solid ${th.border}`, fontSize:"0.72rem" }}>
-          <div style={{ color:th.textMuted, marginBottom:6 }}>{locInfo.short}</div>
-          {locInfo.highlights?.map((h,i) => (
-            <div key={i} style={{ color:th.text, marginBottom:3 }}>✓ {h}</div>
+
+      {showInfo && info && (
+        <div style={{ marginTop:10, padding:"8px 12px", background:th.surface, borderRadius:10,
+          border:`1px solid ${th.border}`, fontSize:"0.78rem", color:th.textMuted }}>
+          <div style={{ color:th.text, marginBottom:6 }}>{info.short}</div>
+          {info.highlights && info.highlights.map((h,i) => (
+            <div key={i} style={{ color:th.accent }}>✦ {h}</div>
           ))}
         </div>
       )}
       {showNote && (
-        <textarea value={loc.note || ""} onChange={e => onNoteChange(loc.id, e.target.value)}
-          placeholder={t.notePlaceholder} rows={2}
-          style={{ marginTop:8, width:"100%", fontSize:"0.72rem", padding:"6px 8px",
+        <textarea value={note} onChange={e => onNoteChange(loc.id, e.target.value)}
+          placeholder={t.notePlaceholder}
+          style={{ marginTop:8, width:"100%", fontSize:"0.78rem", padding:"6px 10px",
             borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
-            resize:"vertical", fontFamily:"inherit" }} />
+            resize:"vertical", minHeight:50 }} />
       )}
     </div>
   );
 }
 
-function MapView({ locations, city }) {
-  const { th } = useTheme();
+function MapView({ locations, city, th }) {
   const mapRef = useRef(null);
-  const mapInstance = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const polylineRef = useRef(null);
 
   useEffect(() => {
-    if (!mapRef.current) return;
-    const init = () => {
-      if (!window.L) { setTimeout(init, 300); return; }
-      if (mapInstance.current) {
-        try { mapInstance.current.remove(); } catch {}
-        mapInstance.current = null;
+    const initMap = () => {
+      if (!window.L || !mapRef.current) return;
+      if (!mapInstanceRef.current) {
+        mapInstanceRef.current = window.L.map(mapRef.current, { zoomControl: true, attributionControl: false });
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(mapInstanceRef.current);
       }
-      const center = city ? [city.lat, city.lng] : [48.8566, 2.3522];
-      mapInstance.current = window.L.map(mapRef.current, { zoomControl: true }).setView(center, 13);
-      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap"
-      }).addTo(mapInstance.current);
+      const map = mapInstanceRef.current;
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      if (polylineRef.current) { polylineRef.current.remove(); polylineRef.current = null; }
 
-      const locs = locations && locations.length > 0 ? locations : (city?.sampleLocations || []);
-      locs.forEach((loc, i) => {
+      const allLocs = locations.length > 0 ? locations : (city?.sampleLocations || []);
+      const centerLat = city?.lat || 48.8566;
+      const centerLng = city?.lng || 2.3522;
+
+      if (allLocs.length === 0) {
+        map.setView([centerLat, centerLng], 13);
+        return;
+      }
+
+      const latlngs = [];
+      allLocs.forEach((loc, i) => {
         if (!loc.lat || !loc.lng) return;
-        const icon = window.L.divIcon({
-          html: `<div style="background:${th.accent};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);animation:markerPop 0.4s ease both;animation-delay:${i*0.08}s">${i+1}</div>`,
-          className: "", iconSize: [28,28], iconAnchor: [14,14]
-        });
-        window.L.marker([loc.lat, loc.lng], { icon })
-          .addTo(mapInstance.current)
-          .bindPopup(`<b>${loc.name}</b><br/>${loc.address||""}`);
+        latlngs.push([loc.lat, loc.lng]);
+        const color = DAY_COLORS[i % DAY_COLORS.length];
+        const html = `<div style="background:${color};color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid white;animation:markerPop 0.4s ease both">${i+1}</div>`;
+        const icon = window.L.divIcon({ html, className:"", iconSize:[28,28], iconAnchor:[14,14] });
+        const marker = window.L.marker([loc.lat, loc.lng], { icon }).addTo(map);
+        marker.bindPopup(`<b>${loc.icon || ""} ${loc.name}</b><br><small>${loc.type || ""}</small>`);
+        markersRef.current.push(marker);
       });
 
-      if (locs.length > 1) {
-        const bounds = locs.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
-        if (bounds.length > 1) {
-          try { mapInstance.current.fitBounds(bounds, { padding: [30,30] }); } catch {}
-        }
+      if (latlngs.length > 1) {
+        polylineRef.current = window.L.polyline(latlngs, { color:"#c4a882", weight:2, dashArray:"6,6", opacity:0.7 }).addTo(map);
+      }
+
+      if (latlngs.length > 0) {
+        if (latlngs.length === 1) map.setView(latlngs[0], 14);
+        else map.fitBounds(latlngs, { padding:[30,30] });
+      } else {
+        map.setView([centerLat, centerLng], 13);
       }
     };
-    init();
-    return () => {
-      if (mapInstance.current) {
-        try { mapInstance.current.remove(); } catch {}
-        mapInstance.current = null;
-      }
-    };
+
+    if (window.L) { initMap(); }
+    else {
+      const interval = setInterval(() => { if (window.L) { clearInterval(interval); initMap(); } }, 300);
+      return () => clearInterval(interval);
+    }
   }, [locations, city]);
 
   return (
-    <div ref={mapRef} style={{
-      width:"100%", height:320, borderRadius:12, overflow:"hidden",
-      border:`1px solid ${th.border}`, background:th.card
-    }} />
+    <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden",
+      border:`1px solid ${th.border}`, background:th.surface }} />
   );
 }
 
-function RouteView({ locations, city, travelMode, t }) {
-  const { th } = useTheme();
-  const locs = locations.filter(l => l.lat && l.lng);
-  if (locs.length < 2) return (
-    <div style={{ textAlign:"center", color:th.textFaint, fontSize:"0.8rem", padding:"20px 0" }}>
-      {t.noRouteHint}
-    </div>
-  );
-  let totalWalk = 0, totalTransit = 0, totalDist = 0;
-  const segments = [];
-  for (let i = 0; i < locs.length - 1; i++) {
-    const travel = calcTravelTime(locs[i], locs[i+1]);
-    if (travel) {
-      totalWalk += travel.walkMin;
-      totalTransit += travel.transitMin;
-      totalDist += travel.distKm;
-      segments.push(travel);
-    } else {
-      segments.push(null);
-    }
-  }
+function BudgetTracker({ locations, city, lang, t, th }) {
+  const [extras, setExtras] = useState("");
+  const [extrasVal, setExtrasVal] = useState(0);
+  const items = locations.map(loc => {
+    const cost = getEntryCost(loc.name, city);
+    return { name: loc.name, cost };
+  }).filter(i => i.cost);
+  const total = items.reduce((s, i) => s + (i.cost.min + i.cost.max) / 2, 0) + extrasVal;
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-      <div style={{ display:"flex", gap:12, padding:"8px 12px", borderRadius:12,
-        background:th.surface, border:`1px solid ${th.border}`, flexWrap:"wrap" }}>
-        <span style={{ fontSize:"0.72rem", color:th.textMuted }}>
-          📍 {locs.length} {t.stops} · {totalDist.toFixed(1)} km
-        </span>
-        <span style={{ fontSize:"0.72rem", color:th.info }}>🚶 {totalWalk} Min. gesamt</span>
-        <span style={{ fontSize:"0.72rem", color:th.gold }}>🚇 {totalTransit} Min. gesamt</span>
-      </div>
-      {locs.map((loc, i) => {
-        const seg = segments[i];
-        const metro = i < locs.length - 1 ? getMetroLine(loc, locs[i+1], city) : null;
-        return (
-          <div key={loc.id}>
-            <div style={{ display:"flex", gap:10, alignItems:"flex-start" }}>
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
-                <div style={{ width:28, height:28, borderRadius:"50%", background:th.accent,
-                  color:"white", display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:"0.75rem", fontWeight:800 }}>{i+1}</div>
-                {i < locs.length - 1 && <div style={{ width:2, height:32, background:th.border, margin:"4px 0" }} />}
-              </div>
-              <div style={{ flex:1, paddingBottom:4 }}>
-                <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{loc.icon} {loc.name}</div>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.area || loc.address}</div>
-              </div>
-            </div>
-            {seg && i < locs.length - 1 && (
-              <div style={{ display:"flex", alignItems:"center", gap:8, paddingLeft:38, paddingBottom:4 }}>
-                <div style={{ fontSize:"0.68rem", color:th.textFaint,
-                  display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-                  <span style={{ color:th.info }}>🚶 {seg.walkMin} Min.</span>
-                  <span style={{ color:th.gold }}>🚇 {seg.transitMin} Min.</span>
-                  <span>({seg.distKm} km)</span>
-                  {metro && <MetroTag line={metro.line} time={metro.time} />}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function TimelineView({ locations, day, city, travelMode, t }) {
-  const { th } = useTheme();
-  const filtered = day ? locations.filter(l => l._day === day) : locations;
-  if (filtered.length === 0) return (
-    <div style={{ textAlign:"center", color:th.textFaint, fontSize:"0.8rem", padding:"20px 0" }}>
-      {t.noRouteHint}
-    </div>
-  );
-  let time = 9 * 60;
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
-      {filtered.map((loc, i) => {
-        const startH = Math.floor(time/60);
-        const startM = time % 60;
-        const durMatch = (loc.duration||"").match(/[\d,.]+/);
-        const durMin = durMatch ? Math.round(parseFloat(durMatch[0].replace(",","."))*60) : 60;
-        time += durMin;
-        const endH = Math.floor(time/60);
-        const endM = time % 60;
-        const travel = i < filtered.length-1 ? calcTravelTime(loc, filtered[i+1]) : null;
-        const transferMin = travelMode === "walking" ? travel?.walkMin : travel?.transitMin;
-        time += transferMin || 20;
-        return (
-          <div key={loc.id}>
-            <div style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
-                <div style={{
-                  width:32, height:32, borderRadius:"50%", background:th.accent,
-                  color:"white", display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:"0.8rem", fontWeight:800
-                }}>{i+1}</div>
-                {i < filtered.length-1 && <div style={{ width:2, flex:1, minHeight:30, background:th.border, margin:"4px 0" }} />}
-              </div>
-              <div style={{ flex:1, paddingBottom:12 }}>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:2 }}>
-                  {String(startH).padStart(2,"0")}:{String(startM).padStart(2,"0")} – {String(endH).padStart(2,"0")}:{String(endM).padStart(2,"0")}
-                </div>
-                <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{loc.icon} {loc.name}</div>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.area} · {loc.duration}</div>
-                {travel && i < filtered.length-1 && (
-                  <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:4 }}>
-                    → {travelMode === "walking" ? `🚶 ${travel.walkMin} Min.` : `🚇 ${travel.transitMin} Min.`} ({travel.distKm} km)
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function PdfDownloadView({ locations, city, startDate, numDays, getDayLabel, lang, t, th }) {
-  function doDownload() {
-    const cityName = city ? city.name : "";
-    const cityEmoji = city ? city.emoji : "";
-    var rows = locations.map(function(loc, i) {
-      var dayLabel = loc._day ? getDayLabel(loc._day) : "";
-      return "<div style='display:flex;gap:12px;border:1px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:10px'>" +
-        "<div style='width:26px;height:26px;border-radius:50%;background:#6c63ff;color:#fff;font-weight:900;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0'>" + (i+1) + "</div>" +
-        "<div><div style='font-weight:700'>" + (loc.icon || "") + " " + loc.name + "</div>" +
-        "<div style='font-size:0.78rem;color:#666'>" + (loc.type || "") + (loc.area ? " - " + loc.area : "") + (loc.duration ? " - " + loc.duration : "") + "</div>" +
-        (dayLabel ? "<div style='font-size:0.72rem;color:#333'>" + dayLabel + "</div>" : "") +
-        (loc.note ? "<div style='font-size:0.72rem;font-style:italic;color:#555'>" + loc.note + "</div>" : "") +
-        "</div></div>";
-    }).join("");
-    var html = "<!DOCTYPE html><html lang='de'><head><meta charset='utf-8'><title>Reiseplan - " + cityName + "</title>" +
-      "<style>body{font-family:system-ui,sans-serif;padding:40px;max-width:680px;margin:0 auto;color:#111;background:#fff}" +
-      "h1{font-size:1.5rem;font-weight:900;margin:0 0 8px}p.meta{font-size:0.85rem;color:#555;margin:0 0 24px}" +
-      "footer{margin-top:28px;font-size:0.72rem;color:#aaa;border-top:1px solid #eee;padding-top:10px}" +
-      "@media print{body{padding:20px}}</style></head><body>" +
-      "<h1>" + cityEmoji + " " + cityName + " - Reiseplan</h1>" +
-      "<p class='meta'>" + startDate + " - " + numDays + " " + t.labelDaysSuffix + " - " + locations.length + " " + t.places + "</p>" +
-      rows + "<footer>Reiseplaner - " + cityName + " - " + startDate + "</footer></body></html>";
-    var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "Reiseplan-" + (cityName || "reise") + ".html";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-      <p style={{ fontSize:"0.82rem", color:th.textMuted, margin:0 }}>
-        {lang === "de"
-          ? "Lade deinen Reiseplan als HTML-Datei herunter. Im Browser oeffnen, dann Strg+P zum Speichern als PDF."
-          : "Download your travel plan as HTML. Open in browser, then Ctrl+P to save as PDF."}
-      </p>
-      {locations.length === 0 ? (
-        <p style={{ fontSize:"0.78rem", color:th.warning }}>{t.addFirst}</p>
-      ) : (
-        <button className="btn-primary" onClick={doDownload}
-          style={{ padding:"12px 24px", borderRadius:12, background:th.accent, color:"white",
-            border:"none", cursor:"pointer", fontSize:"0.95rem", fontWeight:800,
-            display:"inline-flex", alignItems:"center", gap:8, alignSelf:"flex-start" }}>
-          {lang === "de" ? "Reiseplan herunterladen (.html)" : "Download travel plan (.html)"}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function BudgetTracker({ locations, city, t }) {
-  const { th } = useTheme();
-  const [extras, setExtras] = useState([{ label:"Hotel", amount:150 }, { label:"Essen", amount:80 }]);
-  const [newLabel, setNewLabel] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-
-  const locationCosts = locations.map(loc => {
-    const c = getEntryCost(loc.name, city);
-    return c ? { name:loc.name, cost:c } : null;
-  }).filter(Boolean);
-
-  const locTotal = locationCosts.reduce((s,l) => s + (l.cost.min+l.cost.max)/2, 0);
-  const extTotal = extras.reduce((s,e) => s + (Number(e.amount)||0), 0);
-  const total = locTotal + extTotal;
-
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-      {locationCosts.length === 0 && (
-        <div style={{ color:th.textFaint, fontSize:"0.8rem" }}>{t.addFirst}</div>
-      )}
-      {locationCosts.map((l,i) => (
-        <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"6px 10px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
-          <span style={{ fontSize:"0.8rem", color:th.text }}>{l.name}</span>
-          <span style={{ fontSize:"0.8rem", fontWeight:700, color:th.accent }}>
-            {l.cost.min === 0 && l.cost.max === 0 ? <span style={{ color:th.success }}>{t.free}</span>
-              : `${l.cost.currency}${Math.round((l.cost.min+l.cost.max)/2)}`}
+      {items.length === 0 && <div style={{ fontSize:"0.78rem", color:th.textMuted }}>{t.addFirst}</div>}
+      {items.map((item, i) => (
+        <div key={i} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.8rem",
+          padding:"5px 10px", background:th.surface, borderRadius:8, border:`1px solid ${th.border}` }}>
+          <span style={{ color:th.text }}>{item.name}</span>
+          <span style={{ color:th.gold, fontWeight:700 }}>
+            {item.cost.min === 0 && item.cost.max === 0 ? t.free :
+              `${item.cost.currency}${item.cost.min}${item.cost.max !== item.cost.min ? `–${item.cost.max}` : ""}`}
           </span>
         </div>
       ))}
-      <div style={{ fontSize:"0.75rem", color:th.textMuted, marginTop:4 }}>{t.budgetExtras}</div>
-      {extras.map((e,i) => (
-        <div key={i} style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <input value={e.label} onChange={ev => setExtras(ex => ex.map((x,j) => j===i?{...x,label:ev.target.value}:x))}
-            style={{ flex:1, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
-              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-          <input type="number" value={e.amount} onChange={ev => setExtras(ex => ex.map((x,j) => j===i?{...x,amount:ev.target.value}:x))}
-            style={{ width:70, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
-              background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-          <button onClick={() => setExtras(ex => ex.filter((_,j) => j!==i))}
-            style={{ color:th.warning, background:"none", border:"none", cursor:"pointer", fontSize:"1rem" }}>×</button>
+      <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:4 }}>
+        <span style={{ fontSize:"0.75rem", color:th.textMuted }}>{t.budgetExtras}</span>
+        <input type="number" value={extras} onChange={e => { setExtras(e.target.value); setExtrasVal(parseFloat(e.target.value)||0); }}
+          placeholder="0" style={{ width:70, fontSize:"0.78rem", padding:"3px 8px", borderRadius:8,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+      </div>
+      {items.length > 0 && (
+        <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 10px",
+          background:th.goldBg, borderRadius:8, border:`1px solid ${th.gold}`, marginTop:4 }}>
+          <span style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{t.budgetTotal}</span>
+          <span style={{ fontWeight:900, fontSize:"0.95rem", color:th.gold }}>~€{total.toFixed(2)}</span>
         </div>
-      ))}
-      <div style={{ display:"flex", gap:8 }}>
-        <input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Label"
-          style={{ flex:1, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
-            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-        <input type="number" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="€"
-          style={{ width:70, fontSize:"0.75rem", padding:"4px 8px", borderRadius:8,
-            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-        <button onClick={() => { if(newLabel) { setExtras(ex => [...ex,{label:newLabel,amount:Number(newAmount)||0}]); setNewLabel(""); setNewAmount(""); } }}
-          className="btn-primary"
-          style={{ padding:"4px 10px", borderRadius:8, background:th.accent, color:"white",
-            border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>+</button>
-      </div>
-      <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderRadius:10,
-        background:th.accentLight, border:`1px solid ${th.border}`, marginTop:4 }}>
-        <span style={{ fontWeight:800, color:th.accent }}>{t.budgetTotal}</span>
-        <span style={{ fontWeight:800, color:th.accent }}>€{Math.round(total)}</span>
-      </div>
+      )}
       <div style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.budgetNote}</div>
     </div>
   );
 }
 
-function SavedPlans({ locations, cityId, tripDays, locationDays, locationNotes, t, onLoad }) {
-  const { th } = useTheme();
-  const [plans, setPlans] = useState(() => {
-      const raw = safeJsonParse(localStorage.getItem("travelPlans_v2"), []);
-      return (Array.isArray(raw) ? raw : []).filter(Boolean);
-    });
-  const [planName, setPlanName] = useState("");
-  const [savedMsg, setSavedMsg] = useState(false);
-
-  const save = () => {
-    if (!planName.trim()) return;
-    const plan = { id:Date.now(), name:planName.trim(), cityId, tripDays, locations, locationDays, locationNotes };
-    const next = [plan, ...plans.slice(0,9)];
-    setPlans(next);
-    localStorage.setItem("travelPlans_v2", JSON.stringify(next));
-    setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 2000);
-    setPlanName("");
+function ShareSection({ locations, cityId, startDate, numDays, locationDays, locationNotes, t, th }) {
+  const [shareUrl, setShareUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const generate = () => {
+    const data = { cityId, startDate, numDays, locations, locationDays, locationNotes };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const url = window.location.href.split("?")[0] + "?plan=" + encoded;
+    setShareUrl(url);
   };
-
+  const copy = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-      <div style={{ display:"flex", gap:8 }}>
-        <input value={planName} onChange={e => setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
-          style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <button onClick={generate} className="btn-primary"
+        style={{ padding:"8px 16px", borderRadius:10, background:th.accent, color:"white",
+          border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.82rem" }}>
+        {t.createLink}
+      </button>
+      {shareUrl && (
+        <>
+          <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.shareHint}</div>
+          <div style={{ display:"flex", gap:6 }}>
+            <input readOnly value={shareUrl}
+              style={{ flex:1, fontSize:"0.68rem", padding:"5px 8px", borderRadius:8,
+                background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+            <button onClick={copy}
+              style={{ padding:"5px 12px", borderRadius:8, background: copied ? th.success : th.tag,
+                color: copied ? "white" : th.text, border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
+              {copied ? t.copied : t.copy}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SavedPlans({ plans, onSave, onLoad, onDelete, planName, setPlanName, saveMsg, t, th, locations }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ display:"flex", gap:6 }}>
+        <input value={planName} onChange={e => setPlanName(e.target.value)}
+          placeholder={t.planNamePlaceholder}
+          style={{ flex:1, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
             background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-        <button onClick={save} className="btn-primary"
-          style={{ padding:"6px 14px", borderRadius:10, background:th.accent, color:"white",
-            border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
-          {savedMsg ? t.saved : t.save}
+        <button onClick={onSave} className="btn-primary"
+          style={{ padding:"5px 14px", borderRadius:8, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.78rem" }}>
+          {saveMsg ? t.saved : t.save}
         </button>
       </div>
-      {(plans || []).filter(Boolean).length === 0 ? (
-        <div style={{ color:th.textFaint, fontSize:"0.8rem" }}>{t.noPlans}</div>
-      ) : (plans || []).filter(Boolean).map(p => (
-        <div key={p.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"8px 12px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
-          <div>
-            <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.text }}>{p.name}</div>
-            <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{CITIES[p.cityId]?.name || p.cityId} · {p.locations?.length||0} {t.places}</div>
-          </div>
-          <button onClick={() => onLoad && onLoad(p)}
-            style={{ padding:"4px 10px", borderRadius:8, background:th.accentLight, color:th.accent,
-              border:`1px solid ${th.border}`, cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
+      {plans.length === 0 ? (
+        <div style={{ fontSize:"0.78rem", color:th.textMuted }}>{t.noPlans}</div>
+      ) : plans.map(p => (
+        <div key={p.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"6px 10px",
+          background:th.surface, borderRadius:10, border:`1px solid ${th.border}` }}>
+          <span style={{ flex:1, fontSize:"0.8rem", color:th.text, fontWeight:600 }}>{p.name}</span>
+          <span style={{ fontSize:"0.68rem", color:th.textMuted }}>{p.locations?.length || 0} {t.places}</span>
+          <button onClick={() => onLoad(p)}
+            style={{ padding:"3px 10px", borderRadius:8, background:th.accentLight, color:th.accent,
+              border:`1px solid ${th.accent}`, cursor:"pointer", fontSize:"0.72rem", fontWeight:700 }}>
             {t.load}
           </button>
+          <button onClick={() => onDelete(p.id)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:th.textFaint, fontSize:"0.9rem" }}>✕</button>
         </div>
       ))}
     </div>
   );
 }
 
-function SharePanel({ locations, cityId, t }) {
-  const { th } = useTheme();
-  const [link, setLink] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  const createLink = () => {
-    const data = { cityId, locs: locations.map(l => ({ n:l.name, t:l.type, a:l.area })) };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    setLink(`${window.location.origin}?plan=${encoded}`);
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(link).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  };
-
+function ApiKeySection({ apiKey, setApiKey, t, th }) {
+  const [input, setInput] = useState(apiKey || "");
+  const [saved, setSaved] = useState(false);
+  const save = () => { setApiKey(input.trim()); localStorage.setItem("openai_key", input.trim()); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const del = () => { setApiKey(""); localStorage.removeItem("openai_key"); setInput(""); };
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-      <button onClick={createLink} className="btn-primary"
-        style={{ padding:"8px 16px", borderRadius:10, background:th.accent, color:"white",
-          border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
-        {t.createLink}
-      </button>
-      {link && (
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <div style={{ flex:1, fontSize:"0.72rem", padding:"6px 10px", borderRadius:10,
-            background:th.input, color:th.textMuted, border:`1px solid ${th.inputBorder}`,
-            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{link}</div>
-          <button onClick={copyLink} className="btn-primary"
-            style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
-              border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700, whiteSpace:"nowrap" }}>
-            {copied ? t.copied : t.copy}
-          </button>
-        </div>
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.apiHint}</div>
+      <div style={{ display:"flex", gap:6 }}>
+        <input type="password" value={input} onChange={e => setInput(e.target.value)}
+          placeholder="sk-..." style={{ flex:1, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
+            background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+        <button onClick={save}
+          style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
+            border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.75rem" }}>
+          {saved ? t.apiSaved : t.apiSave}
+        </button>
+      </div>
+      {apiKey && (
+        <button onClick={del}
+          style={{ alignSelf:"flex-start", padding:"3px 10px", borderRadius:8,
+            background:th.warningBg, color:th.warning, border:`1px solid ${th.warning}`,
+            cursor:"pointer", fontSize:"0.72rem" }}>
+          {t.apiDelete}
+        </button>
       )}
-      <div style={{ fontSize:"0.7rem", color:th.textFaint }}>{t.shareHint}</div>
     </div>
   );
 }
@@ -1294,104 +1170,91 @@ export default function App() {
   const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
 
-  const [cityId, setCityId] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.cityId || "paris"; } catch { return "paris"; } });
-  const [customCities, setCustomCities] = useState({});
+  const [cityId, setCityId] = useState("paris");
   const [customCityName, setCustomCityName] = useState("");
+  const [customCityInput, setCustomCityInput] = useState("");
+  const [customCityData, setCustomCityData] = useState(null);
   const [showCityPicker, setShowCityPicker] = useState(false);
-  const [addingCustom, setAddingCustom] = useState(false);
-  const [geocoding, setGeocoding] = useState(false);
 
-  const allCities = { ...CITIES, ...customCities };
-  const city = allCities[cityId] || CITIES.paris;
-
-  const [locations, setLocations] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locations || []; } catch { return []; } });
-  const [locationDays, setLocationDays] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locationDays || {}; } catch { return {}; } });
-  const [locationNotes, setLocationNotes] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locationNotes || {}; } catch { return {}; } });
-  const [linkInput, setLinkInput] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState("");
-  const [filterDay, setFilterDay] = useState(null);
-  const [travelMode, setTravelMode] = useState("transit");
-  const [viewTab, setViewTab] = useState("route");
-  const [dragIdx, setDragIdx] = useState(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("oai_key") || "");
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiSaved, setApiSaved] = useState(false);
-  const [showApiPanel, setShowApiPanel] = useState(false);
-  const [skeletonVisible, setSkeletonVisible] = useState(false);
+  const city = customCityData || CITIES[cityId] || CITIES.paris;
 
   const today = new Date().toISOString().slice(0,10);
-  const [startDate, setStartDate] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.startDate || today; } catch { return today; } });
-  const [numDays, setNumDays] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.numDays || 4; } catch { return 4; } });
+  const [startDate, setStartDate] = useState(today);
+  const [numDays, setNumDays] = useState(4);
   const tripDays = generateTripDays(startDate, numDays);
 
-    useEffect(() => {
-      try {
-        localStorage.setItem("rp_last", JSON.stringify({ cityId, locations, locationDays, locationNotes, startDate, numDays }));
-      } catch {}
-    }, [cityId, locations, locationDays, locationNotes, startDate, numDays]);
+  const [locations, setLocations] = useState([]);
+  const [locationDays, setLocationDays] = useState({});
+  const [locationNotes, setLocationNotes] = useState({});
 
-  const getDayLabel = (d) => formatDateLabel(d, lang);
+  const [linkInput, setLinkInput] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [linkError, setLinkError] = useState("");
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
 
-  const locWithDays = locations.map(l => ({
-    ...l,
-    _day: locationDays[l.id] || null,
-    note: locationNotes[l.id] || "",
-  }));
+  const [travelMode, setTravelMode] = useState("transit");
+  const [activeTab, setActiveTab] = useState("route");
+  const [filterDay, setFilterDay] = useState("all");
 
-  const filteredLocs = filterDay
-    ? locWithDays.filter(l => l._day === filterDay)
-    : locWithDays;
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_key") || "");
+  const [planName, setPlanName] = useState("");
+  const [savedPlans, setSavedPlans] = useState(() => safeJsonParse(localStorage.getItem("travel_plans"), []));
+  const [saveMsg, setSaveMsg] = useState(false);
 
-  const closedWarnings = locWithDays.filter(l => {
-    if (!l._day) return false;
-    const info = getOpeningInfo(l.name, l._day, city);
-    return info && !info.isOpen;
-  });
+  // Load from URL on mount
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get("plan");
+      if (plan) {
+        const data = JSON.parse(decodeURIComponent(escape(atob(plan))));
+        const norm = normalizePlan(data);
+        if (norm) {
+          setCityId(norm.cityId);
+          setStartDate(norm.startDate);
+          setNumDays(norm.numDays);
+          setLocations(norm.locations);
+          setLocationDays(norm.locationDays);
+          setLocationNotes(norm.locationNotes);
+        }
+      }
+    } catch {}
+  }, []);
 
-  const analyzeLink = async () => {
+  const addLocation = async () => {
     const url = linkInput.trim();
-    if (!url) { setError(t.errorEmpty); return; }
-    setError("");
+    if (!url) { setLinkError(t.errorEmpty); return; }
+    setLinkError("");
     setAnalyzing(true);
     setSkeletonVisible(true);
-
-    if (apiKey) {
-      try {
-        const result = await analyzeWithAI(url, apiKey, city.name);
-        const newLoc = { ...result, id: Date.now() };
-        setLocations(prev => [...prev, newLoc]);
-        setLinkInput("");
-        setSkeletonVisible(false);
-        setAnalyzing(false);
-        return;
-      } catch (e) {
-        console.warn("AI failed, falling back:", e);
+    try {
+      let loc = null;
+      if (apiKey) {
+        try { loc = await analyzeWithAI(url, apiKey, city.name); } catch {}
       }
-    }
-
-    await new Promise(r => setTimeout(r, 900));
-    const matcher = city.linkMatchers?.find(m => m.pattern.test(url));
-    if (matcher) {
-      const sample = city.sampleLocations[matcher.locationIndex];
-      if (sample) {
-        setLocations(prev => [...prev, { ...sample, id: Date.now() }]);
-        setLinkInput("");
-        setSkeletonVisible(false);
-        setAnalyzing(false);
-        return;
+      if (!loc) {
+        const matchers = city.linkMatchers || [];
+        const match = matchers.find(m => m.pattern.test(url));
+        if (match !== undefined && city.sampleLocations[match.locationIndex]) {
+          loc = { ...city.sampleLocations[match.locationIndex] };
+        }
       }
-    }
-    setError(t.errorNotFound);
-    setSkeletonVisible(false);
+      if (!loc) { setLinkError(t.errorNotFound); setAnalyzing(false); setSkeletonVisible(false); return; }
+      loc.id = Date.now();
+      if (!loc.lat || !loc.lng) {
+        const geo = await geocodeCity(loc.name + " " + city.name);
+        if (geo) { loc.lat = geo.lat; loc.lng = geo.lng; }
+      }
+      setLocations(prev => [...prev, loc]);
+      setLinkInput("");
+    } catch (e) { setLinkError(String(e)); }
     setAnalyzing(false);
+    setSkeletonVisible(false);
   };
 
-  const addDemo = (idx) => {
-    const sample = city.sampleLocations[idx];
-    if (!sample) return;
-    if (locations.find(l => l.name === sample.name)) return;
-    setLocations(prev => [...prev, { ...sample, id: Date.now() }]);
+  const addDemoLocation = (loc) => {
+    if (locations.find(l => l.name === loc.name)) return;
+    setLocations(prev => [...prev, { ...loc, id: Date.now() + Math.random() }]);
   };
 
   const removeLocation = (id) => {
@@ -1400,457 +1263,399 @@ export default function App() {
     setLocationNotes(prev => { const n = {...prev}; delete n[id]; return n; });
   };
 
-  const handleDayChange = (id, day) => setLocationDays(prev => ({ ...prev, [id]: day || null }));
-  const handleNoteChange = (id, note) => setLocationNotes(prev => ({ ...prev, [id]: note }));
+  const moveLocation = (index, dir) => {
+    setLocations(prev => {
+      const arr = [...prev];
+      const swap = index + dir;
+      if (swap < 0 || swap >= arr.length) return arr;
+      [arr[index], arr[swap]] = [arr[swap], arr[index]];
+      return arr;
+    });
+  };
 
-  const handleDragStart = (i) => setDragIdx(i);
-  const handleDragOver = (e, i) => { e.preventDefault(); };
-  const handleDrop = (i) => {
-    if (dragIdx === null || dragIdx === i) return;
-    const next = [...locations];
-    const [moved] = next.splice(dragIdx, 1);
-    next.splice(i, 0, moved);
-    setLocations(next);
-    setDragIdx(null);
+  const savePlan = () => {
+    if (!planName.trim()) return;
+    const plan = normalizePlan({ id: Date.now(), name: planName.trim(), cityId: city.id || cityId,
+      startDate, numDays, tripDays, locations, locationDays, locationNotes });
+    const updated = [...savedPlans.filter(p => p.name !== plan.name), plan];
+    setSavedPlans(updated);
+    localStorage.setItem("travel_plans", JSON.stringify(updated));
+    setSaveMsg(true);
+    setTimeout(() => setSaveMsg(false), 2000);
+  };
+
+  const loadPlan = (plan) => {
+    const norm = normalizePlan(plan);
+    if (!norm) return;
+    setCityId(norm.cityId);
+    setStartDate(norm.startDate);
+    setNumDays(norm.numDays);
+    setLocations(norm.locations);
+    setLocationDays(norm.locationDays);
+    setLocationNotes(norm.locationNotes);
+    setCustomCityData(null);
+  };
+
+  const deletePlan = (id) => {
+    const updated = savedPlans.filter(p => p.id !== id);
+    setSavedPlans(updated);
+    localStorage.setItem("travel_plans", JSON.stringify(updated));
   };
 
   const addCustomCity = async () => {
-    const name = customCityName.trim();
-    if (!name) return;
-    setGeocoding(true);
-    const geo = await geocodeCity(name);
-    const id = name.toLowerCase().replace(/\s+/g,"_");
-    const newCity = {
-      id, name, emoji:"🌍", country: geo?.country || "🌐",
+    if (!customCityInput.trim()) return;
+    const geo = await geocodeCity(customCityInput.trim());
+    const name = geo?.name || customCityInput.trim();
+    setCustomCityData({ id: "custom", name, emoji: "🌍", country: "🌐",
       lat: geo?.lat || 48.8566, lng: geo?.lng || 2.3522,
-      timezone: geo?.timezone || "Europe/Berlin",
       sampleLocations: [], demoLinks: [], linkMatchers: [],
-      entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {},
-    };
-    setCustomCities(prev => ({ ...prev, [id]: newCity }));
-    setCityId(id);
-    setCustomCityName("");
-    setAddingCustom(false);
+      entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {} });
+    setCityId("custom");
     setShowCityPicker(false);
-    setGeocoding(false);
+    setCustomCityInput("");
   };
 
-  const newPlan = () => {
-      if (locations.length > 0) {
-        const ok = window.confirm(lang === "de" ? "Aktuelle Planung verwerfen und neu starten?" : "Discard current plan and start fresh?");
-        if (!ok) return;
-      }
-      setCityId("paris");
-      setLocations([]);
-      setLocationDays({});
-      setLocationNotes({});
-      setStartDate(new Date().toISOString().slice(0,10));
-      setNumDays(4);
-      setFilterDay(null);
-      localStorage.removeItem("rp_last");
-    };
+  const filteredLocations = filterDay === "all" ? locations
+    : locations.filter(l => locationDays[l.id] === filterDay);
 
-    const saveApiKey = () => {
-    localStorage.setItem("oai_key", apiKeyInput);
-    setApiKey(apiKeyInput);
-    setApiSaved(true);
-    setTimeout(() => setApiSaved(false), 2000);
-  };
+  const dayGroups = tripDays.map((day, i) => ({
+    day, index: i,
+    locs: locations.filter(l => locationDays[l.id] === day)
+  })).filter(g => g.locs.length > 0);
+
+  const unassigned = locations.filter(l => !locationDays[l.id]);
 
   return (
-    <div style={{ minHeight:"100vh", background:th.bg, transition:"background 0.4s",
-        backgroundImage: mode==="light"
-          ? "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")"
-          : "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")"
-      }}>
-      {/* NAVBAR */}
-      <div style={{
-        position:"sticky", top:0, zIndex:100,
-        background:th.navBg, backdropFilter:"blur(12px)",
-        borderBottom:`1px solid ${th.border}`,
-        padding:"0 16px", height:52,
-        display:"flex", alignItems:"center", justifyContent:"space-between",
-      }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <span style={{ fontSize:"1.3rem" }}>{city.emoji}</span>
-          <span style={{ fontWeight:900, fontSize:"1.1rem", color:th.accent, fontFamily:"'Playfair Display', Georgia, serif", letterSpacing:"-0.01em" }}>{t.appName}</span>
-          <button onClick={() => setShowCityPicker(v => !v)}
-            style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
-              background:th.accentLight, color:th.accent, border:`1px solid ${th.border}`,
-              cursor:"pointer", fontWeight:700 }}>
-            {city.country} {city.name}
-          </button>
-        </div>
+    <div style={{ minHeight:"100vh", background:th.bg, color:th.text, fontFamily:"'Source Sans 3',system-ui,sans-serif" }}>
+      {/* NAV */}
+      <nav style={{ position:"sticky", top:0, zIndex:100, background:th.navBg,
+        borderBottom:`1px solid ${th.border}`, padding:"10px 16px",
+        display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <button onClick={() => setShowApiPanel(v => !v)}
-            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8,
-              background:apiKey?th.successBg:th.warningBg, color:apiKey?th.success:th.warning,
-              border:`1px solid ${apiKey?th.success:th.warning}22`, cursor:"pointer" }}>
-            {apiKey ? t.apiActive : t.apiMissing}
-          </button>
-          <button onClick={newPlan}
-              style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
-                background:th.warningBg, color:th.warning, border:`1px solid ${th.warning}44`,
-                cursor:"pointer", fontWeight:800, whiteSpace:"nowrap" }}>
-              ✨ {lang === "de" ? "Neu" : "New"}
-            </button>
-            <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
-            style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
-              background:th.tag, color:th.tagText, border:`1px solid ${th.border}`,
-              cursor:"pointer", fontWeight:800 }}>
-            {lang === "de" ? "🇩🇪 DE" : "🇬🇧 EN"}
+          <span style={{ fontSize:"1.3rem" }}>✈️</span>
+          <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:"1.1rem", color:th.accent }}>{t.appName}</span>
+          <span style={{ fontSize:"0.75rem", background:th.tag, color:th.tagText, borderRadius:8, padding:"2px 8px" }}>
+            {city.emoji} {city.name}
+          </span>
+        </div>
+        <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+          <button onClick={() => setLang(l => l==="de" ? "en" : "de")}
+            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, background:th.tag,
+              color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer", fontWeight:700 }}>
+            {lang==="de" ? "EN" : "DE"}
           </button>
           <button onClick={toggleTheme} className="theme-toggle-btn"
-            style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${th.border}`,
-              background:th.card, color:th.text, cursor:"pointer", fontSize:"1rem",
-              display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {mode === "dark" ? "🌙" : "☀️"}
+            style={{ fontSize:"0.9rem", padding:"4px 8px", borderRadius:8, background:th.tag,
+              color:th.text, border:`1px solid ${th.border}`, cursor:"pointer" }}>
+            {mode==="dark" ? "☀️" : "🌙"}
           </button>
+          <button onClick={() => window.print()} className="no-print"
+            style={{ fontSize:"0.68rem", padding:"3px 8px", borderRadius:8, background:th.tag,
+              color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer" }}>🖨️</button>
         </div>
-      </div>
+      </nav>
 
-      {/* CITY PICKER */}
-      {showCityPicker && (
-        <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center" }}
-          onClick={() => setShowCityPicker(false)}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:20,
-              padding:20, width:"min(400px,92vw)", maxHeight:"80vh", overflowY:"auto",
-              boxShadow:th.shadow }}>
-            <h3 style={{ color:th.accent, fontWeight:900, margin:"0 0 14px", fontSize:"1rem" }}>{t.selectCity}</h3>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-              {CITY_ORDER.map(cid => {
-                const c = allCities[cid];
-                if (!c) return null;
-                const active = cid === cityId;
-                return (
-                  <button key={cid} onClick={() => { setCityId(cid); setShowCityPicker(false); }}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
-                      borderRadius:12, border:`1px solid ${active?th.accent:th.border}`,
-                      background:active?th.accentLight:th.card, cursor:"pointer",
-                      color:active?th.accent:th.text, fontWeight:active?800:500, fontSize:"0.82rem" }}>
-                    <span style={{ fontSize:"1.2rem" }}>{c.emoji}</span>
-                    <span>{c.name}</span>
-                  </button>
-                );
-              })}
-              {Object.keys(customCities).map(cid => {
-                const c = customCities[cid];
-                const active = cid === cityId;
-                return (
-                  <button key={cid} onClick={() => { setCityId(cid); setShowCityPicker(false); }}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px",
-                      borderRadius:12, border:`1px solid ${active?th.accent:th.border}`,
-                      background:active?th.accentLight:th.card, cursor:"pointer",
-                      color:active?th.accent:th.text, fontWeight:active?800:500, fontSize:"0.82rem" }}>
-                    <span style={{ fontSize:"1.2rem" }}>{c.emoji}</span>
-                    <span>{c.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ marginTop:12 }}>
-              {!addingCustom ? (
-                <button onClick={() => setAddingCustom(true)}
-                  style={{ width:"100%", padding:"8px", borderRadius:10, border:`1px dashed ${th.border}`,
-                    background:"transparent", color:th.textMuted, cursor:"pointer", fontSize:"0.8rem" }}>
-                  {t.customCity}
+      <div style={{ maxWidth:520, margin:"0 auto", padding:"16px 12px 80px" }}>
+
+        {/* CITY PICKER */}
+        <CollapsibleSection title={t.switchCity} icon="🏙️" th={th} defaultOpen={false}
+          badge={city.emoji + " " + city.name}>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+            {CITY_ORDER.map(cid => {
+              const c = CITIES[cid];
+              return (
+                <button key={cid} onClick={() => { setCityId(cid); setCustomCityData(null); }}
+                  style={{ padding:"4px 10px", borderRadius:10, fontSize:"0.75rem", cursor:"pointer",
+                    background: cityId===cid && !customCityData ? th.accentLight : th.tag,
+                    color: cityId===cid && !customCityData ? th.accent : th.text,
+                    border:`1px solid ${cityId===cid && !customCityData ? th.accent : th.border}`,
+                    fontWeight: cityId===cid && !customCityData ? 700 : 400 }}>
+                  {c.emoji} {c.name}
                 </button>
-              ) : (
-                <div style={{ display:"flex", gap:8 }}>
-                  <input value={customCityName} onChange={e => setCustomCityName(e.target.value)}
-                    placeholder={t.customCityPlaceholder} onKeyDown={e => e.key==="Enter" && addCustomCity()}
-                    style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
-                      background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-                  <button onClick={addCustomCity} disabled={geocoding}
-                    style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
-                      border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
-                    {geocoding ? "..." : t.customCityAdd}
-                  </button>
-                </div>
-              )}
-            </div>
+              );
+            })}
           </div>
-        </div>
-      )}
-
-      {/* API PANEL */}
-      {showApiPanel && (
-        <div style={{ margin:"8px 16px", padding:"12px 16px", borderRadius:14,
-          background:th.card, border:`1px solid ${th.border}`, boxShadow:th.shadow }}>
-          <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.accent, marginBottom:8 }}>{t.apiTitle}</div>
-          <div style={{ display:"flex", gap:8 }}>
-            <input type="password" value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)}
-              placeholder="sk-..." style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10,
+          <div style={{ display:"flex", gap:6 }}>
+            <input value={customCityInput} onChange={e => setCustomCityInput(e.target.value)}
+              onKeyDown={e => e.key==="Enter" && addCustomCity()}
+              placeholder={t.customCityPlaceholder}
+              style={{ flex:1, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8,
                 background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-            <button onClick={saveApiKey} className="btn-primary"
-              style={{ padding:"6px 12px", borderRadius:10, background:th.accent, color:"white",
-                border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
-              {apiSaved ? t.apiSaved : t.apiSave}
+            <button onClick={addCustomCity}
+              style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
+                border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.78rem" }}>
+              {t.customCityAdd}
             </button>
-            {apiKey && (
-              <button onClick={() => { localStorage.removeItem("oai_key"); setApiKey(""); setApiKeyInput(""); }}
-                style={{ padding:"6px 10px", borderRadius:10, background:th.warningBg, color:th.warning,
-                  border:`1px solid ${th.warning}22`, cursor:"pointer", fontSize:"0.8rem" }}>
-                {t.apiDelete}
-              </button>
-            )}
           </div>
-          <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:6 }}>{t.apiHint}</div>
-        </div>
-      )}
+        </CollapsibleSection>
 
-      {/* MAIN CONTENT */}
-      <div style={{ maxWidth:700, margin:"0 auto", padding:"16px", display:"flex", flexDirection:"column", gap:14 }}>
-
-        {/* CLOSED WARNINGS */}
-        {closedWarnings.length > 0 && (
-          <div style={{ padding:"10px 14px", borderRadius:12, background:th.warningBg,
-            border:`1px solid ${th.warning}44`, color:th.warning, fontSize:"0.8rem", fontWeight:600 }}>
-            ⚠️ {t.warningTitle}: {closedWarnings.map(l => l.name).join(", ")} {t.warningClosed}
-            <div style={{ fontWeight:400, fontSize:"0.72rem", marginTop:4, color:th.warning }}>{t.warningHint}</div>
-          </div>
-        )}
-
-        {/* TRIP SETTINGS */}
-        <CollapsibleSection title={t.sectionTrip} defaultOpen={true}>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
+        {/* TRIP DATES */}
+        <CollapsibleSection title={t.sectionTrip} icon="" th={th} defaultOpen={true}>
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
             <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.labelStartDate}</label>
+              <label style={{ fontSize:"0.7rem", color:th.textMuted }}>{t.labelStartDate}</label>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                style={{ fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
+                style={{ fontSize:"0.82rem", padding:"5px 10px", borderRadius:8,
                   background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.labelDays}</label>
-              <input type="number" min={1} max={30} value={numDays} onChange={e => setNumDays(Math.max(1,parseInt(e.target.value)||1))}
-                style={{ width:70, fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
-                  background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+              <label style={{ fontSize:"0.7rem", color:th.textMuted }}>{t.labelDays}</label>
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <input type="number" min={1} max={30} value={numDays}
+                  onChange={e => setNumDays(Math.max(1,Math.min(30,parseInt(e.target.value)||1)))}
+                  style={{ width:60, fontSize:"0.82rem", padding:"5px 8px", borderRadius:8,
+                    background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+                <span style={{ fontSize:"0.78rem", color:th.textMuted }}>{t.labelDaysSuffix}</span>
+              </div>
             </div>
-            <div style={{ fontSize:"0.72rem", color:th.textMuted, alignSelf:"flex-end", paddingBottom:6 }}>
-              {tripDays.length} {t.labelDaysSuffix} · {getDayLabel(tripDays[0])} – {getDayLabel(tripDays[tripDays.length-1])}
-            </div>
+          </div>
+          <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginTop:10 }}>
+            {tripDays.map((d, i) => (
+              <div key={d} style={{ padding:"3px 8px", borderRadius:8, fontSize:"0.68rem",
+                background:th.tag, color:getDayColor(i), fontWeight:700, border:`1px solid ${getDayColor(i)}44` }}>
+                {formatDateLabel(d, lang)}
+              </div>
+            ))}
           </div>
         </CollapsibleSection>
 
         {/* ADD PLACE */}
-        <CollapsibleSection title={`➕ ${t.addPlace}`} defaultOpen={true}>
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            <div style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:700, letterSpacing:"0.05em" }}>{t.insertLink}</div>
-            <div style={{ display:"flex", gap:8 }}>
-              <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && analyzeLink()}
-                placeholder={t.linkPlaceholder}
-                style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:12,
-                  background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`,
-                  outline:"none" }} />
-              <button onClick={analyzeLink} disabled={analyzing} className="btn-primary"
-                style={{ padding:"8px 16px", borderRadius:12, background:th.accent, color:"white",
-                  border:"none", cursor:"pointer", fontSize:"0.82rem", fontWeight:800,
-                  display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-                {analyzing ? <><Spinner size={14} color="white" /> {t.analyzing}</> : t.analyze}
-              </button>
-            </div>
-            {error && <div style={{ fontSize:"0.75rem", color:th.warning }}>{error}</div>}
-            {skeletonVisible && <SkeletonCard th={th} />}
-            {city.sampleLocations?.length > 0 && (
-              <div>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:6 }}>{t.demo}</div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {city.sampleLocations.map((loc, i) => (
-                    <button key={i} onClick={() => addDemo(i)}
-                      style={{ fontSize:"0.72rem", padding:"4px 10px", borderRadius:20,
-                        background:th.tag, color:th.tagText, border:`1px solid ${th.border}`,
-                        cursor:"pointer" }}>
-                      {loc.icon} {loc.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        <div style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:14,
+          padding:"14px", marginBottom:12 }}>
+          <div style={{ fontSize:"0.7rem", fontWeight:700, color:th.textMuted, letterSpacing:"0.08em",
+            textTransform:"uppercase", marginBottom:8 }}>{t.insertLink}</div>
+          <div style={{ display:"flex", gap:6 }}>
+            <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
+              onKeyDown={e => e.key==="Enter" && addLocation()}
+              placeholder={t.linkPlaceholder}
+              style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:10,
+                background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+            <button onClick={addLocation} disabled={analyzing} className="btn-primary"
+              style={{ padding:"8px 14px", borderRadius:10, background:th.accent, color:"white",
+                border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.8rem",
+                display:"flex", alignItems:"center", gap:6, opacity: analyzing ? 0.7 : 1 }}>
+              {analyzing ? <Spinner size={16} color="white" /> : null}
+              {analyzing ? t.analyzing : t.analyze}
+            </button>
           </div>
-        </CollapsibleSection>
+          {linkError && <div style={{ fontSize:"0.72rem", color:th.warning, marginTop:6 }}>⚠️ {linkError}</div>}
+          {apiKey ? (
+            <div style={{ fontSize:"0.68rem", color:th.success, marginTop:4 }}>✅ AI {t.apiActive}</div>
+          ) : (
+            <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:4 }}>⚠️ {t.apiMissing} — Demo-Modus</div>
+          )}
 
-        {/* LOCATIONS */}
-        <CollapsibleSection title={`📍 ${t.myPlaces}`} badge={locations.length} defaultOpen={true}
-          rightContent={
-            <div style={{ display:"flex", gap:6 }}>
-              <button onClick={() => setFilterDay(null)}
-                className="tab-btn"
-                style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
-                  background:!filterDay?th.accent:"transparent",
-                  color:!filterDay?"white":th.textMuted,
-                  border:`1px solid ${!filterDay?th.accent:th.border}`, cursor:"pointer" }}>
-                {t.allDays}
-              </button>
-              {tripDays.map(d => (
-                <button key={d} onClick={() => setFilterDay(d === filterDay ? null : d)}
-                  className="tab-btn"
-                  style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
-                    background:filterDay===d?th.accent:"transparent",
-                    color:filterDay===d?"white":th.textMuted,
-                    border:`1px solid ${filterDay===d?th.accent:th.border}`, cursor:"pointer",
-                    whiteSpace:"nowrap" }}>
-                  {getDayLabel(d)}
-                </button>
-              ))}
-            </div>
-          }>
-          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-            {filteredLocs.length === 0 ? (
-              <div style={{ color:th.textFaint, fontSize:"0.8rem", textAlign:"center", padding:"16px 0" }}>{t.addFirst}</div>
-            ) : filteredLocs.map((loc, i) => (
-              <div key={loc.id}>
-                <LocationCard
-                  loc={loc} day={loc._day} index={i}
-                  onRemove={removeLocation}
-                  onDragStart={() => handleDragStart(i)}
-                  onDragOver={(e) => handleDragOver(e, i)}
-                  onDrop={() => handleDrop(i)}
-                  isDragging={dragIdx === i}
-                  city={city}
-                  onDayChange={handleDayChange}
-                  onNoteChange={handleNoteChange}
-                  availableDays={tripDays}
-                  t={t}
-                  getDayLabel={getDayLabel}
-                />
-                {i < filteredLocs.length - 1 && (
-                  <TravelTimeBadge from={loc} to={filteredLocs[i+1]} />
-                )}
+          {/* DEMO LINKS */}
+          {city.sampleLocations && city.sampleLocations.length > 0 && (
+            <div style={{ marginTop:10 }}>
+              <div style={{ fontSize:"0.68rem", color:th.textMuted, marginBottom:4 }}>{t.demo}</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {city.sampleLocations.map((loc, i) => (
+                  <button key={i} onClick={() => addDemoLocation(loc)}
+                    style={{ padding:"3px 10px", borderRadius:10, fontSize:"0.72rem", cursor:"pointer",
+                      background:th.tag, color:th.tagText, border:`1px solid ${th.border}` }}>
+                    {loc.icon} {loc.name}
+                  </button>
+                ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* SKELETON */}
+        {skeletonVisible && <div style={{ marginBottom:12 }}><SkeletonCard th={th} /></div>}
+
+        {/* TRAVEL MODE */}
+        {locations.length > 0 && (
+          <div style={{ display:"flex", gap:4, marginBottom:10, alignItems:"center", flexWrap:"wrap" }}>
+            <span style={{ fontSize:"0.65rem", color:th.textMuted, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase" }}>{t.travelMode}:</span>
+            {[["walking",t.walking],["transit",t.transit],["driving",t.driving]].map(([m,label]) => (
+              <button key={m} onClick={() => setTravelMode(m)} className="tab-btn"
+                style={{ padding:"3px 10px", borderRadius:8, fontSize:"0.65rem",
+                  background: travelMode===m ? th.accentLight : th.tag,
+                  color: travelMode===m ? th.accent : th.textMuted,
+                  border:`1px solid ${travelMode===m ? th.accent : th.border}`,
+                  fontWeight: travelMode===m ? 700 : 400 }}>
+                {label}
+              </button>
             ))}
           </div>
-        </CollapsibleSection>
+        )}
+
+        {/* DAY FILTER */}
+        {locations.length > 0 && (
+          <div style={{ display:"flex", gap:4, marginBottom:10, flexWrap:"wrap" }}>
+            <button onClick={() => setFilterDay("all")} className="tab-btn"
+              style={{ padding:"3px 10px", borderRadius:8,
+                background: filterDay==="all" ? th.accentLight : th.tag,
+                color: filterDay==="all" ? th.accent : th.textMuted,
+                border:`1px solid ${filterDay==="all" ? th.accent : th.border}`,
+                fontWeight: filterDay==="all" ? 700 : 400, fontSize:"0.65rem" }}>
+              {t.allDays} ({locations.length})
+            </button>
+            {tripDays.map((d, i) => {
+              const cnt = locations.filter(l => locationDays[l.id]===d).length;
+              if (cnt === 0) return null;
+              return (
+                <button key={d} onClick={() => setFilterDay(d)} className="tab-btn"
+                  style={{ padding:"3px 10px", borderRadius:8,
+                    background: filterDay===d ? th.accentLight : th.tag,
+                    color: filterDay===d ? getDayColor(i) : th.textMuted,
+                    border:`1px solid ${filterDay===d ? getDayColor(i) : th.border}`,
+                    fontWeight: filterDay===d ? 700 : 400, fontSize:"0.65rem" }}>
+                  {formatDateLabel(d, lang)} ({cnt})
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* LOCATION CARDS */}
+        <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:12 }}>
+          {filteredLocations.map((loc, i) => (
+            <>
+              <LocationCard key={loc.id} loc={loc} index={locations.indexOf(loc)} city={city}
+                t={t} lang={lang} tripDays={tripDays} locationDays={locationDays}
+                locationNotes={locationNotes}
+                onDayChange={(id, day) => setLocationDays(prev => day ? {...prev,[id]:day} : (()=>{const n={...prev};delete n[id];return n;})())}
+                onNoteChange={(id, note) => setLocationNotes(prev => ({...prev,[id]:note}))}
+                onRemove={removeLocation}
+                onMoveUp={(idx) => moveLocation(idx, -1)}
+                onMoveDown={(idx) => moveLocation(idx, 1)}
+                isFirst={locations.indexOf(loc)===0}
+                isLast={locations.indexOf(loc)===locations.length-1}
+                travelMode={travelMode} th={th} />
+              {i < filteredLocations.length-1 && filterDay==="all" && (
+                <TravelTimeBadge from={loc} to={filteredLocations[i+1]} />
+              )}
+            </>
+          ))}
+        </div>
 
         {/* MAP */}
-        <CollapsibleSection title={t.sectionMap} defaultOpen={true}>
-          <MapView locations={filteredLocs} city={city} />
-        </CollapsibleSection>
+        {locations.length > 0 && (
+          <CollapsibleSection title={t.sectionMap} icon="" th={th} defaultOpen={true}>
+            <MapView locations={filteredLocations} city={city} th={th} />
+          </CollapsibleSection>
+        )}
 
-        {/* ROUTE / TIMELINE / PDF */}
-        <CollapsibleSection title={t.sectionRoute} defaultOpen={false}
-          rightContent={
-            <div style={{ display:"flex", gap:4 }}>
-              {["route","timeline","pdf"].map(tab => (
-                <button key={tab} onClick={() => setViewTab(tab)} className="tab-btn"
-                  style={{ fontSize:"0.68rem", padding:"2px 8px", borderRadius:20,
-                    background:viewTab===tab?th.accent:"transparent",
-                    color:viewTab===tab?"white":th.textMuted,
-                    border:`1px solid ${viewTab===tab?th.accent:th.border}`, cursor:"pointer" }}>
-                  {tab === "route" ? t.route : tab === "timeline" ? t.timeline : t.pdf}
-                </button>
-              ))}
-            </div>
-          }>
-          <div>
-            <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
-              <span style={{ fontSize:"0.72rem", color:th.textMuted, alignSelf:"center" }}>{t.travelMode}:</span>
-              {[["walking",t.walking],["transit",t.transit],["driving",t.driving]].map(([mode, label]) => (
-                <button key={mode} onClick={() => setTravelMode(mode)} className="tab-btn"
-                  style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
-                    background:travelMode===mode?th.accent:"transparent",
-                    color:travelMode===mode?"white":th.textMuted,
-                    border:`1px solid ${travelMode===mode?th.accent:th.border}`, cursor:"pointer" }}>
+        {/* TIMELINE */}
+        {locations.length > 0 && (
+          <CollapsibleSection title={t.sectionRoute} icon="" th={th} defaultOpen={false}
+            badge={`${locations.length} ${t.stops}`}>
+            <div style={{ display:"flex", gap:4, marginBottom:10 }}>
+              {[["route",t.route],["timeline",t.timeline]].map(([tab,label]) => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className="tab-btn"
+                  style={{ padding:"4px 12px", borderRadius:8,
+                    background: activeTab===tab ? th.accentLight : th.tag,
+                    color: activeTab===tab ? th.accent : th.textMuted,
+                    border:`1px solid ${activeTab===tab ? th.accent : th.border}`,
+                    fontWeight: activeTab===tab ? 700 : 400, fontSize:"0.68rem" }}>
                   {label}
                 </button>
               ))}
             </div>
-            {viewTab === "route" ? (
-                <RouteView locations={filteredLocs} city={city} travelMode={travelMode} t={t} />
-              ) : viewTab === "timeline" ? (
-                <TimelineView locations={filteredLocs} day={filterDay} city={city} travelMode={travelMode} t={t} />
-              ) : (
-                <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-                  <p style={{ fontSize:"0.82rem", color:th.textMuted }}>
-                    {lang==="de" ? "Lädt deinen Reiseplan als HTML-Datei herunter." : "Downloads your travel plan as HTML file."}
-                  </p>
-                  <button className="btn-primary" onClick={() => {
-                    const rows = locations.map((loc,i) => [
-                      '<div style="display:flex;gap:12px;border:1px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:10px">',
-                      '<div style="width:26px;height:26px;border-radius:50%;background:#6c63ff;color:#fff;font-weight:900;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (i+1) + '</div>',
-                      '<div><div style="font-weight:700">' + (loc.icon||'') + ' ' + loc.name + '</div>',
-                      '<div style="font-size:0.78rem;color:#666">' + (loc.type||'') + '</div>',
-                      (loc._day ? '<div style="font-size:0.72rem">' + getDayLabel(loc._day) + '</div>' : ''),
-                      '</div></div>'
-                    ].join(''));
-                    const cityName = city ? city.name : '';
-                    const cityEmoji = city ? city.emoji : '';
-                    const html = [
-                      '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">',
-                      '<title>Reiseplan</title>',
-                      '<style>body{font-family:system-ui,sans-serif;padding:40px;max-width:680px;margin:0 auto;color:#111}',
-                      'h1{font-size:1.5rem;font-weight:900;margin:0 0 8px}',
-                      'p.meta{font-size:0.85rem;color:#555;margin:0 0 24px}</style></head><body>',
-                      '<h1>' + cityEmoji + ' ' + cityName + ' \u2013 Reiseplan</h1>',
-                      '<p class="meta">' + startDate + ' \u00b7 ' + numDays + ' ' + t.labelDaysSuffix + ' \u00b7 ' + locations.length + ' ' + t.places + '</p>',
-                      rows.join(''),
-                      '</body></html>'
-                    ].join('');
-                    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Reiseplan-' + cityName + '.html';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                  }} style={{ padding:"12px 24px", borderRadius:12, background:th.accent, color:"white",
-                    border:"none", cursor:"pointer", fontSize:"0.95rem", fontWeight:800,
-                    display:"inline-flex", alignItems:"center", gap:8 }}>
-                    💾 {lang==="de" ? "Reiseplan herunterladen (.html)" : "Download travel plan (.html)"}
-                  </button>
-                </div>
-              )}
-          </div>
-        </CollapsibleSection>
+
+            {activeTab==="route" && (
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {dayGroups.map(({ day, index: di, locs }) => (
+                  <div key={day}>
+                    <div style={{ fontSize:"0.72rem", fontWeight:700, color:getDayColor(di),
+                      marginBottom:4, display:"flex", alignItems:"center", gap:6 }}>
+                      <div style={{ width:10, height:10, borderRadius:"50%", background:getDayColor(di) }} />
+                      Tag {di+1} – {formatDateLabel(day, lang)}
+                    </div>
+                    {locs.map((loc, li) => (
+                      <div key={loc.id}>
+                        <div style={{ display:"flex", gap:8, alignItems:"center",
+                          padding:"6px 10px", background:th.surface, borderRadius:8,
+                          border:`1px solid ${th.border}`, marginBottom:4 }}>
+                          <div style={{ width:22, height:22, borderRadius:"50%", background:getDayColor(di),
+                            color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:"0.7rem", fontWeight:900, flexShrink:0 }}>{li+1}</div>
+                          <span style={{ fontSize:"0.8rem", color:th.text }}>{loc.icon} {loc.name}</span>
+                          <span style={{ fontSize:"0.68rem", color:th.textMuted, marginLeft:"auto" }}>{loc.duration}</span>
+                        </div>
+                        {li < locs.length-1 && <TravelTimeBadge from={loc} to={locs[li+1]} />}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                {unassigned.length > 0 && (
+                  <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:4 }}>
+                    📌 {unassigned.length}x {t.allDays}
+                  </div>
+                )}
+                {locations.length < 2 && (
+                  <div style={{ fontSize:"0.75rem", color:th.textFaint }}>{t.noRouteHint}</div>
+                )}
+              </div>
+            )}
+
+            {activeTab==="timeline" && (
+              <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                {dayGroups.map(({ day, index: di, locs }) => (
+                  <div key={day} style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:"0.78rem", fontWeight:700, color:getDayColor(di), marginBottom:6 }}>
+                      📅 Tag {di+1} – {formatDateLabel(day, lang)}
+                    </div>
+                    {locs.map((loc, li) => (
+                      <div key={loc.id} style={{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:6 }}>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+                          <div style={{ width:20, height:20, borderRadius:"50%", background:getDayColor(di),
+                            color:"white", display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:"0.65rem", fontWeight:900 }}>{li+1}</div>
+                          {li < locs.length-1 && <div style={{ width:2, height:24, background:th.border, margin:"2px 0" }} />}
+                        </div>
+                        <div style={{ flex:1, background:th.surface, borderRadius:8,
+                          border:`1px solid ${th.border}`, padding:"6px 10px" }}>
+                          <div style={{ fontSize:"0.8rem", fontWeight:700, color:th.text }}>{loc.icon} {loc.name}</div>
+                          <div style={{ fontSize:"0.68rem", color:th.textMuted }}>{loc.type} · {loc.duration}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CollapsibleSection>
+        )}
 
         {/* BUDGET */}
-        <CollapsibleSection title={`💰 ${t.budgetTitle}`} defaultOpen={false}>
-          <BudgetTracker locations={locations} city={city} t={t} />
+        {locations.length > 0 && (
+          <CollapsibleSection title={t.budgetTitle} icon="💰" th={th} defaultOpen={false}>
+            <BudgetTracker locations={locations} city={city} lang={lang} t={t} th={th} />
+          </CollapsibleSection>
+        )}
+
+        {/* PACKING LIST */}
+        {locations.length > 0 && (
+          <CollapsibleSection title={lang==="de" ? "Packliste" : "Packing List"} icon="🎒" th={th} defaultOpen={false}>
+            <PackingList locations={locations} numDays={numDays} t={t} lang={lang} />
+          </CollapsibleSection>
+        )}
+
+        {/* SAVED PLANS */}
+        <CollapsibleSection title={t.savedPlans} icon="💾" th={th} defaultOpen={false}
+          badge={savedPlans.length > 0 ? savedPlans.length : null}>
+          <SavedPlans plans={savedPlans} onSave={savePlan} onLoad={loadPlan} onDelete={deletePlan}
+            planName={planName} setPlanName={setPlanName} saveMsg={saveMsg} t={t} th={th} locations={locations} />
         </CollapsibleSection>
 
         {/* SHARE */}
-        <CollapsibleSection title={`${t.share}`} defaultOpen={false}>
-          <SharePanel locations={locations} cityId={cityId} t={t} />
+        <CollapsibleSection title={t.share} icon="🔗" th={th} defaultOpen={false}>
+          <ShareSection locations={locations} cityId={city.id || cityId} startDate={startDate}
+            numDays={numDays} locationDays={locationDays} locationNotes={locationNotes} t={t} th={th} />
         </CollapsibleSection>
 
-        {/* SAVED PLANS */}
-        <CollapsibleSection title={`💾 ${t.savedPlans}`} defaultOpen={false}>
-          <SavedPlans
-              locations={locations} cityId={cityId}
-              tripDays={tripDays} locationDays={locationDays} locationNotes={locationNotes}
-              t={t}
-              onLoad={(p) => {
-                const plan = normalizePlan(p);
-                if (!plan) return;
-                setCityId(plan.cityId);
-                setLocations(plan.locations.map(l => ({ ...l, id: l.id ?? Date.now() + Math.random() })));
-                setLocationDays(plan.locationDays);
-                setLocationNotes(plan.locationNotes);
-                setStartDate(plan.startDate);
-                setNumDays(plan.numDays);
-                setFilterDay(null);
-              }}
-            />
+        {/* API KEY */}
+        <CollapsibleSection title={t.apiTitle} icon="" th={th} defaultOpen={false}>
+          <ApiKeySection apiKey={apiKey} setApiKey={setApiKey} t={t} th={th} />
         </CollapsibleSection>
 
         {/* FOOTER */}
-        <div id="pdf-print-area" style={{ display:"none", fontFamily:"system-ui,sans-serif", padding:24, color:"#000" }}>
-            <h1 style={{ fontSize:"1.4rem", fontWeight:900, marginBottom:4 }}>{city?.emoji} {city?.name} – Reiseplan</h1>
-            <p style={{ fontSize:"0.85rem", color:"#555", marginBottom:16 }}>{startDate} · {numDays} {t.labelDaysSuffix} · {locations.length} {t.places}</p>
-            {locations.map((loc, i) => (
-              <div key={loc.id} style={{ border:"1px solid #ccc", borderRadius:8, padding:"10px 14px", marginBottom:10 }}>
-                <div style={{ fontWeight:700 }}>{i+1}. {loc.name}</div>
-                <div style={{ fontSize:"0.8rem", color:"#555" }}>{loc.type}{loc.area ? ` · ${loc.area}` : ""}{loc.duration ? ` · ⏱ ${loc.duration}` : ""}</div>
-                {loc._day && <div style={{ fontSize:"0.75rem" }}>{getDayLabel(loc._day)}</div>}
-                {loc.note && <div style={{ fontSize:"0.75rem", fontStyle:"italic" }}>{loc.note}</div>}
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign:"center", padding:"16px 0 8px",
-          fontSize:"0.72rem", color:th.textFaint, borderTop:`1px solid ${th.border}` }}>
+        <div style={{ textAlign:"center", fontSize:"0.68rem", color:th.textFaint, marginTop:24, paddingTop:16,
+          borderTop:`1px solid ${th.border}` }}>
           {t.footerText} · {city.emoji} {city.name} · {mode === "dark" ? "🌙" : "☀️"}
         </div>
       </div>
