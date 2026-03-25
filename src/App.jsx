@@ -2,36 +2,36 @@ import { useState, useEffect, useRef } from "react";
 
 const THEMES = {
   dark: {
-    bg: "#0f1117", surface: "#1a1d27", card: "#1e2130", cardHover: "#252840",
-    border: "#2d3150", borderHover: "#4a5080",
-    text: "#e8eaf6", textMuted: "#8b90b8", textFaint: "#4a4f70",
-    accent: "#6c63ff", accentHover: "#8b84ff", accentLight: "rgba(108,99,255,0.15)",
-    success: "#4caf7d", successBg: "#0d2318",
-    warning: "#ff6b6b", warningBg: "#2a0d0d",
-    info: "#42a5f5", infoBg: "#0a1929",
-    gold: "#ffd700", goldBg: "rgba(255,215,0,0.08)",
-    tag: "#1a2040", tagText: "#7b8cde",
-    input: "#12151f", inputBorder: "#2d3150",
-    navBg: "rgba(15,17,23,0.95)",
-    shadow: "0 4px 24px rgba(0,0,0,0.4)",
-    shadowHover: "0 8px 32px rgba(108,99,255,0.25)",
-    skeleton: "#1e2130", skeletonShine: "#252840",
+    bg: "#1c1f2b", surface: "#252836", card: "#2c2f42", cardHover: "#33374d",
+    border: "#3a3f58", borderHover: "#5a6080",
+    text: "#e8e0d0", textMuted: "#a09880", textFaint: "#6a6050",
+    accent: "#c4a882", accentHover: "#d4b892", accentLight: "rgba(196,168,130,0.15)",
+    success: "#7aab7a", successBg: "#1a2e1a",
+    warning: "#c97a5a", warningBg: "#2e1a12",
+    info: "#7aaabb", infoBg: "#12242e",
+    gold: "#d4a84b", goldBg: "rgba(212,168,75,0.1)",
+    tag: "#2a2d3e", tagText: "#c4a882",
+    input: "#1a1d28", inputBorder: "#3a3f58",
+    navBg: "rgba(28,31,43,0.97)",
+    shadow: "0 4px 24px rgba(0,0,0,0.5)",
+    shadowHover: "0 8px 32px rgba(196,168,130,0.2)",
+    skeleton: "#2c2f42", skeletonShine: "#33374d",
   },
   light: {
-    bg: "#f0f2ff", surface: "#ffffff", card: "#ffffff", cardHover: "#f5f6ff",
-    border: "#dde1f5", borderHover: "#b0b8e8",
-    text: "#1a1d40", textMuted: "#5a5f8a", textFaint: "#9096c0",
-    accent: "#5c52f0", accentHover: "#4840d0", accentLight: "rgba(92,82,240,0.1)",
-    success: "#2e9a5c", successBg: "#eafaf1",
-    warning: "#e53935", warningBg: "#fdecea",
-    info: "#1565c0", infoBg: "#e3f2fd",
-    gold: "#f9a825", goldBg: "rgba(249,168,37,0.1)",
-    tag: "#eef0fc", tagText: "#5c68c8",
-    input: "#f8f9ff", inputBorder: "#dde1f5",
-    navBg: "rgba(240,242,255,0.95)",
-    shadow: "0 4px 20px rgba(90,85,200,0.1)",
-    shadowHover: "0 8px 32px rgba(92,82,240,0.2)",
-    skeleton: "#eef0f8", skeletonShine: "#f5f6ff",
+    bg: "#f0ebe0", surface: "#faf6ef", card: "#fff9f0", cardHover: "#fdf5e8",
+    border: "#d8ccb8", borderHover: "#b8a898",
+    text: "#2e2820", textMuted: "#6a5e50", textFaint: "#a09080",
+    accent: "#8b6a3e", accentHover: "#6e5030", accentLight: "rgba(139,106,62,0.1)",
+    success: "#4a8a5a", successBg: "#eaf4ec",
+    warning: "#b05a30", warningBg: "#faeae4",
+    info: "#3a7a9a", infoBg: "#e4f0f6",
+    gold: "#b8860b", goldBg: "rgba(184,134,11,0.1)",
+    tag: "#ede5d8", tagText: "#7a5c38",
+    input: "#f5efe4", inputBorder: "#d0c4b0",
+    navBg: "rgba(240,235,224,0.97)",
+    shadow: "0 4px 20px rgba(100,80,50,0.15)",
+    shadowHover: "0 8px 32px rgba(139,106,62,0.2)",
+    skeleton: "#e8e0d0", skeletonShine: "#f0e8d8",
   }
 };
 
@@ -39,21 +39,24 @@ if (typeof window !== "undefined" && !document.getElementById("app-theme-styles"
   const s = document.createElement("style");
   s.id = "app-theme-styles";
   s.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600;700&display=swap');
     @keyframes fadeSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     @keyframes markerBounce { 0%,100%{transform:translateY(0) scale(1)} 40%{transform:translateY(-10px) scale(1.1)} 60%{transform:translateY(-5px) scale(1.05)} }
     @keyframes markerPop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
     @keyframes spin { to{transform:rotate(360deg)} }
-    .card-anim { animation: fadeSlideIn 0.35s cubic-bezier(.22,1,.36,1) both; }
+    .card-anim { animation: fadeSlideIn 0.4s cubic-bezier(.22,1,.36,1) both; }
     .skeleton-anim { animation: skeletonPulse 1.4s ease-in-out infinite; }
-    .app-card-hover { transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s, background 0.2s; }
-    .app-card-hover:hover { transform: translateY(-2px); }
+    .app-card-hover { transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s, background 0.25s; }
+    .app-card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,106,62,0.18) !important; }
     .theme-toggle-btn { transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
-    .tab-btn { transition: background 0.15s, color 0.15s; }
-    .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; }
-    .btn-primary:hover { transform: translateY(-1px); }
+    .tab-btn { transition: background 0.15s, color 0.15s; font-family: 'Source Sans 3', system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.65rem !important; }
+    .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; font-family: 'Source Sans 3', system-ui, sans-serif; letter-spacing: 0.05em; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,106,62,0.3); }
     .btn-primary:active { transform: translateY(0); }
     .marker-pop { animation: markerPop 0.4s ease both; }
+    h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif !important; }
+    body { font-family: 'Source Sans 3', system-ui, sans-serif; }
     @media print {
       body { background: #fff !important; }
       .no-print { display: none !important; }
@@ -736,14 +739,15 @@ function CollapsibleSection({ title, badge, rightContent, children, defaultOpen=
   return (
     <div className="app-card-hover" style={{
       background:th.surface, border:`1px solid ${th.border}`,
-      borderRadius:16, overflow:"hidden", boxShadow:th.shadow,
+      borderRadius:12, overflow:"hidden", boxShadow:th.shadow,
+      borderLeft:`3px solid ${th.accent}`,
     }}>
       <button onClick={() => setOpen(v => !v)}
         style={{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
           gap:8, padding:"12px 16px", borderBottom: open ? `1px solid ${th.border}` : "none",
           background:th.card, cursor:"pointer", border:"none" }}>
-        <h2 style={{ color:th.accent, fontFamily:"system-ui,sans-serif", fontSize:"0.9rem",
-          fontWeight:900, letterSpacing:"-0.01em", margin:0, display:"flex", alignItems:"center", gap:8 }}>
+        <h2 style={{ color:th.accent, fontFamily:"'Playfair Display', Georgia, serif", fontSize:"0.92rem",
+          fontWeight:700, letterSpacing:"0.01em", margin:0, display:"flex", alignItems:"center", gap:8 }}>
           {title}
           {badge !== undefined && <span style={{ color:th.textFaint, fontSize:"0.75rem", fontWeight:400 }}>({badge})</span>}
         </h2>
@@ -800,7 +804,7 @@ function LocationCard({ loc, day, onRemove, index, onDragStart, onDragOver, onDr
       className="card-anim app-card-hover"
       style={{
         background:th.card, border:`1px solid ${cardBorder}`,
-        borderRadius:14, padding:"10px 12px", cursor:"grab", opacity:isDragging?0.5:1,
+        borderRadius:10, padding:"10px 12px", cursor:"grab", opacity:isDragging?0.5:1,
         boxShadow: isClosed ? `0 0 0 1px ${th.warning}22` : th.shadow,
       }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
@@ -1454,7 +1458,11 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:th.bg, transition:"background 0.3s" }}>
+    <div style={{ minHeight:"100vh", background:th.bg, transition:"background 0.4s",
+        backgroundImage: mode==="light"
+          ? "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")"
+          : "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")"
+      }}>
       {/* NAVBAR */}
       <div style={{
         position:"sticky", top:0, zIndex:100,
@@ -1465,7 +1473,7 @@ export default function App() {
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:"1.3rem" }}>{city.emoji}</span>
-          <span style={{ fontWeight:900, fontSize:"0.95rem", color:th.accent }}>{t.appName}</span>
+          <span style={{ fontWeight:900, fontSize:"1.1rem", color:th.accent, fontFamily:"'Playfair Display', Georgia, serif", letterSpacing:"-0.01em" }}>{t.appName}</span>
           <button onClick={() => setShowCityPicker(v => !v)}
             style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
               background:th.accentLight, color:th.accent, border:`1px solid ${th.border}`,
