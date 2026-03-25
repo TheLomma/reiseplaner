@@ -531,7 +531,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.6",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.7",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -564,7 +564,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.6",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.7",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1290,7 +1290,7 @@ export default function App() {
   const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
 
-  const [cityId, setCityId] = useState("paris");
+  const [cityId, setCityId] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.cityId || "paris"; } catch { return "paris"; } });
   const [customCities, setCustomCities] = useState({});
   const [customCityName, setCustomCityName] = useState("");
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -1300,9 +1300,9 @@ export default function App() {
   const allCities = { ...CITIES, ...customCities };
   const city = allCities[cityId] || CITIES.paris;
 
-  const [locations, setLocations] = useState([]);
-  const [locationDays, setLocationDays] = useState({});
-  const [locationNotes, setLocationNotes] = useState({});
+  const [locations, setLocations] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locations || []; } catch { return []; } });
+  const [locationDays, setLocationDays] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locationDays || {}; } catch { return {}; } });
+  const [locationNotes, setLocationNotes] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.locationNotes || {}; } catch { return {}; } });
   const [linkInput, setLinkInput] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
@@ -1317,9 +1317,15 @@ export default function App() {
   const [skeletonVisible, setSkeletonVisible] = useState(false);
 
   const today = new Date().toISOString().slice(0,10);
-  const [startDate, setStartDate] = useState(today);
-  const [numDays, setNumDays] = useState(4);
+  const [startDate, setStartDate] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.startDate || today; } catch { return today; } });
+  const [numDays, setNumDays] = useState(() => { try { return JSON.parse(localStorage.getItem("rp_last"))?.numDays || 4; } catch { return 4; } });
   const tripDays = generateTripDays(startDate, numDays);
+
+    useEffect(() => {
+      try {
+        localStorage.setItem("rp_last", JSON.stringify({ cityId, locations, locationDays, locationNotes, startDate, numDays }));
+      } catch {}
+    }, [cityId, locations, locationDays, locationNotes, startDate, numDays]);
 
   const getDayLabel = (d) => formatDateLabel(d, lang);
 
@@ -1425,7 +1431,22 @@ export default function App() {
     setGeocoding(false);
   };
 
-  const saveApiKey = () => {
+  const newPlan = () => {
+      if (locations.length > 0) {
+        const ok = window.confirm(lang === "de" ? "Aktuelle Planung verwerfen und neu starten?" : "Discard current plan and start fresh?");
+        if (!ok) return;
+      }
+      setCityId("paris");
+      setLocations([]);
+      setLocationDays({});
+      setLocationNotes({});
+      setStartDate(new Date().toISOString().slice(0,10));
+      setNumDays(4);
+      setFilterDay(null);
+      localStorage.removeItem("rp_last");
+    };
+
+    const saveApiKey = () => {
     localStorage.setItem("oai_key", apiKeyInput);
     setApiKey(apiKeyInput);
     setApiSaved(true);
@@ -1459,7 +1480,13 @@ export default function App() {
               border:`1px solid ${apiKey?th.success:th.warning}22`, cursor:"pointer" }}>
             {apiKey ? t.apiActive : t.apiMissing}
           </button>
-          <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
+          <button onClick={newPlan}
+              style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
+                background:th.warningBg, color:th.warning, border:`1px solid ${th.warning}44`,
+                cursor:"pointer", fontWeight:800, whiteSpace:"nowrap" }}>
+              ✨ {lang === "de" ? "Neu" : "New"}
+            </button>
+            <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
             style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
               background:th.tag, color:th.tagText, border:`1px solid ${th.border}`,
               cursor:"pointer", fontWeight:800 }}>
