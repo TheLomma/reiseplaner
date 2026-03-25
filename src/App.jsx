@@ -2,36 +2,36 @@ import { useState, useEffect, useRef } from "react";
 
 const THEMES = {
   dark: {
-    bg: "#1c1f2b", surface: "#252836", card: "#2c2f42", cardHover: "#33374d",
-    border: "#3a3f58", borderHover: "#5a6080",
-    text: "#e8e0d0", textMuted: "#a09880", textFaint: "#6a6050",
+    bg: "#1e1a14", surface: "#26211a", card: "#2e2820", cardHover: "#38302a",
+    border: "#4a3e2e", borderHover: "#6a5a40",
+    text: "#ede0c8", textMuted: "#a89070", textFaint: "#786050",
     accent: "#c4a882", accentHover: "#d4b892", accentLight: "rgba(196,168,130,0.15)",
-    success: "#7aab7a", successBg: "#1a2e1a",
-    warning: "#c97a5a", warningBg: "#2e1a12",
-    info: "#7aaabb", infoBg: "#12242e",
+    success: "#8aab7a", successBg: "#1e2a16",
+    warning: "#c4855a", warningBg: "#2e1a10",
+    info: "#9ab4c0", infoBg: "#141e22",
     gold: "#d4a84b", goldBg: "rgba(212,168,75,0.1)",
-    tag: "#2a2d3e", tagText: "#c4a882",
-    input: "#1a1d28", inputBorder: "#3a3f58",
+    tag: "#2a2016", tagText: "#c8a96e",
+    input: "#18140e", inputBorder: "#4a3e2e",
     navBg: "rgba(28,31,43,0.97)",
     shadow: "0 4px 24px rgba(0,0,0,0.5)",
     shadowHover: "0 8px 32px rgba(196,168,130,0.2)",
-    skeleton: "#2c2f42", skeletonShine: "#33374d",
+    skeleton: "#2e2820", skeletonShine: "#3a3028",
   },
   light: {
-    bg: "#f0ebe0", surface: "#faf6ef", card: "#fff9f0", cardHover: "#fdf5e8",
-    border: "#d8ccb8", borderHover: "#b8a898",
-    text: "#2e2820", textMuted: "#6a5e50", textFaint: "#a09080",
+    bg: "#f0e8d8", surface: "#faf4e8", card: "#fffbf2", cardHover: "#fdf5e0",
+    border: "#d8c8a8", borderHover: "#b8a888",
+    text: "#2e2010", textMuted: "#6a5040", textFaint: "#a09070",
     accent: "#8b6a3e", accentHover: "#6e5030", accentLight: "rgba(139,106,62,0.1)",
     success: "#4a8a5a", successBg: "#eaf4ec",
-    warning: "#b05a30", warningBg: "#faeae4",
-    info: "#3a7a9a", infoBg: "#e4f0f6",
+    warning: "#b05a28", warningBg: "#faeadc",
+    info: "#5a7a8a", infoBg: "#e8f0f4",
     gold: "#b8860b", goldBg: "rgba(184,134,11,0.1)",
-    tag: "#ede5d8", tagText: "#7a5c38",
-    input: "#f5efe4", inputBorder: "#d0c4b0",
+    tag: "#e8d8b8", tagText: "#5a4020",
+    input: "#f5ede0", inputBorder: "#d0b890",
     navBg: "rgba(240,235,224,0.97)",
     shadow: "0 4px 20px rgba(100,80,50,0.15)",
     shadowHover: "0 8px 32px rgba(139,106,62,0.2)",
-    skeleton: "#e8e0d0", skeletonShine: "#f0e8d8",
+    skeleton: "#e0d0b0", skeletonShine: "#ece0c4",
   }
 };
 
@@ -543,7 +543,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.9",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v4.1",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -576,7 +576,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.9",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v4.1",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -766,6 +766,63 @@ function PackingList({ locations, numDays, t, lang }) {
           style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"white",
             border:"none", cursor:"pointer", fontSize:"0.78rem", fontWeight:700 }}>+</button>
       </div>
+    </div>
+  );
+}
+
+// ── NEAREST-NEIGHBOR ROUTE OPTIMIZER ──────────────────────────────────────
+function optimizeRoute(locations) {
+  if (locations.length < 3) return [...locations];
+  const locs = locations.map(l => ({ ...l }));
+  // find start: loc with lat/lng, else first
+  const startIdx = locs.findIndex(l => l.lat && l.lng);
+  if (startIdx < 0) return [...locations]; // no coords at all
+  const visited = [locs[startIdx]];
+  const remaining = locs.filter((_, i) => i !== startIdx);
+  while (remaining.length > 0) {
+    const last = visited[visited.length - 1];
+    let minDist = Infinity, minIdx = 0;
+    remaining.forEach((loc, i) => {
+      if (!loc.lat || !loc.lng || !last.lat || !last.lng) return;
+      const d = haversineDistance(last.lat, last.lng, loc.lat, loc.lng);
+      if (d < minDist) { minDist = d; minIdx = i; }
+    });
+    visited.push(remaining[minIdx]);
+    remaining.splice(minIdx, 1);
+  }
+  return visited;
+}
+
+// ── HEATMAP COMPONENT ──────────────────────────────────────────────────────
+function AreaHeatmap({ locations, th }) {
+  if (locations.length === 0) return <div style={{ fontSize:"0.78rem", color:th.textMuted }}>Keine Orte vorhanden.</div>;
+  const counts = {};
+  locations.forEach(l => {
+    const area = l.area || "Unbekannt";
+    counts[area] = (counts[area] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const max = entries[0]?.[1] || 1;
+  const heatColors = ["#c8a96e","#d4a84b","#e07b54","#c97a5a","#a05a30"];
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:4 }}>📍 Orte pro Stadtteil</div>
+      {entries.map(([area, count], i) => {
+        const pct = (count / max) * 100;
+        const heat = heatColors[Math.min(Math.floor((count/max)*heatColors.length), heatColors.length-1)];
+        return (
+          <div key={area}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:"0.75rem", marginBottom:3 }}>
+              <span style={{ color:th.text, fontWeight:600 }}>{area}</span>
+              <span style={{ color:heat, fontWeight:700 }}>{count} {count===1?"Ort":"Orte"}</span>
+            </div>
+            <div style={{ height:10, background:th.border, borderRadius:6, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${pct}%`, background:heat, borderRadius:6,
+                transition:"width 0.5s cubic-bezier(.22,1,.36,1)" }} />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -960,7 +1017,7 @@ function LocationCard({ loc, index, city, t, lang, tripDays, locationDays, locat
   );
 }
 
-function MapView({ locations, city, th }) {
+function MapView({ locations, city, th, onExportPng }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -1018,9 +1075,55 @@ function MapView({ locations, city, th }) {
     }
   }, [locations, city]);
 
+  const exportPng = () => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    const size = map.getSize();
+    const canvas = document.createElement("canvas");
+    canvas.width = size.x; canvas.height = size.y;
+    const ctx = canvas.getContext("2d");
+    const panes = mapRef.current.querySelectorAll(".leaflet-tile-pane canvas, .leaflet-tile-pane img");
+    ctx.fillStyle = "#f0e8d8";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    panes.forEach(el => {
+      try {
+        const rect = el.getBoundingClientRect();
+        const mapRect = mapRef.current.getBoundingClientRect();
+        if (el.tagName === "IMG") {
+          ctx.drawImage(el, rect.left - mapRect.left, rect.top - mapRect.top, rect.width, rect.height);
+        }
+      } catch {}
+    });
+    // Draw markers as circles with numbers
+    const allLocs = locations.length > 0 ? locations : (city?.sampleLocations || []);
+    allLocs.forEach((loc, i) => {
+      if (!loc.lat || !loc.lng) return;
+      const pt = map.latLngToContainerPoint([loc.lat, loc.lng]);
+      const color = DAY_COLORS[i % DAY_COLORS.length];
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 13, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = "white"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(i+1), pt.x, pt.y);
+    });
+    const link = document.createElement("a");
+    link.download = "reisekarte.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
   return (
-    <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden",
-      border:`1px solid ${th.border}`, background:th.surface }} />
+    <div>
+      <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden",
+        border:`1px solid ${th.border}`, background:th.surface }} />
+      <button onClick={exportPng}
+        style={{ marginTop:8, width:"100%", padding:"6px 0", borderRadius:10, fontSize:"0.72rem",
+          background:th.tag, color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer", fontWeight:700 }}>
+        🖼️ Karte als PNG exportieren
+      </button>
+    </div>
   );
 }
 
@@ -1193,6 +1296,16 @@ export default function App() {
   const [skeletonVisible, setSkeletonVisible] = useState(false);
 
   const [travelMode, setTravelMode] = useState("transit");
+  const [optimizeMsg, setOptimizeMsg] = useState(false);
+
+  const handleOptimize = () => {
+    setLocations(prev => {
+      const result = optimizeRoute(prev);
+      return result;
+    });
+    setOptimizeMsg(true);
+    setTimeout(() => setOptimizeMsg(false), 2000);
+  };
   const [activeTab, setActiveTab] = useState("route");
   const [filterDay, setFilterDay] = useState("all");
 
@@ -1465,7 +1578,19 @@ export default function App() {
         {/* SKELETON */}
         {skeletonVisible && <div style={{ marginBottom:12 }}><SkeletonCard th={th} /></div>}
 
-        {/* TRAVEL MODE */}
+        {/* ROUTE OPTIMIZE */}
+          {locations.length > 2 && (
+            <div style={{ marginBottom:10 }}>
+              <button onClick={handleOptimize} className="btn-primary"
+                style={{ width:"100%", padding:"9px 0", borderRadius:12, background:th.accent,
+                  color:"white", border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.8rem",
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+                ⚡️ Route optimieren — kürzester Weg
+              </button>
+            </div>
+          )}
+
+          {/* TRAVEL MODE */}
         {locations.length > 0 && (
           <div style={{ display:"flex", gap:4, marginBottom:10, alignItems:"center", flexWrap:"wrap" }}>
             <span style={{ fontSize:"0.65rem", color:th.textMuted, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase" }}>{t.travelMode}:</span>
@@ -1621,7 +1746,14 @@ export default function App() {
           </CollapsibleSection>
         )}
 
-        {/* BUDGET */}
+        {/* HEATMAP */}
+          {locations.length > 0 && (
+            <CollapsibleSection title={lang==="de" ? "Stadtteil-Heatmap" : "District Heatmap"} icon="🔥" th={th} defaultOpen={false}>
+              <AreaHeatmap locations={locations} th={th} />
+            </CollapsibleSection>
+          )}
+
+          {/* BUDGET */}
         {locations.length > 0 && (
           <CollapsibleSection title={t.budgetTitle} icon="💰" th={th} defaultOpen={false}>
             <BudgetTracker locations={locations} city={city} lang={lang} t={t} th={th} />
