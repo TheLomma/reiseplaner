@@ -523,7 +523,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.3",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.4",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -534,6 +534,8 @@ const TRANSLATIONS = {
     helpButton: "❓", cityNoDemo: "Keine Demo-Daten.",
     travelTime: "Reisezeit", walkingTime: "zu Fuß", transitTime: "mit ÖPNV",
     notePlaceholder: "Notiz (z.B. Tickets vorbuchen!)", noteLabel: "📝 Notiz", noteHide: "📝 Ausblenden",
+    sectionTrip: "🗓 Reisezeitraum", sectionMap: "🗺 Karte", sectionRoute: "📅 Route & Timeline",
+    labelStartDate: "Startdatum", labelDays: "Reisetage", labelDaysSuffix: "Tage",
   },
   en: {
     appName: "Travel Planner", addPlace: "Add Place", insertLink: "INSERT LINK",
@@ -554,7 +556,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.3",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.4",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -565,6 +567,8 @@ const TRANSLATIONS = {
     helpButton: "❓", cityNoDemo: "No demo data.",
     travelTime: "Travel time", walkingTime: "walking", transitTime: "by transit",
     notePlaceholder: "Note (e.g. Book tickets!)", noteLabel: "📝 Note", noteHide: "📝 Hide",
+    sectionTrip: "🗓 Travel Period", sectionMap: "🗺 Map", sectionRoute: "📅 Route & Timeline",
+    labelStartDate: "Start date", labelDays: "Travel days", labelDaysSuffix: "days",
   }
 };
 
@@ -1222,7 +1226,7 @@ function SharePanel({ locations, cityId, t }) {
 
 export default function App() {
   const { mode, th } = useTheme();
-  const lang = "de";
+  const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
 
   const [cityId, setCityId] = useState("paris");
@@ -1394,6 +1398,12 @@ export default function App() {
               border:`1px solid ${apiKey?th.success:th.warning}22`, cursor:"pointer" }}>
             {apiKey ? t.apiActive : t.apiMissing}
           </button>
+          <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
+            style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20,
+              background:th.tag, color:th.tagText, border:`1px solid ${th.border}`,
+              cursor:"pointer", fontWeight:800 }}>
+            {lang === "de" ? "🇩🇪 DE" : "🇬🇧 EN"}
+          </button>
           <button onClick={toggleTheme} className="theme-toggle-btn"
             style={{ width:34, height:34, borderRadius:"50%", border:`1px solid ${th.border}`,
               background:th.card, color:th.text, cursor:"pointer", fontSize:"1rem",
@@ -1507,22 +1517,22 @@ export default function App() {
         )}
 
         {/* TRIP SETTINGS */}
-        <CollapsibleSection title="🗓 Reisezeitraum" defaultOpen={true}>
+        <CollapsibleSection title={t.sectionTrip} defaultOpen={true}>
           <div style={{ display:"flex", flexWrap:"wrap", gap:10, alignItems:"center" }}>
             <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>Startdatum</label>
+              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.labelStartDate}</label>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
                 style={{ fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
                   background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>Reisetage</label>
+              <label style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.labelDays}</label>
               <input type="number" min={1} max={30} value={numDays} onChange={e => setNumDays(Math.max(1,parseInt(e.target.value)||1))}
                 style={{ width:70, fontSize:"0.8rem", padding:"5px 10px", borderRadius:10,
                   background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
             <div style={{ fontSize:"0.72rem", color:th.textMuted, alignSelf:"flex-end", paddingBottom:6 }}>
-              {tripDays.length} Tage · {getDayLabel(tripDays[0])} – {getDayLabel(tripDays[tripDays.length-1])}
+              {tripDays.length} {t.labelDaysSuffix} · {getDayLabel(tripDays[0])} – {getDayLabel(tripDays[tripDays.length-1])}
             </div>
           </div>
         </CollapsibleSection>
@@ -1618,12 +1628,12 @@ export default function App() {
         </CollapsibleSection>
 
         {/* MAP */}
-        <CollapsibleSection title="🗺 Karte" defaultOpen={true}>
+        <CollapsibleSection title={t.sectionMap} defaultOpen={true}>
           <MapView locations={filteredLocs} city={city} />
         </CollapsibleSection>
 
         {/* ROUTE / TIMELINE */}
-        <CollapsibleSection title="📅 Route & Timeline" defaultOpen={false}
+        <CollapsibleSection title={t.sectionRoute} defaultOpen={false}
           rightContent={
             <div style={{ display:"flex", gap:4 }}>
               {["route","timeline"].map(tab => (
