@@ -573,7 +573,7 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "✅ API aktiv", apiMissing: "⚠️ API-Key fehlt",
     apiTitle: "🔐 OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.1",
+    apiSaved: "✅ Gespeichert!", apiDelete: "🗑️ Key löschen", footerText: "Reiseplaner v3.2",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.", days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
     admission: "Eintritt", free: "Kostenlos", close: "Schließen", places: "Orte",
@@ -601,7 +601,7 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "✅ API active", apiMissing: "⚠️ API Key missing",
     apiTitle: "🔐 OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.1",
+    apiSaved: "✅ Saved!", apiDelete: "🗑️ Delete key", footerText: "Travel Planner v3.2",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.", days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
     admission: "Admission", free: "Free", close: "Close", places: "Places",
@@ -637,9 +637,27 @@ function generateTripDays(startDate, numDays) {
   for (let i = 0; i < numDays; i++) {
     const d = new Date(base);
     d.setDate(base.getDate() + i);
-    days.push(d.toISOString().slice(0,10));
+    days.push(d.toISOString().slice(0, 10));
   }
   return days;
+}
+
+function safeJsonParse(str, fallback) {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
+function normalizePlan(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = raw.id ?? Date.now();
+  const name = String(raw.name ?? "").trim() || "Untitled";
+  const cityId = raw.cityId ?? raw.city ?? "paris";
+  const startDate = raw.startDate ?? raw.tripStart ?? new Date().toISOString().slice(0, 10);
+  const numDays = Number(raw.numDays ?? raw.tripLen ?? 4) || 4;
+  const tripDays = Array.isArray(raw.tripDays) && raw.tripDays.length ? raw.tripDays : generateTripDays(startDate, numDays);
+  const locations = Array.isArray(raw.locations) ? raw.locations : [];
+  const locationDays = raw.locationDays && typeof raw.locationDays === "object" ? raw.locationDays : {};
+  const locationNotes = raw.locationNotes && typeof raw.locationNotes === "object" ? raw.locationNotes : {};
+  return { id, name, cityId, startDate, numDays, tripDays, locations, locationDays, locationNotes };
 }
 
 function getEntryCost(name, city) {
@@ -990,7 +1008,13 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [planName, setPlanName] = useState("");
   const [savedPlans, setSavedPlans] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("travel_plans") || "[]"); } catch { return []; }
+    try {
+      const raw = safeJsonParse(localStorage.getItem("travel_plans") || "[]", []);
+      const arr = Array.isArray(raw) ? raw : [];
+      return arr.map(normalizePlan).filter(Boolean);
+    } catch {
+      return [];
+    }
   });
   const [saveFeedback, setSaveFeedback] = useState(false);
   const [warnings, setWarnings] = useState([]);
@@ -1100,7 +1124,7 @@ export default function App() {
         const result = await analyzeWithAI(linkInput, apiKey, cityName);
         const loc = { ...result, id: Date.now() };
         setLocations(prev => [...prev, loc]);
-        setLocationDays(prev => ({prev, [loc.id]: tripDays[0]}));
+        setLocationDays(prev => ({ ...prev, [loc.id]: tripDays[0] }));
         setLinkInput("");
       } else {
         setError(t.errorNotFound);
@@ -1115,15 +1139,15 @@ export default function App() {
   const handleRemove = (id) => {
     setLocations(prev => prev.filter(l => l.id !== id));
     setLocationDays(prev => { const n = { ...prev }; delete n[id]; return n; });
-    setLocationNotes(prev => { const n={prev}; delete n[id]; return n; });
+    setLocationNotes(prev => { const n = { ...prev }; delete n[id]; return n; });
   };
 
   const handleDayChange = (id, day) => {
-    setLocationDays(prev => ({prev, [id]: day}));
+    setLocationDays(prev => ({ ...prev, [id]: day }));
   };
 
   const handleNoteChange = (id, note) => {
-    setLocationNotes(prev => ({prev, [id]: note}));
+    setLocationNotes(prev => ({ ...prev, [id]: note }));
   };
 
   const handleDragStart = (i) => setDragIdx(i);
@@ -1144,8 +1168,10 @@ export default function App() {
     if (!planName.trim() || locations.length === 0) return;
     const plan = { id: Date.now(), name: planName, cityId, locations, locationDays, locationNotes, tripStartDate, tripNumDays };
     const updated = [...savedPlans, plan];
-    setSavedPlans(updated);
-    localStorage.setItem("travel_plans", JSON.stringify(updated));
+    // normalize & persist
+    const normalized = updated.map(normalizePlan).filter(Boolean);
+    setSavedPlans(normalized);
+    localStorage.setItem("travel_plans", JSON.stringify(normalized));
     setPlanName(""); setSaveFeedback(true);
     setTimeout(() => setSaveFeedback(false), 2000);
   };
@@ -1264,13 +1290,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background:"#111", color:"#eee", fontFamily:"system-ui,sans-serif" }}>
+    <div style={{ minHeight:"100vh", background: th.bg, color: th.text, fontFamily:"system-ui,sans-serif", transition:"background 0.3s, color 0.3s" }}>
       {/* Header */}
-      <div className="sticky top-0 z-50 px-4 py-3 flex items-center justify-between" style={{ background:"#0a0a0a", borderBottom:"1px solid #333" }}>
+      <div style={{ position:"sticky", top:0, zIndex:50, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", background: th.navBg, borderBottom:`1px solid ${th.border}`, backdropFilter:"blur(12px)" }}>
         <div className="flex items-center gap-2">
           <span className="text-2xl">🗺️</span>
-          <span className="font-black text-lg" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>{t.appName}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a1a", color:"#666", border:"1px solid #333" }}>v3.1</span>
+          <span style={{ fontWeight:900, fontSize:"1.1rem", color: th.accent, fontFamily:"system-ui,sans-serif" }}>{t.appName}</span>
+          <span style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:999, background: th.tag, color: th.textFaint, border:`1px solid ${th.border}` }}>v3.2</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setLang(l => l==="de"?"en":"de")} className="text-xs px-2 py-1 rounded-lg" style={{ background:"#222", color:"#888", border:"1px solid #444" }}>
@@ -1298,7 +1324,7 @@ export default function App() {
               </button>
             </div>
             {apiKey && (
-              <button onClick={handleDeleteApiKey} className="text-xs" style={{ color:"#888" }}>{t.apiDelete}</button>
+              <button onClick={handleDeleteApiKey} style={{ fontSize:"0.75rem", color: th.textMuted, background:"none", border:"none", cursor:"pointer" }}>{t.apiDelete}</button>
             )}
           </div>
         )}
@@ -1328,7 +1354,7 @@ export default function App() {
                 {CITY_ORDER.map(id => (
                   <button key={id} onClick={() => { setCityId(id); setShowCityPicker(false); setLocations([]); setLocationDays({}); setLocationNotes({}); }}
                     className="rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center gap-1 transition-all"
-                    style={{ background: cityId===id?"#3a1a1a":"#1a1a1a", border: cityId===id?"2px solid #e74c3c":"1px solid #333", color: cityId===id?"#e74c3c":"#aaa" }}>
+                    style={{ background: cityId===id ? th.accentLight : th.card, border: cityId===id ? `2px solid ${th.accent}` : `1px solid ${th.border}`, color: cityId===id ? th.accent : th.textMuted, borderRadius:10, padding:"8px 4px", fontSize:"0.75rem", fontWeight:700, display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor:"pointer" }}>
                     <span className="text-xl">{CITIES[id].emoji}</span>
                     <span>{CITIES[id].name}</span>
                   </button>
@@ -1365,7 +1391,7 @@ export default function App() {
           </div>
           <div className="flex flex-wrap gap-1">
             {tripDays.map(d => (
-              <span key={d} className="text-xs px-2 py-0.5 rounded-full" style={{ background:"#1a1a2a", color:"#9b59b6", border:"1px solid #6c3483" }}>
+              <span key={d} style={{ fontSize:"0.72rem", padding:"2px 8px", borderRadius:999, background: th.tag, color: th.accent, border:`1px solid ${th.border}` }}>
                 {formatDateLabel(d, lang)}
               </span>
             ))}
@@ -1387,10 +1413,10 @@ export default function App() {
               {loading ? t.analyzing : t.analyze}
             </button>
           </div>
-          {error && <p className="text-xs" style={{ color:"#e74c3c" }}>{error}</p>}
+          {error && <p style={{ fontSize:"0.75rem", color: th.warning, marginTop:4 }}>{error}</p>}
           {city && (
             <div>
-              <p className="text-xs mb-2" style={{ color:"#666" }}>{t.demo}</p>
+              <p style={{ fontSize:"0.75rem", marginBottom:8, color: th.textFaint }}>{t.demo}</p>
               <div className="flex flex-wrap gap-1 mb-2">
                 {city.demoLinks.map((link, i) => (
                   <button key={i} onClick={() => setLinkInput(link)}
@@ -1413,7 +1439,7 @@ export default function App() {
           <div className="space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-black" style={{ color:"#e74c3c", fontFamily:"Georgia,serif" }}>
-                📍 {t.myPlaces} <span className="text-xs font-normal" style={{ color:"#666" }}>({locations.length})</span>
+                📍 {t.myPlaces} <span style={{ fontSize:"0.75rem", fontWeight:400, color: th.textFaint }}>({locations.length})</span>
               </h2>
               <div className="flex gap-1 flex-wrap">
                 <button onClick={() => setFilterDay("all")}
@@ -1424,13 +1450,13 @@ export default function App() {
                 {tripDays.map(d => (
                   <button key={d} onClick={() => setFilterDay(d)}
                     className="text-xs px-2 py-1 rounded-lg font-medium"
-                    style={{ background: filterDay===d?"#9b59b6":"#222", color: filterDay===d?"white":"#888", border:"1px solid #444" }}>
+                    style={{ fontSize:"0.75rem", padding:"4px 10px", borderRadius:8, fontWeight:500, background: filterDay===d ? th.accent : th.tag, color: filterDay===d ? "#fff" : th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer" }}>
                     {formatDateLabel(d, lang)}
                   </button>
                 ))}
               </div>
             </div>
-            <p className="text-xs" style={{ color:"#555" }}>{t.dragHint}</p>
+            <p style={{ fontSize:"0.72rem", color: th.textFaint }}>{t.dragHint}</p>
             <div className="space-y-2">
               {filteredLocations.map((loc, i) => (
                 <div key={loc.id}>
@@ -1453,11 +1479,11 @@ export default function App() {
         {/* Tabs */}
         {locations.length > 0 && (
           <div className="space-y-4">
-            <div className="flex gap-2 rounded-xl p-1" style={{ background:"#1a1a1a", border:"1px solid #333" }}>
+            <div className="flex gap-2 rounded-xl p-1" style={{ background: th.card, border:`1px solid ${th.border}`, borderRadius:12, padding:4, display:"flex", gap:4 }}>
               {["route","compare","timeline"].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                  style={{ background: activeTab===tab?"#e74c3c":"transparent", color: activeTab===tab?"white":"#666" }}>
+                  style={{ flex:1, padding:"8px", borderRadius:8, fontSize:"0.875rem", fontWeight:700, background: activeTab===tab ? th.accent : "transparent", color: activeTab===tab ? "#fff" : th.textMuted, border:"none", cursor:"pointer" }}>
                   {tab==="route" ? t.route : tab==="compare" ? "Vergleich" : t.timeline}
                 </button>
               ))}
@@ -1470,12 +1496,12 @@ export default function App() {
                   {["walking","transit","driving"].map(mode => (
                     <button key={mode} onClick={() => setTravelMode(mode)}
                       className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                      style={{ background: travelMode===mode?"#e74c3c":"#222", color: travelMode===mode?"white":"#888", border:"1px solid #444" }}>
+                      style={{ fontSize:"0.75rem", padding:"6px 12px", borderRadius:8, fontWeight:500, background: travelMode===mode ? th.accent : th.tag, color: travelMode===mode ? "#fff" : th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer" }}>
                       {t[mode]}
                     </button>
                   ))}
                 </div>
-                <div ref={mapRef} className="w-full rounded-2xl overflow-hidden" style={{ height:320, background:"#1a1a2a" }} />
+                <div ref={mapRef} style={{ width:"100%", borderRadius:16, overflow:"hidden", height:320, background: th.card }} />
                 {filteredLocations.length >= 2 ? (
                   <a href={googleMapsUrl()} target="_blank" rel="noopener noreferrer"
                     className="block w-full py-3 rounded-xl text-center text-sm font-bold"
@@ -1494,24 +1520,24 @@ export default function App() {
             {/* Timeline Tab */}
             {activeTab==="compare" && (()=>{
                 const locs=filteredLocations.map(l=>l.loc||l);
-                if(locs.length<2)return <p className="text-xs text-center py-4" style={{color:"#666"}}>{t.noRouteHint}</p>;
+                if(locs.length<2)return <p style={{fontSize:"0.75rem",textAlign:"center",padding:"16px 0",color:th.textFaint}}>{t.noRouteHint}</p>;
                 const shortestRoute=(()=>{const rem=[...locs];const res=[rem.shift()];while(rem.length>0){const last=res[res.length-1];let minD=Infinity,minI=0;rem.forEach((l,i)=>{const d=haversineDistance(last.lat||0,last.lng||0,l.lat||0,l.lng||0);if(d<minD){minD=d;minI=i;}});res.push(rem.splice(minI,1)[0]);}return res;})();
                 const cheapestRoute=[...locs].sort((a,b)=>{const ca=getEntryCost(a.name,city);const cb=getEntryCost(b.name,city);return(ca?.min??999)-(cb?.min??999);});
                 const calcDist=r=>r.reduce((s,l,i)=>i===0?s:s+haversineDistance(r[i-1].lat||0,r[i-1].lng||0,l.lat||0,l.lng||0),0);
                 const calcCost=r=>r.reduce((s,l)=>{const c=getEntryCost(l.name,city);return s+(c?.min??0);},0);
-                const RouteCard=({title,color,badge,route})=>(<div className="rounded-2xl p-4 space-y-3" style={{background:"#1a1a2a",border:`2px solid ${color}`}}><div className="flex items-center justify-between"><span className="font-black text-sm" style={{color,fontFamily:"Georgia,serif"}}>{title}</span><span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{background:color+"33",color}}>{badge}</span></div><div className="flex gap-4"><div><p className="text-xs" style={{color:"#888"}}>Distanz</p><p className="font-bold text-sm" style={{color:"#5dade2"}}>{calcDist(route).toFixed(1)} km</p></div><div><p className="text-xs" style={{color:"#888"}}>Eintritt</p><p className="font-bold text-sm" style={{color:"#27ae60"}}>ab {calcCost(route)} EUR</p></div><div><p className="text-xs" style={{color:"#888"}}>Stopps</p><p className="font-bold text-sm" style={{color:"#f39c12"}}>{route.length}</p></div></div><div className="space-y-1.5">{route.map((l,i)=>{const c=getEntryCost(l.name,city);return(<div key={l.id||i} className="flex items-center gap-2"><span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{background:color,color:"white"}}>{i+1}</span><span className="text-xs flex-1" style={{color:"#ccc"}}>{l.icon} {l.name}</span>{c&&<span className="text-xs" style={{color:"#27ae60"}}>{c.min===0?"Frei":c.currency+c.min}</span>}</div>);})}</div></div>);
+                const RouteCard=({title,color,badge,route})=>(<div style={{background:th.card,border:`2px solid ${color}`,borderRadius:16,padding:16,marginBottom:8}}><div className="flex items-center justify-between"><span style={{fontWeight:900,fontSize:"0.875rem",color}}>{title}</span><span style={{fontSize:"0.72rem",padding:"2px 8px",borderRadius:999,fontWeight:700,background:color+"22",color}}>{badge}</span></div><div className="flex gap-4"><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Distanz</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.info}}>{calcDist(route).toFixed(1)} km</p></div><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Eintritt</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.success}}>ab {calcCost(route)} EUR</p></div><div><p style={{fontSize:"0.72rem",color:th.textMuted}}>Stopps</p><p style={{fontWeight:700,fontSize:"0.875rem",color:th.gold}}>{route.length}</p></div></div><div className="space-y-1.5">{route.map((l,i)=>{const c=getEntryCost(l.name,city);return(<div key={l.id||i} className="flex items-center gap-2"><span style={{width:20,height:20,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.7rem",fontWeight:700,flexShrink:0,background:color,color:"#fff"}}>{i+1}</span><span style={{fontSize:"0.75rem",flex:1,color:th.text}}>{l.icon} {l.name}</span>{c&&<span style={{fontSize:"0.72rem",color:th.success}}>{c.min===0?"Frei":c.currency+c.min}</span>}</div>);})}</div></div>);
                 const dSaved=Math.abs(calcDist(cheapestRoute)-calcDist(shortestRoute)).toFixed(1);
                 const cSaved=Math.abs(calcCost(shortestRoute)-calcCost(cheapestRoute)).toFixed(0);
-                return(<div className="space-y-3"><p className="text-xs font-semibold" style={{color:"#888"}}>Vergleich fuer {locs.length} Orte:</p><RouteCard title="Kuerzeste Route" color="#5dade2" badge="Weniger laufen" route={shortestRoute}/><RouteCard title="Guenstigste Route" color="#27ae60" badge="Weniger ausgeben" route={cheapestRoute}/><div className="rounded-xl p-3" style={{background:"#2a2a1a",border:"1px solid #5a5a2d"}}><p className="text-xs font-bold" style={{color:"#f39c12"}}>Tipp</p><p className="text-xs mt-1" style={{color:"#aaa"}}>Kuerzeste Route spart {dSaved} km. Guenstigste Route spart {cSaved} EUR Eintritt.</p></div></div>);
+                return(<div className="space-y-3"><p className="text-xs font-semibold" style={{color:"#888"}}>Vergleich fuer {locs.length} Orte:</p><RouteCard title="Kuerzeste Route" color="#5dade2" badge="Weniger laufen" route={shortestRoute}/><RouteCard title="Guenstigste Route" color="#27ae60" badge="Weniger ausgeben" route={cheapestRoute}/><div style={{borderRadius:10,padding:12,background:th.goldBg,border:`1px solid ${th.border}`}}><p style={{fontSize:"0.75rem",fontWeight:700,color:th.gold}}>Tipp</p><p style={{fontSize:"0.75rem",marginTop:4,color:th.textMuted}}>Kuerzeste Route spart {dSaved} km. Guenstigste Route spart {cSaved} EUR Eintritt.</p></div></div>);
               })()}
 
               {activeTab==="timeline" && (
               <div className="space-y-4">
                 {timelineByDay.length === 0 ? (
-                  <p className="text-xs text-center" style={{ color:"#666" }}>Keine Orte geplant.</p>
+                  <p style={{ fontSize:"0.75rem", textAlign:"center", color: th.textFaint }}>Keine Orte geplant.</p>
                 ) : timelineByDay.map(({ day, locs }) => (
                   <div key={day} className="space-y-2">
-                    <h3 className="font-bold text-sm" style={{ color:"#9b59b6" }}>
+                    <h3 style={{ fontWeight:700, fontSize:"0.875rem", color: th.accent }}>
                       📅 {formatDateLabel(day, lang)}
                     </h3>
                     {locs.map((loc, i) => {
@@ -1527,22 +1553,22 @@ export default function App() {
                           <div className="flex flex-col items-center">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                               style={{ background:"#e74c3c", color:"white" }}>{i+1}</div>
-                            {i < locs.length-1 && <div className="w-0.5 flex-1 my-1" style={{ background:"#333" }} />}
+                            {i < locs.length-1 && <div style={{ width:2, flex:1, margin:"4px 0", background: th.border }} />}
                           </div>
-                          <div className="flex-1 rounded-xl p-3 mb-2" style={{ background:"#2a2a2a", border:"1px solid #444" }}>
+                          <div style={{ flex:1, borderRadius:10, padding:12, marginBottom:8, background: th.card, border:`1px solid ${th.border}` }}>
                             <div className="flex items-start justify-between">
                               <div>
-                                <p className="font-bold text-sm" style={{ color:"#f0ece0" }}>{loc.icon} {loc.name}</p>
-                                <p className="text-xs" style={{ color:"#888" }}>{String(h).padStart(2,"0")}:{String(m).padStart(2,"0")} Uhr · ⏱ {loc.duration}</p>
+                                <p style={{ fontWeight:700, fontSize:"0.875rem", color: th.text }}>{loc.icon} {loc.name}</p>
+                                <p style={{ fontSize:"0.72rem", color: th.textMuted }}>{String(h).padStart(2,"0")}:{String(m).padStart(2,"0")} Uhr · ⏱ {loc.duration}</p>
                               </div>
                               {cost && (
-                                <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background:"#1a2a1a", color:"#27ae60", border:"1px solid #2d5a2d" }}>
+                                <span style={{ fontSize:"0.72rem", padding:"2px 8px", borderRadius:999, fontWeight:700, background: th.successBg, color: th.success, border:`1px solid ${th.success}` }}>
                                   {cost.min===0 ? "Frei" : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`}
                                 </span>
                               )}
                             </div>
                             {loc.note && (
-                              <p className="text-xs mt-1 italic" style={{ color:"#27ae60" }}>📝 {loc.note}</p>
+                              <p style={{ fontSize:"0.72rem", marginTop:4, fontStyle:"italic", color: th.success }}>📝 {loc.note}</p>
                             )}
                           </div>
                         </div>
@@ -1574,8 +1600,8 @@ export default function App() {
                   const cost = getEntryCost(loc.name, city);
                   return (
                     <div key={loc.id} className="flex items-center justify-between">
-                      <span className="text-sm" style={{ color:"#ccc" }}>{loc.icon} {loc.name}</span>
-                      <span className="text-sm font-bold" style={{ color:"#27ae60" }}>
+                      <span style={{ fontSize:"0.875rem", color: th.text }}>{loc.icon} {loc.name}</span>
+                      <span style={{ fontSize:"0.875rem", fontWeight:700, color: th.success }}>
                         {cost ? (cost.min===0 ? t.free : `${cost.currency}${cost.min}${cost.max!==cost.min?`–${cost.max}`:""}`) : "?"}
                       </span>
                     </div>
@@ -1593,7 +1619,7 @@ export default function App() {
               <p className="font-bold text-sm" style={{ color:"#27ae60" }}>
                 {t.budgetTotal}: {totalBudgetMin===totalBudgetMax ? `€${totalBudgetMin.toFixed(2)}` : `€${totalBudgetMin.toFixed(2)} – €${totalBudgetMax.toFixed(2)}`}
               </p>
-              <p className="text-xs mt-1" style={{ color:"#666" }}>{t.budgetNote}</p>
+              <p style={{ fontSize:"0.72rem", marginTop:4, color: th.textFaint }}>{t.budgetNote}</p>
             </div>
           </div>
         </CollapsibleSection>
@@ -1608,7 +1634,7 @@ export default function App() {
             </button>
             {shareUrl && (
               <div className="space-y-2">
-                <p className="text-xs" style={{ color:"#888" }}>{t.shareHint}</p>
+                <p style={{ fontSize:"0.75rem", color: th.textMuted }}>{t.shareHint}</p>
                 <div className="flex gap-2">
                   <input readOnly value={shareUrl} className="flex-1 rounded-xl px-3 py-2 text-xs focus:outline-none"
                     style={{ background:"#1a1a1a", border:"1px solid #444", color:"#aaa" }} />
@@ -1636,18 +1662,18 @@ export default function App() {
                   {saveFeedback ? t.saved : t.save}
                 </button>
               </div>
-              {locations.length===0 && <p className="text-xs" style={{ color:"#666" }}>{t.addFirst}</p>}
+              {locations.length===0 && <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.addFirst}</p>}
             </div>
             <div className="space-y-2">
-              <h3 className="text-sm font-bold" style={{ color:"#888" }}>{t.savedPlans}</h3>
+              <h3 style={{ fontSize:"0.875rem", fontWeight:700, color: th.textMuted }}>{t.savedPlans}</h3>
               {savedPlans.length===0 ? (
-                <p className="text-xs" style={{ color:"#666" }}>{t.noPlans}</p>
+                <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.noPlans}</p>
               ) : savedPlans.map(plan => (
                 <div key={plan.id} className="flex items-center justify-between rounded-xl px-3 py-2"
-                  style={{ background:"#1a1a1a", border:"1px solid #333" }}>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color:"#f0ece0" }}>{plan.name}</p>
-                    <p className="text-xs" style={{ color:"#666" }}>{CITIES[plan.cityId]?.name || plan.cityId} · {plan.locations?.length || 0} Orte</p>
+                  style={{ background: th.card, border:`1px solid ${th.border}`, borderRadius:10, padding:"10px 12px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div>
+                      <p style={{ fontSize:"0.875rem", fontWeight:700, color: th.text }}>{plan.name}</p>
+                      <p style={{ fontSize:"0.72rem", color: th.textFaint }}>{CITIES[plan.cityId]?.name || plan.cityId} · {plan.locations?.length || 0} Orte</p>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleLoadPlan(plan)} className="text-xs px-2 py-1 rounded-lg font-bold"
@@ -1662,8 +1688,8 @@ export default function App() {
         </CollapsibleSection>
 
         {/* Footer */}
-        <div className="text-center py-6">
-          <p className="text-xs" style={{ color:"#555" }}>{t.footerText}</p>
+        <div style={{ textAlign:"center", padding:"24px 0" }}>
+            <p style={{ fontSize:"0.75rem", color: th.textFaint }}>{t.footerText}</p>
         </div>
       </div>
     </div>
