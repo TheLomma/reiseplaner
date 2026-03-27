@@ -1,32 +1,63 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Reiseplaner</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reiseplaner</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-180.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Reiseplaner" />
-  <meta name="theme-color" content="#1e1a14" />
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
 
-  <!-- React via CDN (kein Build-Schritt nötig) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body style="margin:0;padding:0;background:#1e1a14;">
-  <div id="root"></div>
-  <script type="text/babel" src="app.jsx"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Service Worker registrieren -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
-    }
-  </script>
-</body>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: system-ui, -apple-system, sans-serif; }
+      #root { min-height: 100vh; }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes skeletonShimmer {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
+      @keyframes markerPop {
+        0% { transform: scale(0.5); opacity: 0; }
+        70% { transform: scale(1.15); }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      .skeleton-anim {
+        animation: skeletonShimmer 1.4s ease-in-out infinite;
+      }
+      .card-anim {
+        animation: fadeIn 0.35s ease both;
+      }
+      .marker-pop {
+        animation: markerPop 0.3s ease both;
+      }
+      .app-card-hover {
+        transition: box-shadow 0.2s, border-color 0.2s, transform 0.15s;
+      }
+      .app-card-hover:hover {
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- ✅ type="module" ist zwingend notwendig für Vite! -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
