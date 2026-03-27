@@ -12,7 +12,7 @@ const THEMES = {
     gold: "#d4a84b", goldBg: "rgba(212,168,75,0.1)",
     tag: "#2a2016", tagText: "#c8a96e",
     input: "#18140e", inputBorder: "#4a3e2e",
-    navBg: "rgba(28,31,43,0.97)",
+    navBg: "rgba(28,24,18,0.97)",
     shadow: "0 4px 24px rgba(0,0,0,0.5)",
     shadowHover: "0 8px 32px rgba(196,168,130,0.2)",
     skeleton: "#2e2820", skeletonShine: "#3a3028",
@@ -35,64 +35,6 @@ const THEMES = {
   }
 };
 
-if (typeof window !== "undefined" && !document.getElementById("pwa-icon-inject")) {
-  // Generate a 180x180 canvas icon for iOS home screen
-  const iconCanvas = document.createElement("canvas");
-  iconCanvas.width = 180; iconCanvas.height = 180;
-  const ctx = iconCanvas.getContext("2d");
-  // Background gradient
-  const grad = ctx.createLinearGradient(0,0,180,180);
-  grad.addColorStop(0, "#2e2820"); grad.addColorStop(1, "#1e1a14");
-  ctx.fillStyle = grad;
-  const r = 36;
-  ctx.beginPath(); ctx.moveTo(r,0); ctx.lineTo(180-r,0); ctx.quadraticCurveTo(180,0,180,r);
-  ctx.lineTo(180,180-r); ctx.quadraticCurveTo(180,180,180-r,180);
-  ctx.lineTo(r,180); ctx.quadraticCurveTo(0,180,0,180-r);
-  ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.closePath(); ctx.fill();
-  // Globe circle
-  ctx.strokeStyle = "#c4a882"; ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.arc(90,80,46,0,Math.PI*2); ctx.stroke();
-  // Meridian lines
-  ctx.beginPath(); ctx.ellipse(90,80,22,46,0,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(44,80); ctx.lineTo(136,80); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(52,55); ctx.lineTo(128,55); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(52,105); ctx.lineTo(128,105); ctx.stroke();
-  // Plane emoji
-  ctx.font = "bold 38px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText("✈", 90, 80);
-  // Label
-  ctx.fillStyle = "#c4a882"; ctx.font = "bold 16px 'Source Sans 3', sans-serif";
-  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
-  ctx.fillText("Reiseplaner", 90, 158);
-  const iconDataUrl = iconCanvas.toDataURL("image/png");
-  // Inject apple-touch-icon
-  const linkEl = document.createElement("link");
-  linkEl.id = "pwa-icon-inject";
-  linkEl.rel = "apple-touch-icon";
-  linkEl.setAttribute("sizes", "180x180");
-  linkEl.href = iconDataUrl;
-  document.head.appendChild(linkEl);
-  // iOS status bar
-  const metaStatusBar = document.createElement("meta");
-  metaStatusBar.name = "apple-mobile-web-app-status-bar-style";
-  metaStatusBar.content = "black-translucent";
-  document.head.appendChild(metaStatusBar);
-  // iOS capable
-  const metaCapable = document.createElement("meta");
-  metaCapable.name = "apple-mobile-web-app-capable";
-  metaCapable.content = "yes";
-  document.head.appendChild(metaCapable);
-  // App title
-  const metaTitle = document.createElement("meta");
-  metaTitle.name = "apple-mobile-web-app-title";
-  metaTitle.content = "Reiseplaner";
-  document.head.appendChild(metaTitle);
-  // Favicon
-  let fav = document.querySelector('link[rel="icon"]');
-  if (!fav) { fav = document.createElement("link"); fav.rel="icon"; document.head.appendChild(fav); }
-  fav.href = iconDataUrl;
-}
-
 if (typeof window !== "undefined" && !document.getElementById("app-theme-styles")) {
   const s = document.createElement("style");
   s.id = "app-theme-styles";
@@ -105,20 +47,18 @@ if (typeof window !== "undefined" && !document.getElementById("app-theme-styles"
     .card-anim { animation: fadeSlideIn 0.4s cubic-bezier(.22,1,.36,1) both; }
     .skeleton-anim { animation: skeletonPulse 1.4s ease-in-out infinite; }
     .app-card-hover { transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s, background 0.25s; }
-    .app-card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,106,62,0.18) !important; }
-    .theme-toggle-btn { transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+    .app-card-hover:hover { transform: translateY(-2px); }
     .tab-btn { transition: background 0.15s, color 0.15s; font-family: 'Source Sans 3', system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.65rem !important; }
     .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; font-family: 'Source Sans 3', system-ui, sans-serif; letter-spacing: 0.05em; }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,106,62,0.3); }
+    .btn-primary:hover { transform: translateY(-1px); }
     .btn-primary:active { transform: translateY(0); }
     .marker-pop { animation: markerPop 0.4s ease both; }
-    h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif !important; }
+    h1,h2,h3 { font-family: 'Playfair Display', Georgia, serif !important; }
     body { font-family: 'Source Sans 3', system-ui, sans-serif; }
-    @media print {
-      body { background: #fff !important; }
-      .no-print { display: none !important; }
-      .print-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc !important; border-radius: 8px !important; padding: 10px !important; margin-bottom: 10px !important; background: #fff !important; color: #000 !important; }
-    }
+    * { box-sizing: border-box !important; }
+    body, #root { overflow-x: hidden !important; max-width: 100vw !important; }
+    input, select, textarea { font-size: 16px !important; }
+    button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { border-radius: 3px; }
@@ -130,12 +70,16 @@ if (typeof window !== "undefined") {
   let vp = document.querySelector('meta[name="viewport"]');
   if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
   vp.content = 'width=device-width, initial-scale=1, maximum-scale=1';
-  if (!document.getElementById('mobile-fix')) {
-    const s = document.createElement('style');
-    s.id = 'mobile-fix';
-    s.textContent = '* { box-sizing: border-box !important; } body, #root { overflow-x: hidden !important; max-width: 100vw !important; } input, select, textarea { font-size: 16px !important; } button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }';
-    document.head.appendChild(s);
-  }
+}
+
+if (typeof window !== "undefined" && !window.L) {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(link);
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  document.head.appendChild(script);
 }
 
 const ThemeCtx = typeof window !== "undefined"
@@ -183,16 +127,6 @@ function SkeletonCard({ th }) {
   );
 }
 
-if (typeof window !== "undefined" && !window.L) {
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-  document.head.appendChild(link);
-  const script = document.createElement("script");
-  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-  document.head.appendChild(script);
-}
-
 const CITIES = {
   paris: {
     id: "paris", name: "Paris", emoji: "🗼", country: "🇫🇷",
@@ -202,7 +136,7 @@ const CITIES = {
       { id: 2, name: "Arc de Triomphe", type: "Sehenswürdigkeit", address: "Pl. Charles de Gaulle, 75008 Paris", lat: 48.8738, lng: 2.295, area: "8. Arrondissement", duration: "1 Std.", icon: "🏛️" },
       { id: 3, name: "Le Grand Véfour", type: "Restaurant", address: "17 Rue de Beaujolais, 75001 Paris", lat: 48.8637, lng: 2.337, area: "1. Arrondissement", duration: "2 Std.", icon: "🍽️" },
     ],
-    demoLinks: ["https://maps.google.com/?q=eiffelturm", "https://maps.google.com/?q=arc+de+triomphe", "https://www.restaurant-levefour.fr"],
+    demoLinks: ["https://maps.google.com/?q=eiffelturm", "https://maps.google.com/?q=arc+de+triomphe", "https://www.restaurant-legrandvefour.fr"],
     linkMatchers: [
       { pattern: /eiffel|tour-eiffel/i, locationIndex: 0 },
       { pattern: /arc|triomphe/i, locationIndex: 1 },
@@ -583,13 +517,13 @@ const TRANSLATIONS = {
     warningClosed: "ist an dem gewählten Tag geschlossen!", warningHint: "Bitte Besuchstag ändern.",
     closed: "geschlossen", apiActive: "API aktiv", apiMissing: "API-Key fehlt",
     apiTitle: "OpenAI API-Key", apiHint: "Lokal gespeichert.", apiSave: "Speichern",
-    apiSaved: "Gespeichert!", apiDelete: "Key löschen", footerText: "Reiseplaner v4.5",
+    apiSaved: "Gespeichert!", apiDelete: "Key löschen", footerText: "Reiseplaner v4.7",
     noRouteHint: "Füge mind. 2 Orte hinzu.", errorEmpty: "Bitte Link eingeben.",
     errorNotFound: "Link nicht erkannt.",
     days: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
     admission: "Eintritt", free: "Kostenlos", close: "Schliessen", places: "Orte",
     selectCity: "Stadt wählen", customCity: "Andere Stadt",
-    customCityPlaceholder: "Stadtname", customCityAdd: "Hinzufügen",
+    customCityPlaceholder: "Stadtname eingeben", customCityAdd: "Hinzufügen",
     switchCity: "Stadt wechseln", currentCity: "Aktuelle Stadt",
     travelTime: "Reisezeit", walkingTime: "zu Fuss", transitTime: "mit ÖPNV",
     notePlaceholder: "Notiz (z.B. Tickets vorbuchen!)", noteLabel: "Notiz", noteHide: "Ausblenden",
@@ -616,13 +550,13 @@ const TRANSLATIONS = {
     warningClosed: "is closed on the selected day!", warningHint: "Please change the visit day.",
     closed: "closed", apiActive: "API active", apiMissing: "API Key missing",
     apiTitle: "OpenAI API Key", apiHint: "Stored locally.", apiSave: "Save",
-    apiSaved: "Saved!", apiDelete: "Delete key", footerText: "Travel Planner v4.5",
+    apiSaved: "Saved!", apiDelete: "Delete key", footerText: "Travel Planner v4.7",
     noRouteHint: "Add at least 2 places.", errorEmpty: "Please enter a link.",
     errorNotFound: "Link not recognized.",
     days: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
     admission: "Admission", free: "Free", close: "Close", places: "Places",
     selectCity: "Select City", customCity: "Other City",
-    customCityPlaceholder: "City name", customCityAdd: "Add",
+    customCityPlaceholder: "Enter city name", customCityAdd: "Add",
     switchCity: "Switch City", currentCity: "Current City",
     travelTime: "Travel time", walkingTime: "walking", transitTime: "by transit",
     notePlaceholder: "Note (e.g. Book tickets!)", noteLabel: "Note", noteHide: "Hide",
@@ -686,7 +620,8 @@ function useUndoRedo(initial) {
   const safeInitial = Array.isArray(initial) ? initial : [];
   const [history, setHistory] = useState([safeInitial]);
   const [cursor, setCursor] = useState(0);
-  const current = Array.isArray(history[cursor]) ? history[cursor] : safeInitial;
+  const rawCurrent = history[cursor];
+  const current = Array.isArray(rawCurrent) ? rawCurrent.filter(x => x != null) : safeInitial;
   const set = (val) => {
     const prev = Array.isArray(history[cursor]) ? history[cursor] : safeInitial;
     const next = typeof val === "function" ? val(prev) : val;
@@ -782,7 +717,7 @@ function PackingList({ locations, numDays, lang }) {
     { id: "phone", label: lang==="de" ? "Handy + Ladekabel" : "Phone + charger", always: true },
     { id: "money", label: lang==="de" ? "Karte + Bargeld" : "Card + cash", always: true },
     { id: "insurance", label: lang==="de" ? "Reiseversicherung" : "Travel insurance", always: true },
-    { id: "clothes", label: lang==="de" ? `Kleidung fuer ${numDays} Tage` : `Clothes for ${numDays} days`, always: true },
+    { id: "clothes", label: lang==="de" ? `Kleidung für ${numDays} Tage` : `Clothes for ${numDays} days`, always: true },
     { id: "shoes", label: lang==="de" ? "Bequeme Schuhe" : "Comfortable shoes", cond: hasMuseum || hasPark },
     { id: "camera", label: lang==="de" ? "Kamera / Powerbank" : "Camera / powerbank", cond: hasMuseum || hasChurch },
     { id: "smart", label: lang==="de" ? "Schicke Kleidung" : "Smart clothes", cond: hasRestaurant },
@@ -791,7 +726,7 @@ function PackingList({ locations, numDays, lang }) {
     { id: "cover", label: lang==="de" ? "Schulterbedeckung" : "Shoulder cover", cond: hasChurch },
     { id: "adapter", label: lang==="de" ? "Reiseadapter" : "Travel adapter", cond: longTrip },
     { id: "meds", label: lang==="de" ? "Medikamente" : "Medication", cond: longTrip },
-    { id: "guide", label: lang==="de" ? "Reisefuehrer / Offline-Karten" : "Guidebook / offline maps", always: true },
+    { id: "guide", label: lang==="de" ? "Reiseführer / Offline-Karten" : "Guidebook / offline maps", always: true },
   ].filter(item => item.always || item.cond);
   const allItems = [...autoItems, ...customItems.map((label, i) => ({ id: `custom_${i}`, label }))];
   const doneCount = allItems.filter(item => checked[item.id]).length;
@@ -813,41 +748,284 @@ function PackingList({ locations, numDays, lang }) {
         <input value={customItem} onChange={e => setCustomItem(e.target.value)}
           onKeyDown={e => { if(e.key==="Enter" && customItem.trim()) { setCustomItems(c => [...c, customItem.trim()]); setCustomItem(""); }}}
           placeholder={lang==="de" ? "Eigenes Item..." : "Custom item..."}
-          style={{ flex:1, fontSize:"0.8rem", padding:"5px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          style={{ flex:1, fontSize:"0.82rem", padding:"5px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
         <button onClick={() => { if(customItem.trim()) { setCustomItems(c => [...c, customItem.trim()]); setCustomItem(""); }}}
-          style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:"#fff", border:"none", cursor:"pointer", fontWeight:700 }}>+</button>
+          style={{ padding:"5px 12px", borderRadius:8, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700 }}>+</button>
       </div>
     </div>
   );
 }
 
-const WEATHER_DATA = [
-  { icon:"S", label:{de:"Sonnig",en:"Sunny"}, temp:[18,28], uv:8 },
-  { icon:"C", label:{de:"Bewölkt",en:"Cloudy"}, temp:[12,18], uv:3 },
-  { icon:"R", label:{de:"Regen",en:"Rain"}, temp:[9,14], uv:1 },
-  { icon:"T", label:{de:"Gewitter",en:"Storm"}, temp:[8,13], uv:1 },
-  { icon:"P", label:{de:"Leicht bewölkt",en:"Partly cloudy"}, temp:[14,22], uv:5 },
-  { icon:"W", label:{de:"Windig",en:"Windy"}, temp:[11,17], uv:4 },
-];
-
-function WeatherWidget({ tripDays, lang, th }) {
-  const safedays = Array.isArray(tripDays) ? tripDays : [];
-  if (!safedays.length) return null;
-  const weathers = safedays.map((d, i) => WEATHER_DATA[(i * 3 + 2) % WEATHER_DATA.length]);
-  const icons = { S:"☀️", C:"🌥️", R:"🌧️", T:"⛈️", P:"⛅", W:"💨" };
+function StarRating({ stars, reviews, price, badge, lang, th }) {
+  if (!stars) return null;
+  const full = Math.floor(stars);
+  const half = stars - full >= 0.5;
   return (
-    <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:4 }}>
-      {safedays.map((day, i) => {
-        const w = weathers[i];
-        return (
-          <div key={day} style={{ minWidth:72, background:th.card, border:`1px solid ${th.border}`, borderRadius:10, padding:"8px 6px", textAlign:"center", flexShrink:0 }}>
-            <div style={{ fontSize:"0.65rem", color:th.textMuted, marginBottom:2 }}>{formatDateLabel(day, lang)}</div>
-            <div style={{ fontSize:"1.3rem" }}>{icons[w.icon]}</div>
-            <div style={{ fontSize:"0.62rem", color:th.textMuted, marginTop:1 }}>{w.label[lang]}</div>
-            <div style={{ fontSize:"0.7rem", color:th.text, fontWeight:700, marginTop:2 }}>{w.temp[0]}–{w.temp[1]}°</div>
-          </div>
-        );
-      })}
+    <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:6, marginTop:4 }}>
+      <div style={{ display:"flex", gap:1 }}>
+        {[...Array(5)].map((_,i) => (
+          <span key={i} style={{ fontSize:"0.75rem", color: i < full ? th.gold : (i === full && half ? th.gold : th.border) }}>
+            {i < full ? "★" : (i === full && half ? "½" : "☆")}
+          </span>
+        ))}
+      </div>
+      <span style={{ fontSize:"0.72rem", color:th.textMuted }}>{stars}</span>
+      {reviews && <span style={{ fontSize:"0.68rem", color:th.textFaint }}>({reviews.toLocaleString()} {lang==="de"?"Bew.":"rev."})</span>}
+      {price && <span style={{ fontSize:"0.68rem", padding:"1px 6px", borderRadius:6, background:th.tag, color:th.tagText }}>{price}</span>}
+      {badge && <span style={{ fontSize:"0.66rem", padding:"1px 6px", borderRadius:6, background:th.goldBg, color:th.gold, fontWeight:600 }}>{badge}</span>}
+    </div>
+  );
+}
+
+function TravelTimeBadge({ from, to, mode, th }) {
+  const tt = calcTravelTime(from, to);
+  if (!tt) return null;
+  const time = mode === "walking" ? tt.walkMin : tt.transitMin;
+  const icon = mode === "walking" ? "🚶" : "🚇";
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:4, fontSize:"0.7rem", color:th.textMuted, padding:"3px 8px", background:th.surface, borderRadius:20, border:`1px solid ${th.border}` }}>
+      <span>{icon}</span>
+      <span>{time} min</span>
+      <span style={{ color:th.textFaint }}>· {tt.distKm} km</span>
+    </div>
+  );
+}
+
+function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, locationDays, locationNotes, onNoteChange, city, lang, t, travelMode, showSkeleton }) {
+  const { th } = useTheme();
+  const [showInfo, setShowInfo] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const assignedDay = locationDays?.[loc.id] ?? (tripDays?.[0] || null);
+  const rating = getRating(loc.name, city);
+  const cost = getEntryCost(loc.name, city);
+  const info = getLocationInfo(loc.name, city);
+  const openInfo = getOpeningInfo(loc.name, assignedDay, city);
+  const isClosed = openInfo && !openInfo.isOpen;
+  const note = locationNotes?.[loc.id] || "";
+
+  if (showSkeleton) return <SkeletonCard th={th} />;
+
+  return (
+    <div className="app-card-hover card-anim print-card" style={{
+      background: th.card, border: `1px solid ${isClosed ? th.warning : th.border}`,
+      borderRadius: 14, padding: "10px 12px", position:"relative",
+      boxShadow: isClosed ? `0 0 0 2px ${th.warning}22` : "none",
+      animationDelay: `${index * 0.05}s`
+    }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+        <div style={{ width:34, height:34, borderRadius:"50%", background: dayColor ? `${dayColor}22` : th.accentLight, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.1rem", flexShrink:0, border:`2px solid ${dayColor || th.accent}` }}>
+          {loc.icon || "📍"}
+        </div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontWeight:700, fontSize:"0.88rem", color:th.text, lineHeight:1.2 }}>{loc.name}</div>
+          <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:2 }}>{loc.type}{loc.area ? ` · ${loc.area}` : ""}</div>
+          {rating && <StarRating {...rating} lang={lang} th={th} />}
+        </div>
+        <button onClick={() => onRemove(loc.id)} style={{ background:"none", border:"none", color:th.textFaint, cursor:"pointer", fontSize:"1rem", padding:"2px 4px", lineHeight:1, flexShrink:0 }}>✕</button>
+      </div>
+
+      {isClosed && (
+        <div style={{ marginTop:6, padding:"4px 8px", borderRadius:6, background:th.warningBg, border:`1px solid ${th.warning}`, fontSize:"0.7rem", color:th.warning }}>
+          ⚠️ {t.warningClosed}
+        </div>
+      )}
+
+      <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
+        {tripDays && tripDays.length > 0 && (
+          <select value={assignedDay || ""} onChange={e => onDayChange(loc.id, e.target.value)}
+            style={{ fontSize:"0.7rem", padding:"3px 6px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, cursor:"pointer" }}>
+            {tripDays.map((d, i) => (
+              <option key={d} value={d}>{formatDateLabel(d, lang)}</option>
+            ))}
+          </select>
+        )}
+        {cost && (
+          <span style={{ fontSize:"0.68rem", padding:"2px 7px", borderRadius:8, background:th.tag, color:th.tagText }}>
+            {cost.min === 0 ? t.free : `${cost.currency}${cost.min}${cost.max !== cost.min ? `–${cost.max}` : ""}`}
+          </span>
+        )}
+        {openInfo && (
+          <span style={{ fontSize:"0.68rem", color:openInfo.isOpen ? th.success : th.warning }}>
+            {openInfo.isOpen ? `🕐 ${openInfo.hours}` : `❌ ${t.closed}`}
+          </span>
+        )}
+        {loc.duration && (
+          <span style={{ fontSize:"0.68rem", color:th.textFaint }}>⏱ {loc.duration}</span>
+        )}
+      </div>
+
+      {info && (
+        <div style={{ marginTop:6 }}>
+          <button onClick={() => setShowInfo(v => !v)} style={{ fontSize:"0.68rem", color:th.accent, background:"none", border:"none", cursor:"pointer", padding:0 }}>
+            {showInfo ? t.infoHide : t.infoShow} ▾
+          </button>
+          {showInfo && (
+            <div style={{ marginTop:4, padding:"6px 8px", borderRadius:8, background:th.surface, border:`1px solid ${th.border}` }}>
+              <div style={{ fontSize:"0.74rem", color:th.textMuted, marginBottom:4 }}>{info.short}</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+                {info.highlights.map((h,i) => (
+                  <span key={i} style={{ fontSize:"0.66rem", padding:"1px 6px", borderRadius:6, background:th.tag, color:th.tagText }}>✓ {h}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ marginTop:6 }}>
+        <button onClick={() => setShowNote(v => !v)} style={{ fontSize:"0.68rem", color:th.textMuted, background:"none", border:"none", cursor:"pointer", padding:0 }}>
+          📝 {showNote ? t.noteHide : t.noteLabel}
+        </button>
+        {showNote && (
+          <textarea value={note} onChange={e => onNoteChange(loc.id, e.target.value)}
+            placeholder={t.notePlaceholder}
+            style={{ marginTop:4, width:"100%", fontSize:"0.76rem", padding:"6px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, resize:"vertical", minHeight:50 }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CollapsibleSection({ title, icon, children, defaultOpen = true, badge }) {
+  const { th } = useTheme();
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ marginBottom:12 }}>
+      <button onClick={() => setOpen(v => !v)} style={{
+        width:"100%", display:"flex", alignItems:"center", gap:8, background:"none", border:"none",
+        cursor:"pointer", padding:"6px 0", marginBottom: open ? 8 : 0
+      }}>
+        <span style={{ fontSize:"0.7rem", color:th.accent }}>{icon}</span>
+        <span style={{ fontSize:"0.65rem", fontWeight:700, color:th.textMuted, letterSpacing:"0.1em", textTransform:"uppercase", flex:1, textAlign:"left" }}>{title}</span>
+        {badge !== undefined && (
+          <span style={{ fontSize:"0.65rem", padding:"1px 7px", borderRadius:10, background:th.accentLight, color:th.accent, fontWeight:700 }}>{badge}</span>
+        )}
+        <span style={{ fontSize:"0.7rem", color:th.textFaint, transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition:"transform 0.2s" }}>▼</span>
+      </button>
+      {open && <div>{children}</div>}
+    </div>
+  );
+}
+
+function MapView({ locations, city, travelMode, locationDays, activeDay }) {
+  const { th } = useTheme();
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const polylineRef = useRef(null);
+
+  const safeLocations = Array.isArray(locations) ? locations : [];
+  const filtered = activeDay
+    ? safeLocations.filter(l => (locationDays?.[l.id] ?? null) === activeDay)
+    : safeLocations;
+
+  useEffect(() => {
+    const initMap = () => {
+      if (!mapRef.current || !window.L) return;
+      if (!mapInstanceRef.current) {
+        mapInstanceRef.current = window.L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: true });
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap"
+        }).addTo(mapInstanceRef.current);
+      }
+      const map = mapInstanceRef.current;
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      if (polylineRef.current) { polylineRef.current.remove(); polylineRef.current = null; }
+
+      const pts = filtered.filter(l => l.lat && l.lng);
+      if (pts.length === 0) {
+        const center = city ? [city.lat, city.lng] : [48.8566, 2.3522];
+        map.setView(center, 13);
+        return;
+      }
+
+      const daySet = [...new Set(pts.map(l => locationDays?.[l.id] || null))];
+
+      pts.forEach((loc, i) => {
+        const dayIdx = daySet.indexOf(locationDays?.[loc.id] || null);
+        const color = getDayColor(dayIdx >= 0 ? dayIdx : i);
+        const icon = window.L.divIcon({
+          className: "",
+          html: `<div class="marker-pop" style="width:30px;height:30px;border-radius:50%;background:${color};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${loc.icon || "📍"}</div>`,
+          iconSize: [30, 30], iconAnchor: [15, 15]
+        });
+        const marker = window.L.marker([loc.lat, loc.lng], { icon })
+          .addTo(map)
+          .bindPopup(`<strong>${loc.name}</strong><br/><small>${loc.type || ""}${loc.area ? " · " + loc.area : ""}</small>`);
+        markersRef.current.push(marker);
+      });
+
+      if (pts.length >= 2) {
+        const latlngs = pts.map(l => [l.lat, l.lng]);
+        polylineRef.current = window.L.polyline(latlngs, { color: th.accent, weight: 2, opacity: 0.6, dashArray: "6,6" }).addTo(map);
+      }
+
+      const bounds = window.L.latLngBounds(pts.map(l => [l.lat, l.lng]));
+      map.fitBounds(bounds, { padding: [40, 40] });
+    };
+
+    if (window.L) {
+      initMap();
+    } else {
+      const check = setInterval(() => { if (window.L) { clearInterval(check); initMap(); } }, 200);
+      return () => clearInterval(check);
+    }
+  }, [filtered, city, th.accent]);
+
+  return (
+    <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden", border:`1px solid ${th.border}`, zIndex:1 }} />
+  );
+}
+
+function BudgetTracker({ locations, city, lang, t }) {
+  const { th } = useTheme();
+  const [extras, setExtras] = useState([{ label: lang==="de" ? "Hotel" : "Hotel", amount: "" }, { label: lang==="de" ? "Transport" : "Transport", amount: "" }]);
+  const safeLocations = Array.isArray(locations) ? locations : [];
+
+  const entryCosts = safeLocations.filter(loc => loc != null).map(loc => {
+    const cost = getEntryCost(loc.name, city);
+    if (!cost) return { name: loc.name, cost: 0, label: t.free };
+    if (cost.min === 0) return { name: loc.name, cost: 0, label: t.free };
+    const avg = (cost.min + cost.max) / 2;
+    return { name: loc.name, cost: avg, label: `${cost.currency}${cost.min}${cost.max !== cost.min ? "–" + cost.max : ""}` };
+  });
+
+  const entriesTotal = entryCosts.reduce((s, e) => s + e.cost, 0);
+  const extrasTotal = extras.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+  const total = entriesTotal + extrasTotal;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      {entryCosts.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          {entryCosts.map((e, i) => (
+            <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:"0.78rem", padding:"4px 8px", borderRadius:8, background:th.surface }}>
+              <span style={{ color:th.textMuted }}>{e.name}</span>
+              <span style={{ color: e.cost === 0 ? th.success : th.text, fontWeight:600 }}>{e.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ fontSize:"0.68rem", color:th.textMuted, marginTop:2 }}>{t.budgetExtras}</div>
+      {extras.map((ex, i) => (
+        <div key={i} style={{ display:"flex", gap:6 }}>
+          <input value={ex.label} onChange={e => setExtras(arr => arr.map((x,j) => j===i ? {...x, label:e.target.value} : x))}
+            style={{ flex:2, fontSize:"0.76rem", padding:"4px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <input type="number" value={ex.amount} onChange={e => setExtras(arr => arr.map((x,j) => j===i ? {...x, amount:e.target.value} : x))}
+            placeholder="€" style={{ flex:1, fontSize:"0.76rem", padding:"4px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <button onClick={() => setExtras(arr => arr.filter((_,j) => j!==i))} style={{ background:"none", border:"none", color:th.textFaint, cursor:"pointer", fontSize:"0.9rem" }}>✕</button>
+        </div>
+      ))}
+      <button onClick={() => setExtras(arr => [...arr, { label:"", amount:"" }])}
+        style={{ fontSize:"0.72rem", color:th.accent, background:"none", border:`1px dashed ${th.border}`, borderRadius:8, padding:"4px 8px", cursor:"pointer" }}>
+        + {lang==="de" ? "Position hinzufügen" : "Add item"}
+      </button>
+      <div style={{ borderTop:`1px solid ${th.border}`, paddingTop:8, marginTop:4, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <span style={{ fontSize:"0.78rem", fontWeight:700, color:th.text }}>{t.budgetTotal}</span>
+        <span style={{ fontSize:"1rem", fontWeight:700, color:th.accent }}>~€{Math.round(total)}</span>
+      </div>
+      <div style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.budgetNote}</div>
     </div>
   );
 }
@@ -857,751 +1035,521 @@ export default function App() {
   const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
 
+  const today = new Date().toISOString().slice(0, 10);
   const [cityId, setCityId] = useState("paris");
-  const [customCities, setCustomCities] = useState([]);
-  const city = CITIES[cityId] || customCities.find(c => c.id === cityId) || CITIES["paris"];
+  const [customCities, setCustomCities] = useState({});
+  const [showCustomCityInput, setShowCustomCityInput] = useState(false);
+  const [customCityInput, setCustomCityInput] = useState("");
 
-  const [locations, setLocations, { undo: undoLoc, redo: redoLoc, canUndo, canRedo }] = useUndoRedo([]);
-  const safeLocations = Array.isArray(locations) ? locations : [];
+  const allCities = { ...CITIES, ...customCities };
+  const city = allCities[cityId] || CITIES.paris;
 
+  const [startDate, setStartDate] = useState(today);
+  const [numDays, setNumDays] = useState(4);
+  const [tripDays, setTripDays] = useState(() => generateTripDays(today, 4));
+  const [activeDay, setActiveDay] = useState(null);
+
+  const [locations, setLocations, { undo, redo, canUndo, canRedo }] = useUndoRedo([]);
   const [locationDays, setLocationDays] = useState({});
   const [locationNotes, setLocationNotes] = useState({});
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0,10));
-  const [numDays, setNumDays] = useState(4);
-  const [tripDays, setTripDays] = useState(() => generateTripDays(new Date().toISOString().slice(0,10), 4));
+
+  const [link, setLink] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState("");
+  const [travelMode, setTravelMode] = useState("walking");
+  const [activeTab, setActiveTab] = useState("route");
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
+
+  const [planName, setPlanName] = useState("");
+  const [savedPlans, setSavedPlans] = useState(() => { const p = safeJsonParse(localStorage.getItem('reiseplaner_plans_v2'), []); return Array.isArray(p) ? p : []; });
+  const [saveMsg, setSaveMsg] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
+  const [copyMsg, setCopyMsg] = useState("");
+
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_key") || "");
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [apiSaved, setApiSaved] = useState(false);
+  const [showApiPanel, setShowApiPanel] = useState(false);
 
   useEffect(() => {
     const newDays = generateTripDays(startDate, numDays);
     setTripDays(newDays);
+    if (activeDay && !newDays.includes(activeDay)) setActiveDay(null);
   }, [startDate, numDays]);
 
-  const [linkInput, setLinkInput] = useState("");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [linkError, setLinkError] = useState("");
-  const [activeTab, setActiveTab] = useState("route");
-  const [travelMode, setTravelMode] = useState("walking");
-  const [filterDay, setFilterDay] = useState("all");
-  const [expandedInfo, setExpandedInfo] = useState({});
-  const [expandedNote, setExpandedNote] = useState({});
-  const [dragIdx, setDragIdx] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
-  const [savedPlans, setSavedPlans] = useState(() => {
-    const raw = safeJsonParse(localStorage.getItem("travelPlans_v4"), []);
-    return Array.isArray(raw) ? raw.map(normalizePlan).filter(Boolean) : [];
-  });
-  const [planName, setPlanName] = useState("");
-  const [saveMsg, setSaveMsg] = useState("");
-  const [shareUrl, setShareUrl] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [showCityPanel, setShowCityPanel] = useState(false);
-  const [customCityInput, setCustomCityInput] = useState("");
-  const [showApiPanel, setShowApiPanel] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("openai_api_key") || "");
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [apiSaved, setApiSaved] = useState(false);
-  const [showSavePlans, setShowSavePlans] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [showPacking, setShowPacking] = useState(false);
-  const [showWeather, setShowWeather] = useState(false);
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
+  useEffect(() => {
+    document.body.style.background = th.bg;
+    document.body.style.color = th.text;
+    document.body.style.transition = "background 0.3s, color 0.3s";
+  }, [th]);
 
-  const safeTripDays = Array.isArray(tripDays) ? tripDays : [];
+  const handleAddCustomCity = () => {
+    const name = customCityInput.trim();
+    if (!name) return;
+    const id = "custom_" + name.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
+    const newCity = {
+      id, name, emoji: "🌍", country: "🌐",
+      lat: 48.8566, lng: 2.3522, timezone: "UTC",
+      sampleLocations: [], demoLinks: [], linkMatchers: [],
+      entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {},
+    };
+    setCustomCities(prev => ({ ...prev, [id]: newCity }));
+    setCityId(id);
+    setCustomCityInput("");
+    setShowCustomCityInput(false);
+  };
 
-  const filteredLocations = filterDay === "all"
-    ? safeLocations
-    : safeLocations.filter(loc => locationDays[loc.id] === filterDay);
+  const analyzeLink = async (inputLink) => {
+    const url = (inputLink || link).trim();
+    if (!url) { setError(t.errorEmpty); return; }
+    setError(""); setAnalyzing(true); setSkeletonVisible(true);
 
-  function analyzeLink(url) {
-    const input = (url || linkInput).trim();
-    if (!input) { setLinkError(t.errorEmpty); return; }
-    setLinkError("");
-    setAnalyzing(true);
-    setTimeout(() => {
-      setAnalyzing(false);
-      const matchers = city?.linkMatchers || [];
-      let matched = null;
-      for (const m of matchers) {
-        if (m.pattern.test(input)) {
-          matched = (city?.sampleLocations || [])[m.locationIndex];
+    await new Promise(r => setTimeout(r, 900));
+
+    let matched = null;
+    if (city.linkMatchers) {
+      for (const matcher of city.linkMatchers) {
+        if (matcher.pattern.test(url)) {
+          matched = city.sampleLocations[matcher.locationIndex];
           break;
         }
       }
-      if (!matched) {
-        const allCities = [...Object.values(CITIES), ...customCities];
-        for (const c of allCities) {
-          for (const m of (c.linkMatchers || [])) {
-            if (m.pattern.test(input)) {
-              matched = (c.sampleLocations || [])[m.locationIndex];
-              break;
-            }
-          }
-          if (matched) break;
-        }
+    }
+    if (!matched) {
+      for (const loc of (city.sampleLocations || [])) {
+        if (url.toLowerCase().includes(loc.name.toLowerCase())) { matched = loc; break; }
       }
-      if (!matched) { setLinkError(t.errorNotFound); return; }
-      const newLoc = { ...matched, id: Date.now(), sourceUrl: input };
-      setLocations(prev => {
-        const p = Array.isArray(prev) ? prev : [];
-        if (p.some(l => l.name === newLoc.name)) return p;
-        return [...p, newLoc];
-      });
-      setLinkInput("");
-    }, 800);
-  }
+    }
+    if (!matched && city.sampleLocations?.length > 0) {
+      matched = city.sampleLocations[Math.floor(Math.random() * city.sampleLocations.length)];
+    }
 
-  function removeLocation(id) {
-    setLocations(prev => (Array.isArray(prev) ? prev : []).filter(l => l.id !== id));
-    setLocationDays(d => { const nd = { ...d }; delete nd[id]; return nd; });
-    setLocationNotes(n => { const nn = { ...n }; delete nn[id]; return nn; });
-  }
+    setAnalyzing(false);
+    setTimeout(() => setSkeletonVisible(false), 400);
 
-  function handleDrop(targetIdx) {
-    if (dragIdx === null || dragIdx === targetIdx) return;
-    setLocations(prev => {
-      const p = Array.isArray(prev) ? [...prev] : [];
-      const [item] = p.splice(dragIdx, 1);
-      p.splice(targetIdx, 0, item);
-      return p;
-    });
-    setDragIdx(null);
-    setDragOver(null);
-  }
+    if (matched) {
+      const exists = locations.find(l => l.id === matched.id);
+      if (!exists) {
+        setLocations(prev => [...prev, { ...matched, id: matched.id + "_" + Date.now() }]);
+        setLink("");
+      }
+    } else {
+      setError(t.errorNotFound);
+    }
+  };
 
-  function loadPlan(plan) {
+  const removeLocation = (id) => {
+    setLocations(prev => prev.filter(l => l.id !== id));
+    setLocationDays(prev => { const n = {...prev}; delete n[id]; return n; });
+    setLocationNotes(prev => { const n = {...prev}; delete n[id]; return n; });
+  };
+
+  const handleDayChange = (locId, day) => {
+    setLocationDays(prev => ({ ...prev, [locId]: day }));
+  };
+
+  const handleNoteChange = (locId, note) => {
+    setLocationNotes(prev => ({ ...prev, [locId]: note }));
+  };
+
+  const savePlan = () => {
+    if (!planName.trim()) return;
+    const plan = normalizePlan({ id: Date.now(), name: planName, cityId, startDate, numDays, tripDays, locations, locationDays, locationNotes });
+    const updated = [...savedPlans.filter(p => p.name !== planName), plan];
+    setSavedPlans(updated);
+    localStorage.setItem("reiseplaner_plans_v2", JSON.stringify(updated));
+    setSaveMsg(t.saved);
+    setTimeout(() => setSaveMsg(""), 2000);
+  };
+
+  const loadPlan = (plan) => {
     const p = normalizePlan(plan);
     if (!p) return;
     setCityId(p.cityId);
-    setLocations(Array.isArray(p.locations) ? p.locations : []);
-    setLocationDays(p.locationDays || {});
-    setLocationNotes(p.locationNotes || {});
     setStartDate(p.startDate);
     setNumDays(p.numDays);
-    setShowSavePlans(false);
-  }
+    setTripDays(p.tripDays);
+    setLocations(p.locations);
+    setLocationDays(p.locationDays);
+    setLocationNotes(p.locationNotes);
+  };
 
-  function savePlan() {
-    if (!planName.trim()) return;
-    const plan = normalizePlan({
-      id: Date.now(), name: planName, cityId, startDate, numDays,
-      tripDays: safeTripDays, locations: safeLocations, locationDays, locationNotes
-    });
-    if (!plan) return;
-    const updated = [...savedPlans.filter(p => p.name !== planName), plan];
-    setSavedPlans(updated);
-    localStorage.setItem("travelPlans_v4", JSON.stringify(updated));
-    setSaveMsg(t.saved);
-    setTimeout(() => setSaveMsg(""), 2000);
-  }
-
-  function deletePlan(id) {
+  const deletePlan = (id) => {
     const updated = savedPlans.filter(p => p.id !== id);
     setSavedPlans(updated);
-    localStorage.setItem("travelPlans_v4", JSON.stringify(updated));
-  }
+    localStorage.setItem("reiseplaner_plans_v2", JSON.stringify(updated));
+  };
 
-  function createShareLink() {
-    const data = { cityId, startDate, numDays, locations: safeLocations, locationDays };
+  const createShareLink = () => {
+    const data = { cityId, startDate, numDays, locations, locationDays };
     const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-    setShareUrl(window.location.href.split("?")[0] + "?plan=" + encoded);
-    setShowShare(true);
-  }
+    const url = `${window.location.origin}${window.location.pathname}?plan=${encoded}`;
+    setShareUrl(url);
+  };
 
-  function copyShareUrl() {
-    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  }
+  const copyShareUrl = () => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopyMsg(t.copied);
+      setTimeout(() => setCopyMsg(""), 2000);
+    });
+  };
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get("plan");
-    if (encoded) {
-      try {
-        const data = JSON.parse(decodeURIComponent(atob(encoded)));
-        const p = normalizePlan(data);
-        if (p) { setCityId(p.cityId); setLocations(p.locations); setLocationDays(p.locationDays); setStartDate(p.startDate); setNumDays(p.numDays); }
-      } catch {}
-    }
-  }, []);
+  const safeLocationsMain = Array.isArray(locations) ? locations.filter(l => l != null) : [];
+    const filteredLocations = activeDay
+      ? safeLocationsMain.filter(l => (locationDays?.[l.id] ?? tripDays?.[0]) === activeDay)
+      : safeLocationsMain;
 
-  useEffect(() => {
-    if (activeTab !== "map") return;
-    const initMap = () => {
-      if (!window.L || !mapRef.current) return;
-      if (!mapInstanceRef.current) {
-        mapInstanceRef.current = window.L.map(mapRef.current).setView([city.lat, city.lng], 13);
-        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OSM" }).addTo(mapInstanceRef.current);
-      } else {
-        mapInstanceRef.current.setView([city.lat, city.lng], 13);
-      }
-      markersRef.current.forEach(m => m.remove());
-      markersRef.current = [];
-      const locs = Array.isArray(filteredLocations) ? filteredLocations : [];
-      locs.forEach((loc, i) => {
-        if (!loc.lat || !loc.lng) return;
-        const dayIdx = safeTripDays.indexOf(locationDays[loc.id]);
-        const color = dayIdx >= 0 ? getDayColor(dayIdx) : th.accent;
-        const icon = window.L.divIcon({
-          className: "",
-          html: `<div style="width:28px;height:28px;borderRadius:50%;background:${color};border:2px solid #fff;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${i+1}</div>`,
-          iconSize: [28,28], iconAnchor: [14,14]
-        });
-        const marker = window.L.marker([loc.lat, loc.lng], { icon }).addTo(mapInstanceRef.current);
-        marker.bindPopup(`<b>${loc.name}</b><br>${loc.address || ""}`);
-        markersRef.current.push(marker);
-      });
-      if (locs.length > 1) {
-        const coords = locs.filter(l => l.lat && l.lng).map(l => [l.lat, l.lng]);
-        if (coords.length > 1) {
-          const poly = window.L.polyline(coords, { color: th.accent, weight: 3, opacity: 0.7, dashArray: "6 4" }).addTo(mapInstanceRef.current);
-          markersRef.current.push(poly);
-          mapInstanceRef.current.fitBounds(poly.getBounds(), { padding: [30,30] });
-        }
-      }
-    };
-    if (window.L) { initMap(); } else {
-      const interval = setInterval(() => { if (window.L) { clearInterval(interval); initMap(); } }, 300);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, safeLocations, filteredLocations, city, locationDays, travelMode]);
-
-  const closedWarnings = safeLocations.filter(loc => {
-    const day = locationDays[loc.id];
-    if (!day) return false;
+  const closedWarnings = safeLocationsMain.filter(loc => {
+    const day = locationDays?.[loc.id] ?? tripDays?.[0];
     const info = getOpeningInfo(loc.name, day, city);
-    return info && info.isOpen === false;
+    return info && !info.isOpen;
   });
 
-  const totalBudgetMin = safeLocations.reduce((sum, loc) => {
-    const cost = getEntryCost(loc.name, city);
-    return sum + (cost ? cost.min : 0);
-  }, 0);
-  const totalBudgetMax = safeLocations.reduce((sum, loc) => {
-    const cost = getEntryCost(loc.name, city);
-    return sum + (cost ? cost.max : 0);
-  }, 0);
-
-  const navBtn = (label, active, onClick) => (
-    <button onClick={onClick} style={{
-      padding:"6px 14px", borderRadius:20, border:"none", cursor:"pointer", fontWeight:600,
-      fontSize:"0.7rem", letterSpacing:"0.05em", textTransform:"uppercase",
-      background: active ? th.accent : "transparent",
-      color: active ? "#fff" : th.textMuted,
-      transition:"all 0.15s"
-    }}>{label}</button>
-  );
+  const cityOrderAll = [...CITY_ORDER, ...Object.keys(customCities)];
 
   return (
     <div style={{ minHeight:"100vh", background:th.bg, color:th.text, fontFamily:"'Source Sans 3', system-ui, sans-serif" }}>
-      {/* NAVBAR */}
-      <nav className="no-print" style={{
-        position:"sticky", top:0, zIndex:100, background:th.navBg,
-        borderBottom:`1px solid ${th.border}`, backdropFilter:"blur(12px)",
-        padding:"0 16px", height:52, display:"flex", alignItems:"center", justifyContent:"space-between"
-      }}>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:"1.2rem", fontFamily:"'Playfair Display', serif", fontWeight:900, color:th.accent }}>
-            {city.emoji} {t.appName}
-          </span>
-          <span style={{ fontSize:"0.65rem", color:th.textMuted, background:th.surface, padding:"2px 8px", borderRadius:10, border:`1px solid ${th.border}` }}>
-            {city.country} {city.name}
-          </span>
-        </div>
-        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-          <button onClick={undoLoc} disabled={!canUndo} title="Undo"
-            style={{ width:30, height:30, borderRadius:"50%", border:`1px solid ${th.border}`, background:th.surface, cursor:canUndo?"pointer":"default", opacity:canUndo?1:0.35, color:th.text, fontSize:"0.85rem", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {"<"}
-          </button>
-          <button onClick={redoLoc} disabled={!canRedo} title="Redo"
-            style={{ width:30, height:30, borderRadius:"50%", border:`1px solid ${th.border}`, background:th.surface, cursor:canRedo?"pointer":"default", opacity:canRedo?1:0.35, color:th.text, fontSize:"0.85rem", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {">"}
-          </button>
-          <button onClick={toggleTheme} className="theme-toggle-btn"
-            style={{ width:30, height:30, borderRadius:"50%", border:`1px solid ${th.border}`, background:th.surface, cursor:"pointer", color:th.accent, fontSize:"0.85rem", display:"flex", alignItems:"center", justifyContent:"center" }}>
-            {mode === "dark" ? "L" : "D"}
-          </button>
-          <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
-            style={{ padding:"4px 10px", borderRadius:14, border:`1px solid ${th.border}`, background:th.surface, cursor:"pointer", color:th.textMuted, fontSize:"0.72rem", fontWeight:700 }}>
-            {lang === "de" ? "EN" : "DE"}
-          </button>
-          <button onClick={() => setShowCityPanel(v => !v)}
-            style={{ padding:"4px 10px", borderRadius:14, border:`1px solid ${th.border}`, background:th.surface, cursor:"pointer", color:th.textMuted, fontSize:"0.72rem" }}>
-            {t.switchCity}
-          </button>
-          <button onClick={() => window.print()} className="no-print"
-            style={{ padding:"4px 10px", borderRadius:14, border:`1px solid ${th.border}`, background:th.surface, cursor:"pointer", color:th.textMuted, fontSize:"0.72rem" }}>
-            PDF
-          </button>
-        </div>
-      </nav>
+      {/* Navbar */}
+      <div style={{ position:"sticky", top:0, zIndex:100, background:th.navBg, backdropFilter:"blur(12px)", borderBottom:`1px solid ${th.border}`, padding:"0 16px", height:52, display:"flex", alignItems:"center", gap:12 }}>
+        <span style={{ fontFamily:"'Playfair Display', serif", fontWeight:900, fontSize:"1.1rem", color:th.accent, letterSpacing:"-0.02em" }}>✈ {t.appName}</span>
+        <div style={{ flex:1 }} />
+        <button onClick={() => setLang(l => l === "de" ? "en" : "de")}
+          style={{ fontSize:"0.7rem", padding:"4px 10px", borderRadius:20, background:th.surface, color:th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer", fontWeight:600 }}>
+          {lang === "de" ? "EN" : "DE"}
+        </button>
+        <button onClick={toggleTheme}
+          style={{ fontSize:"1rem", padding:"4px 10px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, cursor:"pointer" }}>
+          {mode === "dark" ? "☀️" : "🌙"}
+        </button>
+        <button onClick={() => setShowApiPanel(v => !v)}
+          style={{ fontSize:"0.65rem", padding:"4px 10px", borderRadius:20, background: apiKey ? th.successBg : th.warningBg, color: apiKey ? th.success : th.warning, border:`1px solid ${apiKey ? th.success : th.warning}`, cursor:"pointer", fontWeight:600 }}>
+          {apiKey ? t.apiActive : t.apiMissing}
+        </button>
+      </div>
 
-      {/* CITY PANEL */}
-      {showCityPanel && (
-        <div className="no-print" style={{ position:"fixed", top:52, right:0, zIndex:200, background:th.surface, border:`1px solid ${th.border}`, borderRadius:"0 0 0 16px", padding:16, minWidth:240, boxShadow:th.shadow }}>
-          <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.textMuted, marginBottom:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{t.selectCity}</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-            {CITY_ORDER.map(id => {
-              const c = CITIES[id];
-              if (!c) return null;
-              return (
-                <button key={id} onClick={() => { setCityId(id); setShowCityPanel(false); }}
-                  style={{ textAlign:"left", padding:"8px 12px", borderRadius:10, border:`1px solid ${cityId===id ? th.accent : th.border}`, background:cityId===id ? th.accentLight : th.card, cursor:"pointer", color:th.text, fontSize:"0.82rem", fontWeight:cityId===id ? 700 : 400 }}>
-                  {c.emoji} {c.name} {c.country}
-                </button>
-              );
-            })}
-            {customCities.map(c => (
-              <button key={c.id} onClick={() => { setCityId(c.id); setShowCityPanel(false); }}
-                style={{ textAlign:"left", padding:"8px 12px", borderRadius:10, border:`1px solid ${cityId===c.id ? th.accent : th.border}`, background:cityId===c.id ? th.accentLight : th.card, cursor:"pointer", color:th.text, fontSize:"0.82rem" }}>
-                {c.emoji} {c.name}
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop:10, display:"flex", gap:6 }}>
-            <input value={customCityInput} onChange={e => setCustomCityInput(e.target.value)}
-              placeholder={t.customCityPlaceholder}
-              style={{ flex:1, fontSize:"0.8rem", padding:"5px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-            <button onClick={() => {
-              if (!customCityInput.trim()) return;
-              const id = customCityInput.trim().toLowerCase().replace(/\s+/g,"_");
-              const newCity = { id, name: customCityInput.trim(), emoji: "🌍", country: "", lat: 48.8566, lng: 2.3522, timezone: "UTC", sampleLocations: [], demoLinks: [], linkMatchers: [], entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {} };
-              setCustomCities(prev => [...prev, newCity]);
-              setCityId(id);
-              setCustomCityInput("");
-              setShowCityPanel(false);
-            }} style={{ padding:"5px 10px", borderRadius:8, background:th.accent, color:"#fff", border:"none", cursor:"pointer", fontSize:"0.8rem", fontWeight:700 }}>
-              {t.customCityAdd}
-            </button>
-          </div>
+      {showApiPanel && (
+        <div style={{ background:th.surface, borderBottom:`1px solid ${th.border}`, padding:"12px 16px", display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+          <span style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:600 }}>{t.apiTitle}:</span>
+          <input type="password" value={apiKeyInput || apiKey} onChange={e => setApiKeyInput(e.target.value)}
+            placeholder="sk-..." style={{ flex:1, minWidth:180, fontSize:"0.78rem", padding:"5px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+          <button onClick={() => { localStorage.setItem("openai_key", apiKeyInput); setApiKey(apiKeyInput); setApiSaved(true); setTimeout(()=>setApiSaved(false),2000); }}
+            style={{ fontSize:"0.72rem", padding:"5px 12px", borderRadius:8, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700 }}>
+            {apiSaved ? t.apiSaved : t.apiSave}
+          </button>
+          <button onClick={() => { localStorage.removeItem("openai_key"); setApiKey(""); setApiKeyInput(""); }}
+            style={{ fontSize:"0.72rem", padding:"5px 10px", borderRadius:8, background:"none", color:th.warning, border:`1px solid ${th.warning}`, cursor:"pointer" }}>
+            {t.apiDelete}
+          </button>
+          <span style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.apiHint}</span>
         </div>
       )}
 
-      <div style={{ maxWidth:720, margin:"0 auto", padding:"16px 12px" }}>
+      <div style={{ maxWidth:480, margin:"0 auto", padding:"16px 12px 80px" }}>
 
-        {/* TRIP PERIOD */}
-        <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-          <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.sectionTrip}</div>
-          <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"center" }}>
+        {/* City Selector */}
+        <CollapsibleSection title={t.selectCity} icon="🌍" defaultOpen={true}>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {cityOrderAll.map(id => {
+              const c = allCities[id];
+              if (!c) return null;
+              const active = cityId === id;
+              return (
+                <button key={id} onClick={() => setCityId(id)} style={{
+                  padding:"5px 10px", borderRadius:20, fontSize:"0.72rem", fontWeight: active ? 700 : 400,
+                  background: active ? th.accent : th.surface,
+                  color: active ? th.bg : th.textMuted,
+                  border: `1px solid ${active ? th.accent : th.border}`,
+                  cursor:"pointer", display:"flex", alignItems:"center", gap:4
+                }}>
+                  <span style={{ fontSize:"0.7rem" }}>{c.country}</span>
+                  {c.name}
+                </button>
+              );
+            })}
+
+            {/* Andere Stadt Button */}
+            <button onClick={() => setShowCustomCityInput(v => !v)} style={{
+              padding:"5px 10px", borderRadius:20, fontSize:"0.72rem", fontWeight:400,
+              background: showCustomCityInput ? th.accentLight : th.surface,
+              color: showCustomCityInput ? th.accent : th.textMuted,
+              border: `1px dashed ${showCustomCityInput ? th.accent : th.border}`,
+              cursor:"pointer", display:"flex", alignItems:"center", gap:4
+            }}>
+              + {t.customCity}
+            </button>
+          </div>
+
+          {/* Custom City Input Panel */}
+          {showCustomCityInput && (
+            <div style={{ marginTop:10, display:"flex", gap:8, alignItems:"center", padding:"10px 12px", borderRadius:12, background:th.surface, border:`1px solid ${th.border}` }}>
+              <span style={{ fontSize:"1rem" }}>🌍</span>
+              <input
+                autoFocus
+                value={customCityInput}
+                onChange={e => setCustomCityInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleAddCustomCity(); if (e.key === "Escape") setShowCustomCityInput(false); }}
+                placeholder={t.customCityPlaceholder}
+                style={{ flex:1, fontSize:"0.82rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, outline:"none" }}
+              />
+              <button onClick={handleAddCustomCity} style={{
+                padding:"6px 14px", borderRadius:8, background:th.accent, color:th.bg,
+                border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.78rem"
+              }}>
+                {t.customCityAdd}
+              </button>
+              <button onClick={() => { setShowCustomCityInput(false); setCustomCityInput(""); }} style={{
+                background:"none", border:"none", color:th.textFaint, cursor:"pointer", fontSize:"1rem", padding:"2px 4px"
+              }}>✕</button>
+            </div>
+          )}
+        </CollapsibleSection>
+
+        {/* Trip Period */}
+        <CollapsibleSection title={t.sectionTrip} icon="📅" defaultOpen={true}>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:10, alignItems:"center", marginBottom:10 }}>
             <div>
-              <label style={{ fontSize:"0.7rem", color:th.textMuted, display:"block", marginBottom:3 }}>{t.labelStartDate}</label>
+              <div style={{ fontSize:"0.65rem", color:th.textMuted, marginBottom:3, textTransform:"uppercase", letterSpacing:"0.08em" }}>{t.labelStartDate}</div>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                style={{ fontSize:"0.85rem", padding:"5px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+                style={{ fontSize:"0.82rem", padding:"5px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
             </div>
             <div>
-              <label style={{ fontSize:"0.7rem", color:th.textMuted, display:"block", marginBottom:3 }}>{t.labelDays}</label>
+              <div style={{ fontSize:"0.65rem", color:th.textMuted, marginBottom:3, textTransform:"uppercase", letterSpacing:"0.08em" }}>{t.labelDays}</div>
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <button onClick={() => setNumDays(n => Math.max(1, n-1))}
-                  style={{ width:28, height:28, borderRadius:"50%", border:`1px solid ${th.border}`, background:th.card, cursor:"pointer", color:th.text, fontWeight:700 }}>-</button>
-                <span style={{ fontSize:"0.95rem", fontWeight:700, minWidth:24, textAlign:"center" }}>{numDays}</span>
-                <button onClick={() => setNumDays(n => Math.min(30, n+1))}
-                  style={{ width:28, height:28, borderRadius:"50%", border:`1px solid ${th.border}`, background:th.card, cursor:"pointer", color:th.text, fontWeight:700 }}>+</button>
-                <span style={{ fontSize:"0.7rem", color:th.textMuted }}>{t.labelDaysSuffix}</span>
+                <button onClick={() => setNumDays(n => Math.max(1, n-1))} style={{ width:28, height:28, borderRadius:"50%", background:th.surface, border:`1px solid ${th.border}`, color:th.text, cursor:"pointer", fontSize:"1rem", display:"flex", alignItems:"center", justifyContent:"center" }}>−</button>
+                <span style={{ fontSize:"0.9rem", fontWeight:700, color:th.text, minWidth:20, textAlign:"center" }}>{numDays}</span>
+                <button onClick={() => setNumDays(n => Math.min(14, n+1))} style={{ width:28, height:28, borderRadius:"50%", background:th.surface, border:`1px solid ${th.border}`, color:th.text, cursor:"pointer", fontSize:"1rem", display:"flex", alignItems:"center", justifyContent:"center" }}>+</button>
+                <span style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.labelDaysSuffix}</span>
               </div>
             </div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {safeTripDays.map((day, i) => (
-                <div key={day} style={{ fontSize:"0.65rem", padding:"3px 8px", borderRadius:10, background:th.card, border:`2px solid ${getDayColor(i)}`, color:th.text, fontWeight:600 }}>
-                  {formatDateLabel(day, lang)}
-                </div>
-              ))}
-            </div>
           </div>
-        </section>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            <button onClick={() => setActiveDay(null)} style={{
+              padding:"4px 10px", borderRadius:20, fontSize:"0.68rem", fontWeight: !activeDay ? 700 : 400,
+              background: !activeDay ? th.accent : th.surface, color: !activeDay ? th.bg : th.textMuted,
+              border:`1px solid ${!activeDay ? th.accent : th.border}`, cursor:"pointer"
+            }}>{t.allDays}</button>
+            {tripDays.map((d, i) => (
+              <button key={d} onClick={() => setActiveDay(d === activeDay ? null : d)} style={{
+                padding:"4px 10px", borderRadius:20, fontSize:"0.68rem", fontWeight: activeDay===d ? 700 : 400,
+                background: activeDay===d ? getDayColor(i) : th.surface,
+                color: activeDay===d ? "#fff" : th.textMuted,
+                border:`1px solid ${activeDay===d ? getDayColor(i) : th.border}`, cursor:"pointer"
+              }}>{formatDateLabel(d, lang)}</button>
+            ))}
+          </div>
+        </CollapsibleSection>
 
-        {/* WARNINGS */}
+        {/* Closed Warnings */}
         {closedWarnings.length > 0 && (
-          <div style={{ background:th.warningBg, border:`1px solid ${th.warning}`, borderRadius:12, padding:"10px 14px", marginBottom:12, fontSize:"0.8rem", color:th.warning }}>
-            <strong>{t.warningTitle}:</strong>{" "}
-            {closedWarnings.map(l => l.name).join(", ")} {t.warningClosed} {t.warningHint}
+          <div style={{ marginBottom:12, padding:"10px 12px", borderRadius:12, background:th.warningBg, border:`1px solid ${th.warning}` }}>
+            <div style={{ fontSize:"0.72rem", fontWeight:700, color:th.warning, marginBottom:4 }}>⚠️ {t.warningTitle}</div>
+            {closedWarnings.map(loc => (
+              <div key={loc.id} style={{ fontSize:"0.7rem", color:th.warning }}>· {loc.name} {t.warningClosed}</div>
+            ))}
+            <div style={{ fontSize:"0.68rem", color:th.textMuted, marginTop:4 }}>{t.warningHint}</div>
           </div>
         )}
 
-        {/* LINK INPUT */}
-        <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-          <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.insertLink}</div>
-          <div style={{ display:"flex", gap:8 }}>
-            <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
+        {/* Add Place */}
+        <CollapsibleSection title={t.addPlace} icon="🔗" defaultOpen={true}>
+          <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+            <input value={link} onChange={e => setLink(e.target.value)}
               onKeyDown={e => e.key === "Enter" && analyzeLink()}
               placeholder={t.linkPlaceholder}
-              style={{ flex:1, fontSize:"0.85rem", padding:"8px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${linkError ? th.warning : th.inputBorder}`, outline:"none" }} />
-            <button onClick={() => analyzeLink()} disabled={analyzing} className="btn-primary"
-              style={{ padding:"8px 16px", borderRadius:10, border:"none", cursor:"pointer", background:th.accent, color:"#fff", fontWeight:700, fontSize:"0.8rem", opacity:analyzing?0.7:1 }}>
+              style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, outline:"none" }} />
+            <button className="btn-primary" onClick={() => analyzeLink()} disabled={analyzing}
+              style={{ padding:"8px 14px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.78rem", opacity: analyzing ? 0.7 : 1, display:"flex", alignItems:"center", gap:6 }}>
+              {analyzing ? <Spinner size={14} color={th.bg} /> : null}
               {analyzing ? t.analyzing : t.analyze}
             </button>
           </div>
-          {linkError && <div style={{ color:th.warning, fontSize:"0.75rem", marginTop:6 }}>{linkError}</div>}
-          {(city?.demoLinks || []).length > 0 && (
-            <div style={{ marginTop:10 }}>
-              <span style={{ fontSize:"0.68rem", color:th.textMuted }}>{t.demo} </span>
-              {(city.demoLinks).map((link, i) => (
-                <button key={i} onClick={() => analyzeLink(link)}
-                  style={{ fontSize:"0.68rem", color:th.accent, background:"none", border:"none", cursor:"pointer", padding:"0 4px", textDecoration:"underline" }}>
-                  {(city.sampleLocations || [])[i]?.name || link}
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* TABS */}
-        <div className="no-print" style={{ display:"flex", gap:4, marginBottom:12, background:th.surface, borderRadius:12, padding:4, border:`1px solid ${th.border}` }}>
-          {["route","map","timeline"].map(tab => navBtn(t[tab], activeTab===tab, () => setActiveTab(tab)))}
-          <div style={{ flex:1 }} />
-          <button onClick={() => setShowWeather(v => !v)}
-            style={{ padding:"5px 12px", borderRadius:10, border:`1px solid ${th.border}`, background:showWeather?th.accentLight:th.card, cursor:"pointer", color:th.textMuted, fontSize:"0.7rem" }}>
-            {t.weather}
-          </button>
-          <button onClick={() => setShowPacking(v => !v)}
-            style={{ padding:"5px 12px", borderRadius:10, border:`1px solid ${th.border}`, background:showPacking?th.accentLight:th.card, cursor:"pointer", color:th.textMuted, fontSize:"0.7rem" }}>
-            {t.packingList}
-          </button>
-          <button onClick={() => setShowSavePlans(v => !v)}
-            style={{ padding:"5px 12px", borderRadius:10, border:`1px solid ${th.border}`, background:showSavePlans?th.accentLight:th.card, cursor:"pointer", color:th.textMuted, fontSize:"0.7rem" }}>
-            {t.savePlans}
-          </button>
-          <button onClick={createShareLink}
-            style={{ padding:"5px 12px", borderRadius:10, border:`1px solid ${th.border}`, background:th.card, cursor:"pointer", color:th.textMuted, fontSize:"0.7rem" }}>
-            {t.share}
-          </button>
-        </div>
-
-        {/* WEATHER */}
-        {showWeather && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.weather}</div>
-            <WeatherWidget tripDays={safeTripDays} lang={lang} th={th} />
-          </section>
-        )}
-
-        {/* PACKING LIST */}
-        {showPacking && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.packingList}</div>
-            <PackingList locations={safeLocations} numDays={numDays} lang={lang} />
-          </section>
-        )}
-
-        {/* SAVE PLANS */}
-        {showSavePlans && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.savedPlans}</div>
-            <div style={{ display:"flex", gap:8, marginBottom:12 }}>
-              <input value={planName} onChange={e => setPlanName(e.target.value)}
-                placeholder={t.planNamePlaceholder}
-                style={{ flex:1, fontSize:"0.85rem", padding:"7px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-              <button onClick={savePlan}
-                style={{ padding:"7px 16px", borderRadius:10, background:th.accent, color:"#fff", border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.8rem" }}>
-                {saveMsg || t.save}
-              </button>
-            </div>
-            {savedPlans.length === 0 ? (
-              <div style={{ fontSize:"0.8rem", color:th.textMuted }}>{t.noPlans}</div>
-            ) : (
-              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                {savedPlans.map(plan => (
-                  <div key={plan.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", background:th.card, borderRadius:10, border:`1px solid ${th.border}` }}>
-                    <span style={{ flex:1, fontSize:"0.82rem", color:th.text }}>{plan.name}</span>
-                    <span style={{ fontSize:"0.68rem", color:th.textMuted }}>{(CITIES[plan.cityId]||{}).name || plan.cityId}</span>
-                    <button onClick={() => loadPlan(plan)}
-                      style={{ padding:"3px 10px", borderRadius:8, background:th.accent, color:"#fff", border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
-                      {t.load}
-                    </button>
-                    <button onClick={() => deletePlan(plan.id)}
-                      style={{ padding:"3px 8px", borderRadius:8, background:th.warningBg, color:th.warning, border:`1px solid ${th.warning}`, cursor:"pointer", fontSize:"0.75rem" }}>
-                      X
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* SHARE */}
-        {showShare && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, marginBottom:8 }}>{t.shareHint}</div>
-            <div style={{ display:"flex", gap:8 }}>
-              <input readOnly value={shareUrl} style={{ flex:1, fontSize:"0.75rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-              <button onClick={copyShareUrl}
-                style={{ padding:"6px 14px", borderRadius:8, background:th.accent, color:"#fff", border:"none", cursor:"pointer", fontSize:"0.75rem", fontWeight:700 }}>
-                {copied ? t.copied : t.copy}
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* DAY FILTER */}
-        {safeLocations.length > 0 && (
-          <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:10 }}>
-            <button onClick={() => setFilterDay("all")} className="tab-btn"
-              style={{ padding:"4px 12px", borderRadius:10, border:`1px solid ${filterDay==="all" ? th.accent : th.border}`, background:filterDay==="all" ? th.accentLight : th.card, color:filterDay==="all" ? th.accent : th.textMuted, cursor:"pointer" }}>
-              {t.allDays}
-            </button>
-            {safeTripDays.map((day, i) => (
-              <button key={day} onClick={() => setFilterDay(day)} className="tab-btn"
-                style={{ padding:"4px 12px", borderRadius:10, border:`2px solid ${filterDay===day ? getDayColor(i) : th.border}`, background:filterDay===day ? "rgba(0,0,0,0.08)" : th.card, color:filterDay===day ? getDayColor(i) : th.textMuted, cursor:"pointer", fontWeight:filterDay===day ? 700 : 400 }}>
-                {formatDateLabel(day, lang)}
-              </button>
+          {error && <div style={{ fontSize:"0.72rem", color:th.warning, marginBottom:6 }}>⚠ {error}</div>}
+          <div style={{ fontSize:"0.65rem", color:th.textFaint, marginBottom:4 }}>{t.demo}</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:5 }}>
+            {(city.demoLinks || []).map((dl, i) => (
+              <button key={i} onClick={() => analyzeLink(dl)} style={{
+                fontSize:"0.65rem", padding:"3px 8px", borderRadius:8,
+                background:th.tag, color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer"
+              }}>{city.sampleLocations?.[i]?.name || dl}</button>
             ))}
           </div>
-        )}
+        </CollapsibleSection>
 
-        {/* ROUTE TAB */}
-        {activeTab === "route" && (
-          <div>
-            {safeLocations.length === 0 ? (
-              <div style={{ textAlign:"center", padding:"40px 20px", color:th.textMuted, fontSize:"0.9rem" }}>
-                <div style={{ fontSize:"2rem", marginBottom:8 }}>🗺️</div>
-                <div>{t.addFirst}</div>
-              </div>
-            ) : (
-              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-                {filteredLocations.map((loc, i) => {
-                  const cost = getEntryCost(loc.name, city);
-                  const rating = getRating(loc.name, city);
-                  const info = getLocationInfo(loc.name, city);
-                  const assignedDay = locationDays[loc.id];
-                  const openInfo = assignedDay ? getOpeningInfo(loc.name, assignedDay, city) : null;
-                  const isClosed = openInfo && openInfo.isOpen === false;
-                  const dayIdx = safeTripDays.indexOf(assignedDay);
-                  const dayColor = dayIdx >= 0 ? getDayColor(dayIdx) : th.border;
-                  const travelInfo = i > 0 && filteredLocations[i-1] ? calcTravelTime(filteredLocations[i-1], loc) : null;
-                  const note = locationNotes[loc.id] || "";
-
-                  return (
-                    <div key={loc.id}>
-                      {travelInfo && (
-                        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 12px", fontSize:"0.68rem", color:th.textMuted }}>
-                          <div style={{ flex:1, height:1, background:th.border }} />
-                          <span>{travelInfo.distKm} km</span>
-                          <span>•</span>
-                          <span>{travelMode === "walking" ? travelInfo.walkMin + " min " + t.walkingTime : travelInfo.transitMin + " min " + t.transitTime}</span>
-                          <div style={{ flex:1, height:1, background:th.border }} />
-                        </div>
-                      )}
-                      <div className="app-card-hover card-anim print-card"
-                        draggable
-                        onDragStart={() => setDragIdx(i)}
-                        onDragOver={e => { e.preventDefault(); setDragOver(i); }}
-                        onDrop={() => handleDrop(i)}
-                        onDragEnd={() => { setDragIdx(null); setDragOver(null); }}
-                        style={{
-                          background: th.card, border: `2px solid ${isClosed ? th.warning : dragOver === i ? th.accent : dayColor}`,
-                          borderRadius:14, padding:"12px 14px", cursor:"grab", position:"relative",
-                          opacity: dragIdx === i ? 0.5 : 1
-                        }}>
-                        <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
-                          <div style={{ width:36, height:36, borderRadius:"50%", background:dayColor, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.1rem", flexShrink:0, color:"#fff" }}>
-                            {i + 1}
-                          </div>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-                              <span style={{ fontWeight:700, fontSize:"0.95rem", color:th.text }}>{loc.name}</span>
-                              {rating && (
-                                <span style={{ fontSize:"0.65rem", background:th.goldBg, color:th.gold, padding:"1px 6px", borderRadius:8, fontWeight:700 }}>
-                                  {rating.badge}
-                                </span>
-                              )}
-                              {isClosed && (
-                                <span style={{ fontSize:"0.65rem", background:th.warningBg, color:th.warning, padding:"1px 6px", borderRadius:8, fontWeight:700 }}>
-                                  {t.closedDay}
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:2 }}>{loc.type} • {loc.area} • {loc.duration}</div>
-                            {rating && (
-                              <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:2 }}>
-                                {"★".repeat(Math.round(rating.stars))}{"☆".repeat(5-Math.round(rating.stars))} {rating.stars} ({(rating.reviews/1000).toFixed(0)}k {t.reviews}) • {rating.price}
-                              </div>
-                            )}
-                            {cost && (
-                              <div style={{ fontSize:"0.7rem", color:th.accent, marginTop:2 }}>
-                                {t.admission}: {cost.min === 0 ? t.free : `${cost.currency}${cost.min}${cost.max !== cost.min ? "–"+cost.max : ""}`}
-                                {cost.note ? ` (${cost.note})` : ""}
-                              </div>
-                            )}
-                            {openInfo && (
-                              <div style={{ fontSize:"0.7rem", color:isClosed ? th.warning : th.success, marginTop:2 }}>
-                                {isClosed ? t.closedDay : openInfo.hours}
-                                {openInfo.note ? " • " + openInfo.note : ""}
-                              </div>
-                            )}
-                          </div>
-                          <button onClick={() => removeLocation(loc.id)}
-                            style={{ padding:"3px 8px", borderRadius:8, background:th.warningBg, color:th.warning, border:"none", cursor:"pointer", fontSize:"0.7rem", fontWeight:700, flexShrink:0 }}>
-                            X
-                          </button>
-                        </div>
-
-                        {/* DAY ASSIGN */}
-                        <div style={{ marginTop:10, display:"flex", gap:4, flexWrap:"wrap", alignItems:"center" }}>
-                          <span style={{ fontSize:"0.65rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.06em" }}>{t.visitDay}:</span>
-                          <button onClick={() => setLocationDays(d => { const nd={...d}; delete nd[loc.id]; return nd; })}
-                            style={{ padding:"2px 8px", borderRadius:8, border:`1px solid ${!assignedDay ? th.accent : th.border}`, background:!assignedDay ? th.accentLight : th.card, color:!assignedDay ? th.accent : th.textMuted, cursor:"pointer", fontSize:"0.65rem" }}>
-                            -
-                          </button>
-                          {safeTripDays.map((day, di) => (
-                            <button key={day} onClick={() => setLocationDays(d => ({ ...d, [loc.id]: day }))}
-                              style={{ padding:"2px 8px", borderRadius:8, border:`2px solid ${assignedDay===day ? getDayColor(di) : th.border}`, background:assignedDay===day ? "rgba(0,0,0,0.06)" : th.card, color:assignedDay===day ? getDayColor(di) : th.textMuted, cursor:"pointer", fontSize:"0.65rem", fontWeight:assignedDay===day ? 700 : 400 }}>
-                              {formatDateLabel(day, lang)}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* INFO TOGGLE */}
-                        {info && (
-                          <div style={{ marginTop:8 }}>
-                            <button onClick={() => setExpandedInfo(e => ({ ...e, [loc.id]: !e[loc.id] }))}
-                              style={{ fontSize:"0.7rem", color:th.accent, background:"none", border:"none", cursor:"pointer", padding:0 }}>
-                              {expandedInfo[loc.id] ? t.infoHide : t.infoShow}
-                            </button>
-                            {expandedInfo[loc.id] && (
-                              <div style={{ marginTop:6, fontSize:"0.78rem", color:th.textMuted, background:th.surface, borderRadius:8, padding:"8px 10px" }}>
-                                <div style={{ marginBottom:4 }}>{info.short}</div>
-                                {(info.highlights || []).map((h, hi) => (
-                                  <div key={hi} style={{ display:"flex", gap:6, alignItems:"flex-start" }}>
-                                    <span style={{ color:th.accent, flexShrink:0 }}>•</span>
-                                    <span>{h}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* NOTE */}
-                        <div style={{ marginTop:6 }}>
-                          <button onClick={() => setExpandedNote(e => ({ ...e, [loc.id]: !e[loc.id] }))}
-                            style={{ fontSize:"0.7rem", color:th.textMuted, background:"none", border:"none", cursor:"pointer", padding:0 }}>
-                            {expandedNote[loc.id] ? t.noteHide : t.noteLabel}
-                          </button>
-                          {expandedNote[loc.id] && (
-                            <textarea value={note}
-                              onChange={e => setLocationNotes(n => ({ ...n, [loc.id]: e.target.value }))}
-                              placeholder={t.notePlaceholder}
-                              style={{ width:"100%", marginTop:4, fontSize:"0.78rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, resize:"vertical", minHeight:50 }} />
-                          )}
-                        </div>
-
-                        {/* MAPS LINK */}
-                        {loc.sourceUrl && (
-                          <div style={{ marginTop:8 }}>
-                            <a href={loc.sourceUrl} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize:"0.7rem", color:th.info, textDecoration:"none" }}>
-                              {t.openInMaps}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+        {/* Undo/Redo */}
+        {(locations || []).length > 0 && (
+          <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+            <button onClick={undo} disabled={!canUndo} style={{ fontSize:"0.7rem", padding:"3px 10px", borderRadius:8, background:th.surface, color: canUndo ? th.accent : th.textFaint, border:`1px solid ${th.border}`, cursor: canUndo ? "pointer" : "default" }}>↩ Undo</button>
+            <button onClick={redo} disabled={!canRedo} style={{ fontSize:"0.7rem", padding:"3px 10px", borderRadius:8, background:th.surface, color: canRedo ? th.accent : th.textFaint, border:`1px solid ${th.border}`, cursor: canRedo ? "pointer" : "default" }}>↪ Redo</button>
           </div>
         )}
 
-        {/* MAP TAB */}
-        {activeTab === "map" && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, overflow:"hidden", marginBottom:14 }}>
-            <div style={{ padding:"10px 14px", borderBottom:`1px solid ${th.border}`, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em" }}>{t.sectionMap}</span>
-              <div style={{ flex:1 }} />
-              {[["walking", t.walking], ["transit", t.transit], ["driving", t.driving]].map(([m, label]) => (
-                <button key={m} onClick={() => setTravelMode(m)}
-                  style={{ padding:"3px 10px", borderRadius:10, border:`1px solid ${travelMode===m ? th.accent : th.border}`, background:travelMode===m ? th.accentLight : th.card, color:travelMode===m ? th.accent : th.textMuted, cursor:"pointer", fontSize:"0.68rem", fontWeight:travelMode===m ? 700 : 400 }}>
-                  {label}
-                </button>
-              ))}
+        {/* Locations */}
+        {safeLocationsMain.length > 0 && (
+            <CollapsibleSection title={t.myPlaces} icon="📍" defaultOpen={true} badge={safeLocationsMain.length}>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {filteredLocations.map((loc, i) => {
+                const dayIdx = tripDays.indexOf(locationDays?.[loc.id] ?? tripDays[0]);
+                return (
+                  <LocationCard key={loc.id} loc={loc} index={i}
+                    dayColor={getDayColor(dayIdx >= 0 ? dayIdx : 0)}
+                    onRemove={removeLocation} onDayChange={handleDayChange}
+                    tripDays={tripDays} locationDays={locationDays}
+                    locationNotes={locationNotes} onNoteChange={handleNoteChange}
+                    city={city} lang={lang} t={t} travelMode={travelMode}
+                    showSkeleton={skeletonVisible && i === filteredLocations.length - 1} />
+                );
+              })}
             </div>
-            <div ref={mapRef} style={{ height:380, width:"100%" }} />
-            {safeLocations.length === 0 && (
-              <div style={{ padding:20, textAlign:"center", color:th.textMuted, fontSize:"0.85rem" }}>{t.addFirst}</div>
-            )}
-          </section>
+          </CollapsibleSection>
         )}
 
-        {/* TIMELINE TAB */}
-        {activeTab === "timeline" && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:14 }}>{t.timelineTitle}</div>
-            {safeTripDays.length === 0 ? (
-              <div style={{ color:th.textMuted, fontSize:"0.85rem" }}>{t.addFirst}</div>
-            ) : safeTripDays.map((day, di) => {
-              const dayLocs = safeLocations.filter(l => locationDays[l.id] === day);
-              return (
-                <div key={day} style={{ marginBottom:20 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <div style={{ width:10, height:10, borderRadius:"50%", background:getDayColor(di) }} />
-                    <span style={{ fontWeight:700, fontSize:"0.85rem", color:getDayColor(di) }}>{formatDateLabel(day, lang)}</span>
-                    <span style={{ fontSize:"0.68rem", color:th.textMuted }}>({dayLocs.length} {t.stops})</span>
+        {/* Map */}
+        <CollapsibleSection title={t.sectionMap} icon="🗺️" defaultOpen={true}>
+          <MapView locations={locations} city={city} travelMode={travelMode} locationDays={locationDays} activeDay={activeDay} />
+        </CollapsibleSection>
+
+        {/* Travel Mode */}
+        <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+          {[["walking", "🚶", t.walking], ["transit", "🚇", t.transit], ["driving", "🚗", t.driving]].map(([mode, icon, label]) => (
+            <button key={mode} className="tab-btn" onClick={() => setTravelMode(mode)} style={{
+              flex:1, padding:"6px 4px", borderRadius:10, fontSize:"0.65rem",
+              background: travelMode===mode ? th.accent : th.surface,
+              color: travelMode===mode ? th.bg : th.textMuted,
+              border:`1px solid ${travelMode===mode ? th.accent : th.border}`, cursor:"pointer"
+            }}>{icon} {label}</button>
+          ))}
+        </div>
+
+        {/* Route / Timeline tabs */}
+        <CollapsibleSection title={t.sectionRoute} icon="🗺️" defaultOpen={true}>
+          <div style={{ display:"flex", gap:6, marginBottom:10 }}>
+            {[["route","route",t.route],["timeline","timeline",t.timeline]].map(([key,,label]) => (
+              <button key={key} className="tab-btn" onClick={() => setActiveTab(key)} style={{
+                padding:"5px 14px", borderRadius:8,
+                background: activeTab===key ? th.accent : th.surface,
+                color: activeTab===key ? th.bg : th.textMuted,
+                border:`1px solid ${activeTab===key ? th.accent : th.border}`, cursor:"pointer"
+              }}>{label}</button>
+            ))}
+          </div>
+
+          {safeLocationsMain.length < 2 && (
+            <div style={{ fontSize:"0.76rem", color:th.textFaint, padding:"12px 0" }}>{t.noRouteHint}</div>
+          )}
+
+          {safeLocationsMain.length >= 2 && activeTab === "route" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {filteredLocations.map((loc, i) => (
+                <div key={loc.id}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:12, background:th.card, border:`1px solid ${th.border}` }}>
+                    <div style={{ width:26, height:26, borderRadius:"50%", background:th.accentLight, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.8rem", fontWeight:700, color:th.accent, flexShrink:0 }}>{i+1}</div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:"0.82rem", fontWeight:700, color:th.text }}>{loc.name}</div>
+                      <div style={{ fontSize:"0.68rem", color:th.textMuted }}>{loc.area || loc.type}</div>
+                    </div>
+                    {loc.lat && loc.lng && (
+                      <a href={`https://maps.google.com/?q=${loc.lat},${loc.lng}`} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize:"0.65rem", color:th.accent, textDecoration:"none" }}>↗</a>
+                    )}
                   </div>
-                  {dayLocs.length === 0 ? (
-                    <div style={{ fontSize:"0.78rem", color:th.textFaint, paddingLeft:18 }}>{t.addFirst}</div>
-                  ) : (
-                    <div style={{ paddingLeft:18, borderLeft:`2px solid ${getDayColor(di)}`, display:"flex", flexDirection:"column", gap:8 }}>
-                      {dayLocs.map((loc, li) => {
-                        const travelInfo = li > 0 ? calcTravelTime(dayLocs[li-1], loc) : null;
-                        const openInfo = getOpeningInfo(loc.name, day, city);
-                        return (
-                          <div key={loc.id}>
-                            {travelInfo && (
-                              <div style={{ fontSize:"0.65rem", color:th.textMuted, padding:"2px 0 2px 10px" }}>
-                                {travelMode === "walking" ? travelInfo.walkMin + " min" : travelInfo.transitMin + " min"} ({travelInfo.distKm} km)
-                              </div>
-                            )}
-                            <div style={{ background:th.card, borderRadius:10, padding:"8px 12px", border:`1px solid ${th.border}` }}>
-                              <div style={{ fontWeight:700, fontSize:"0.85rem" }}>{loc.icon} {loc.name}</div>
-                              <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.duration} • {loc.area}</div>
-                              {openInfo && (
-                                <div style={{ fontSize:"0.68rem", color:openInfo.isOpen === false ? th.warning : th.success, marginTop:2 }}>
-                                  {openInfo.isOpen === false ? t.closedDay : openInfo.hours}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {i < filteredLocations.length - 1 && (
+                    <div style={{ display:"flex", justifyContent:"center", padding:"4px 0" }}>
+                      <TravelTimeBadge from={filteredLocations[i]} to={filteredLocations[i+1]} mode={travelMode} th={th} />
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </section>
-        )}
+              ))}
+            </div>
+          )}
 
-        {/* BUDGET */}
-        {safeLocations.length > 0 && (
-          <section style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:14 }}>
-            <div style={{ fontWeight:700, fontSize:"0.75rem", color:th.textMuted, textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{t.budgetTitle}</div>
-            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-              {safeLocations.map(loc => {
-                const cost = getEntryCost(loc.name, city);
-                if (!cost) return null;
+          {safeLocationsMain.length >= 2 && activeTab === "timeline" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+              {tripDays.map((day, di) => {
+                const dayLocs = safeLocationsMain.filter(l => (locationDays?.[l.id] ?? tripDays[0]) === day);
+                if (dayLocs.length === 0) return null;
                 return (
-                  <div key={loc.id} style={{ display:"flex", justifyContent:"space-between", fontSize:"0.8rem" }}>
-                    <span style={{ color:th.text }}>{loc.name}</span>
-                    <span style={{ color:th.accent, fontWeight:600 }}>
-                      {cost.min === 0 ? t.free : `${cost.currency}${cost.min}${cost.max !== cost.min ? "–"+cost.max : ""}`}
-                    </span>
+                  <div key={day} style={{ marginBottom:12 }}>
+                    <div style={{ fontSize:"0.68rem", fontWeight:700, color:getDayColor(di), marginBottom:6, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+                      {formatDateLabel(day, lang)}
+                    </div>
+                    {dayLocs.map((loc, i) => (
+                      <div key={loc.id} style={{ display:"flex", gap:10, marginBottom:6 }}>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+                          <div style={{ width:10, height:10, borderRadius:"50%", background:getDayColor(di), flexShrink:0, marginTop:4 }} />
+                          {i < dayLocs.length-1 && <div style={{ width:2, flex:1, background:th.border, minHeight:20 }} />}
+                        </div>
+                        <div style={{ flex:1, paddingBottom:6 }}>
+                          <div style={{ fontSize:"0.8rem", fontWeight:700, color:th.text }}>{loc.name}</div>
+                          <div style={{ fontSize:"0.68rem", color:th.textMuted }}>{loc.type}{loc.duration ? ` · ${loc.duration}` : ""}</div>
+                          {i < dayLocs.length-1 && (
+                            <div style={{ marginTop:4 }}>
+                              <TravelTimeBadge from={dayLocs[i]} to={dayLocs[i+1]} mode={travelMode} th={th} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 );
               })}
-              <div style={{ borderTop:`1px solid ${th.border}`, paddingTop:8, display:"flex", justifyContent:"space-between", fontWeight:700 }}>
-                <span style={{ color:th.text }}>{t.budgetTotal}</span>
-                <span style={{ color:th.gold }}>
-                  {totalBudgetMin === totalBudgetMax ? `€${totalBudgetMin.toFixed(0)}` : `€${totalBudgetMin.toFixed(0)}–${totalBudgetMax.toFixed(0)}`}
-                </span>
-              </div>
-              <div style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.budgetNote}</div>
             </div>
-          </section>
-        )}
+          )}
+        </CollapsibleSection>
 
-        {/* FOOTER */}
-        <div style={{ textAlign:"center", fontSize:"0.68rem", color:th.textFaint, padding:"16px 0 8px" }}>
-          {t.footerText}
+        {/* Packing List */}
+        <CollapsibleSection title={t.packingList} icon="🧳" defaultOpen={false}>
+          <PackingList locations={locations} numDays={numDays} lang={lang} />
+        </CollapsibleSection>
+
+        {/* Budget */}
+        <CollapsibleSection title={t.budget} icon="💶" defaultOpen={false}>
+          <BudgetTracker locations={locations} city={city} lang={lang} t={t} />
+        </CollapsibleSection>
+
+        {/* Save Plans */}
+        <CollapsibleSection title={t.savePlans} icon="💾" defaultOpen={false}>
+          <div style={{ display:"flex", gap:8, marginBottom:10 }}>
+            <input value={planName} onChange={e => setPlanName(e.target.value)}
+              placeholder={t.planNamePlaceholder}
+              style={{ flex:1, fontSize:"0.82rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+            <button onClick={savePlan} style={{ padding:"6px 14px", borderRadius:8, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.78rem" }}>
+              {saveMsg || t.save}
+            </button>
+          </div>
+          {savedPlans.length === 0 ? (
+            <div style={{ fontSize:"0.76rem", color:th.textFaint }}>{t.noPlans}</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              {savedPlans.map(plan => (
+                <div key={plan.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
+                  <span style={{ flex:1, fontSize:"0.8rem", color:th.text }}>{plan.name}</span>
+                  <span style={{ fontSize:"0.68rem", color:th.textMuted }}>{allCities[plan.cityId]?.name || plan.cityId}</span>
+                  <button onClick={() => loadPlan(plan)} style={{ fontSize:"0.7rem", padding:"3px 8px", borderRadius:6, background:th.accentLight, color:th.accent, border:`1px solid ${th.accent}`, cursor:"pointer" }}>{t.load}</button>
+                  <button onClick={() => deletePlan(plan.id)} style={{ fontSize:"0.7rem", padding:"3px 6px", borderRadius:6, background:"none", color:th.textFaint, border:`1px solid ${th.border}`, cursor:"pointer" }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        {/* Share */}
+        <CollapsibleSection title={t.share} icon="🔗" defaultOpen={false}>
+          <button onClick={createShareLink} style={{ fontSize:"0.78rem", padding:"7px 14px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, marginBottom:8 }}>
+            {t.createLink}
+          </button>
+          {shareUrl && (
+            <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+              <input readOnly value={shareUrl} style={{ flex:1, minWidth:140, fontSize:"0.7rem", padding:"5px 8px", borderRadius:8, background:th.input, color:th.textMuted, border:`1px solid ${th.inputBorder}` }} />
+              <button onClick={copyShareUrl} style={{ fontSize:"0.72rem", padding:"5px 10px", borderRadius:8, background:th.surface, color:th.accent, border:`1px solid ${th.accent}`, cursor:"pointer", fontWeight:600 }}>
+                {copyMsg || t.copy}
+              </button>
+            </div>
+          )}
+        </CollapsibleSection>
+
+        {/* Footer */}
+        <div style={{ textAlign:"center", marginTop:24, paddingTop:16, borderTop:`1px solid ${th.border}` }}>
+          <div style={{ fontSize:"0.65rem", color:th.textFaint }}>{t.footerText}</div>
         </div>
       </div>
     </div>
