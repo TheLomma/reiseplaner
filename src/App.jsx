@@ -878,6 +878,7 @@ export default function App() {
       s.id = "app-theme-styles";
       s.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+        :root { --app-max: 960px; --app-pad: clamp(8px, 2vw, 24px); }
         @keyframes fadeSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes markerPop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
@@ -895,6 +896,17 @@ export default function App() {
         body { font-family: 'Source Sans 3',system-ui,sans-serif; transition: background 0.3s; }
         * { box-sizing: border-box !important; }
         body, #root { overflow-x: hidden !important; max-width: 100vw !important; }
+        .app-shell { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
+        @media (min-width: 700px) {
+          .app-shell { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; }
+          .app-col-left { border-right: none; }
+        }
+        @media (min-width: 1100px) {
+          .app-shell { grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr); }
+          .app-col-right { border-left: none; }
+        }
+        .app-col { padding: var(--app-pad); display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: calc(100vh - 52px); }
+        @media (max-width: 699px) { .app-col { max-height: none; overflow-y: visible; } }
         input, select, textarea { font-size: 16px !important; }
         button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width:6px; height:6px; }
@@ -1013,9 +1025,13 @@ export default function App() {
 
   return (
     <div style={{ minHeight:"100vh", background:th.bg, color:th.text, fontFamily:"'Source Sans 3',system-ui,sans-serif" }}>
+      
       <Navbar lang={lang} setLang={setLang} t={t} canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo} />
 
-      <div style={{ maxWidth:480, margin:"0 auto", padding:"16px 12px 80px" }}>
+      <div className="app-shell">
+
+        {/* ===== LINKE SPALTE ===== */}
+        <div className="app-col app-col-left" style={{ borderRight: "1px solid " + th.border }}>
 
         {/* City + Trip */}
         <CollapsibleSection title={t.sectionTrip} icon="🗓" th={th} defaultOpen={true}>
@@ -1091,9 +1107,9 @@ export default function App() {
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Link Input */}
+        {/* Link Input */
         <CollapsibleSection title={t.addPlace} icon="➕" th={th} defaultOpen={true}>
           <div style={{ display:"flex", flexDirection:"column", gap:8, paddingTop:4 }}>
             <div style={{ display:"flex", gap:8 }}>
@@ -1119,9 +1135,12 @@ export default function App() {
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        </div>{/* Ende linke Spalte */}
 
-        {/* Closed Warnings */}
+        {/* ===== MITTLERE SPALTE ===== */}
+        <div className="app-col app-col-mid">
+
+        {/* Closed Warnings */
         {closedWarnings.length > 0 && (
           <div style={{ padding:"10px 14px", borderRadius:12, background:th.warningBg, border:`1px solid ${th.warning}`, marginBottom:12 }}>
             <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.warning, marginBottom:4 }}>⚠ {t.warningTitle}</div>
@@ -1164,18 +1183,18 @@ export default function App() {
           </CollapsibleSection>
         )}
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Map */}
+        {/* Map */
         <CollapsibleSection title={t.sectionMap} icon="🗺" th={th} defaultOpen={locations.length > 0}>
           <div style={{ paddingTop:8 }}>
             <MapView locations={locations} city={city} travelMode={travelMode} locationDays={locationDays} tripDays={tripDays} />
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Route & Timeline */}
+        {/* Route & Timeline */
         <CollapsibleSection title={t.sectionRoute} icon="🛣" th={th} defaultOpen={false}>
           <div style={{ paddingTop:8 }}>
             <div style={{ display:"flex", gap:6, marginBottom:12 }}>
@@ -1270,27 +1289,30 @@ export default function App() {
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        </div>{/* Ende mittlere Spalte */}
 
-        {/* Packing List */}
+        {/* ===== RECHTE SPALTE ===== */}
+        <div className="app-col app-col-right" style={{ borderLeft: "1px solid " + th.border }}>
+
+        {/* Packing List */
         <CollapsibleSection title={t.packingList} icon="🎒" th={th} defaultOpen={false}>
           <div style={{ paddingTop:8 }}>
             <PackingList locations={locations} numDays={numDays} lang={lang} />
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Budget */}
+        {/* Budget */
         <CollapsibleSection title={t.budget} icon="💰" th={th} defaultOpen={false}>
           <div style={{ paddingTop:8 }}>
             <BudgetView locations={locations} city={city} lang={lang} t={t} />
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Save Plans */}
+        {/* Save Plans */
         <CollapsibleSection title={t.savePlans} icon="💾" th={th} defaultOpen={false}>
           <div style={{ display:"flex", flexDirection:"column", gap:10, paddingTop:8 }}>
             <div style={{ display:"flex", gap:8 }}>
@@ -1307,22 +1329,22 @@ export default function App() {
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:12 }} />
+        <div style={{ height:4 }} />
 
-        {/* Share */}
+        {/* Share */
         <CollapsibleSection title={t.share} icon="🔗" th={th} defaultOpen={false}>
           <div style={{ paddingTop:8 }}>
             <ShareView locations={locations} cityId={cityId} startDate={startDate} numDays={numDays} lang={lang} t={t} />
           </div>
         </CollapsibleSection>
 
-        <div style={{ height:32 }} />
-
-        {/* Footer */}
+        <div style={{ height:8 }} />
         <div style={{ textAlign:"center", fontSize:"0.7rem", color:th.textFaint, paddingBottom:16 }}>
           {t.footerText}
         </div>
-      </div>
+
+        </div>{/* Ende rechte Spalte */}
+      </div>{/* Ende app-shell */}
     </div>
   );
 }
