@@ -214,7 +214,6 @@ const CITIES = {
 
 const DAY_COLORS = ["#e07b54","#5b8dd9","#6abf69","#d4a84b","#a66dd4","#4bb8c4","#d46d8a","#7aab7a","#c4a882","#8b6a3e","#5a8fa3","#c97a5a"];
 function getDayColor(i) { return DAY_COLORS[i % DAY_COLORS.length]; }
-const CITY_ORDER = ["paris","london","berlin","rom","barcelona","wien","amsterdam","prag","lissabon","new_york"];
 
 const TRANSLATIONS = {
   de: {
@@ -236,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v4.8",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.0",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -269,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v4.8",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.0",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -315,10 +314,6 @@ function generateTripDays(startDate, numDays) {
     days.push(d.toISOString().slice(0,10));
   }
   return days;
-}
-
-function safeJsonParse(str, fallback) {
-  try { return JSON.parse(str); } catch { return fallback; }
 }
 
 function normalizePlan(raw) {
@@ -394,13 +389,6 @@ function getOpeningInfo(name, day, city) {
   return { isOpen, hours: info.hours, note: info.note };
 }
 
-function getMetroLine(loc1, loc2, city) {
-  if (!loc1 || !loc2 || !city) return null;
-  const lines = city.metroLines || {};
-  const key = `${loc1.area} -> ${loc2.area}`;
-  return lines[key] || null;
-}
-
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -431,12 +419,12 @@ function Spinner({ size = 20, color }) {
 
 function SkeletonCard({ th }) {
   const bar = (w, h = 10, mt = 0) => (
-    <div className="skeleton-anim" style={{ width: w, height: h, borderRadius: 6, background: th.skeletonShine, marginTop: mt }} />
+    <div style={{ width: w, height: h, borderRadius: 6, background: th.skeletonShine, marginTop: mt }} />
   );
   return (
     <div style={{ background: th.card, border: `1px solid ${th.border}`, borderRadius: 14, padding: "12px 14px" }}>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <div className="skeleton-anim" style={{ width: 36, height: 36, borderRadius: "50%", background: th.skeletonShine }} />
+        <div style={{ width: 36, height: 36, borderRadius: "50%", background: th.skeletonShine }} />
         <div style={{ flex: 1 }}>{bar("60%", 12)}{bar("40%", 8, 6)}</div>
       </div>
       {bar("90%", 8, 12)}{bar("75%", 8, 6)}{bar("50%", 8, 6)}
@@ -537,7 +525,7 @@ function PackingList({ locations, numDays, lang }) {
 function CollapsibleSection({ title, icon, children, defaultOpen = true, badge, th }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, overflow:"hidden", marginBottom:0 }}>
+    <div style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:16, overflow:"hidden" }}>
       <button onClick={() => setOpen(o => !o)} style={{ width:"100%", display:"flex", alignItems:"center", gap:10, padding:"13px 16px", background:"none", border:"none", cursor:"pointer", color:th.text }}>
         <span style={{ fontSize:"1rem" }}>{icon}</span>
         <span style={{ fontWeight:700, fontSize:"0.88rem", flex:1, textAlign:"left", color:th.text }}>{title}</span>
@@ -549,7 +537,7 @@ function CollapsibleSection({ title, icon, children, defaultOpen = true, badge, 
   );
 }
 
-function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, locationDays, locationNotes, onNoteChange, city, lang, t, travelMode, showSkeleton }) {
+function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, locationDays, locationNotes, onNoteChange, city, lang, t, travelMode }) {
   const { th } = useTheme();
   const [showInfo, setShowInfo] = useState(false);
   const [showNote, setShowNote] = useState(false);
@@ -561,14 +549,11 @@ function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, l
   const isClosed = openInfo && !openInfo.isOpen;
   const note = locationNotes?.[loc.id] || "";
 
-  if (showSkeleton) return <SkeletonCard th={th} />;
-
   return (
-    <div className="app-card-hover card-anim" style={{
+    <div style={{
       background:th.card, border:`1px solid ${isClosed?th.warning:th.border}`,
       borderRadius:14, padding:"10px 12px", position:"relative",
       boxShadow:isClosed?`0 0 0 2px ${th.warning}22`:"none",
-      animationDelay:`${index*0.05}s`
     }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
         <div style={{ width:34, height:34, borderRadius:"50%", background:dayColor?`${dayColor}22`:th.accentLight, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.1rem", flexShrink:0, border:`2px solid ${dayColor||th.accent}` }}>
@@ -580,7 +565,9 @@ function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, l
           {rating && <StarRating {...rating} lang={lang} th={th} />}
           {cost && (
             <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:4 }}>
-              {t.admission}: {cost.min === 0 && cost.max === 0 ? <span style={{ color:th.success, fontWeight:700 }}>{t.free}</span> : <span style={{ color:th.accent, fontWeight:600 }}>{cost.currency}{cost.min}{cost.max!==cost.min?`–${cost.currency}${cost.max}`:""}</span>}
+              {t.admission}: {cost.min === 0 && cost.max === 0
+                ? <span style={{ color:th.success, fontWeight:700 }}>{t.free}</span>
+                : <span style={{ color:th.accent, fontWeight:600 }}>{cost.currency}{cost.min}{cost.max!==cost.min?`–${cost.currency}${cost.max}`:""}</span>}
               {cost.note && <span style={{ color:th.textFaint }}> · {cost.note}</span>}
             </div>
           )}
@@ -631,199 +618,181 @@ function LocationCard({ loc, index, dayColor, onRemove, onDayChange, tripDays, l
       {showNote && (
         <textarea value={note} onChange={e => onNoteChange(loc.id, e.target.value)}
           placeholder={t.notePlaceholder} rows={2}
-          style={{ width:"100%", marginTop:8, fontSize:"0.78rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, resize:"vertical", fontFamily:"inherit" }} />
+          style={{ width:"100%", marginTop:8, fontSize:"0.78rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, resize:"vertical", fontFamily:"inherit", boxSizing:"border-box" }} />
       )}
     </div>
   );
 }
 
-function MapView({ locations, city, travelMode, locationDays, tripDays }) {
-  const { th } = useTheme();
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
-  const polylineRef = useRef(null);
+function BudgetPanel({ locations, city, lang, t, th }) {
   const safeLocations = Array.isArray(locations) ? locations : [];
-
-  useEffect(() => {
-    let attempts = 0;
-    const tryInit = () => {
-      if (!mapRef.current) return;
-      if (!window.L) { if (attempts++ < 20) setTimeout(tryInit, 300); return; }
-      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
-      const center = safeLocations.length > 0 ? [safeLocations[0].lat || city.lat, safeLocations[0].lng || city.lng] : [city.lat, city.lng];
-      const map = window.L.map(mapRef.current, { zoomControl: true, attributionControl: false }).setView(center, 13);
-      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-      mapInstanceRef.current = map;
-      updateMarkers(map);
-    };
-    tryInit();
-    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; } };
-  }, [city.id]);
-
-  const updateMarkers = useCallback((map) => {
-    if (!map || !window.L) return;
-    markersRef.current.forEach(m => map.removeLayer(m));
-    markersRef.current = [];
-    if (polylineRef.current) { map.removeLayer(polylineRef.current); polylineRef.current = null; }
-    const validLocs = safeLocations.filter(l => l.lat && l.lng);
-    validLocs.forEach((loc, i) => {
-      const dayIdx = tripDays ? tripDays.indexOf(locationDays?.[loc.id] ?? tripDays[0]) : i;
-      const color = getDayColor(dayIdx >= 0 ? dayIdx : i);
-      const icon = window.L.divIcon({
-        className: "",
-        html: `<div class="marker-pop" style="width:32px;height:32px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid white;">${loc.icon||"📍"}</div>`,
-        iconSize: [32,32], iconAnchor: [16,16],
-      });
-      const marker = window.L.marker([loc.lat, loc.lng], { icon }).addTo(map);
-      marker.bindPopup(`<b>${loc.name}</b><br/><small>${loc.type||""}</small>`);
-      markersRef.current.push(marker);
-    });
-    if (validLocs.length > 1) {
-      const coords = validLocs.map(l => [l.lat, l.lng]);
-      polylineRef.current = window.L.polyline(coords, { color: th.accent, weight: 2, opacity: 0.6, dashArray: "6,6" }).addTo(map);
-    }
-    if (validLocs.length > 0) {
-      const group = window.L.featureGroup(markersRef.current);
-      map.fitBounds(group.getBounds().pad(0.2));
-    }
-  }, [safeLocations, locationDays, tripDays, th.accent]);
-
-  useEffect(() => {
-    if (mapInstanceRef.current && window.L) updateMarkers(mapInstanceRef.current);
-  }, [updateMarkers]);
-
-  return <div ref={mapRef} style={{ width:"100%", height:280, borderRadius:12, overflow:"hidden", background:th.surface, border:`1px solid ${th.border}` }} />;
-}
-
-function BudgetView({ locations, city, lang, t }) {
-  const { th } = useTheme();
-  const [extras, setExtras] = useState([{ label:"", amount:"" }]);
-  const safeLocations = Array.isArray(locations) ? locations : [];
-  const items = safeLocations.map(loc => {
+  const [extras, setExtras] = useState(0);
+  let total = 0;
+  const rows = safeLocations.map(loc => {
     const cost = getEntryCost(loc.name, city);
-    if (!cost) return null;
-    const avg = cost.min === 0 && cost.max === 0 ? 0 : (cost.min + cost.max) / 2;
-    return { name: loc.name, avg, currency: cost.currency, note: cost.note, free: cost.min === 0 && cost.max === 0 };
-  }).filter(Boolean);
-  const extrasTotal = extras.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
-  const total = items.reduce((s, i) => s + i.avg, 0) + extrasTotal;
-
+    const mid = cost ? (cost.min + cost.max) / 2 : 0;
+    total += mid;
+    return { name: loc.name, cost, mid };
+  });
+  total += Number(extras) || 0;
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-      {items.length === 0 && <div style={{ fontSize:"0.8rem", color:th.textMuted }}>{t.addFirst}</div>}
-      {items.map((item,i) => (
-        <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 10px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
-          <span style={{ fontSize:"0.8rem", color:th.text }}>{item.name}</span>
-          <span style={{ fontSize:"0.8rem", fontWeight:700, color:item.free?th.success:th.accent }}>
-            {item.free ? t.free : `~${item.currency}${item.avg.toFixed(0)}`}
+      {rows.map((r,i) => (
+        <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:"0.8rem", padding:"5px 8px", borderRadius:8, background:th.card, border:`1px solid ${th.border}` }}>
+          <span style={{ color:th.text }}>{r.name}</span>
+          <span style={{ color:r.mid===0?th.success:th.accent, fontWeight:600 }}>
+            {r.mid === 0 ? t.free : `~${r.cost?.currency}${Math.round(r.mid)}`}
           </span>
         </div>
       ))}
-      <div style={{ fontSize:"0.75rem", color:th.textMuted, marginTop:4 }}>{t.budgetExtras}</div>
-      {extras.map((e,i) => (
-        <div key={i} style={{ display:"flex", gap:6 }}>
-          <input value={e.label} onChange={ev => setExtras(x => x.map((ex,j) => j===i?{...ex,label:ev.target.value}:ex))}
-            placeholder={lang==="de"?"Bezeichnung":"Label"}
-            style={{ flex:2, fontSize:"0.78rem", padding:"4px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-          <input value={e.amount} onChange={ev => setExtras(x => x.map((ex,j) => j===i?{...ex,amount:ev.target.value}:ex))}
-            placeholder="€" type="number"
-            style={{ flex:1, fontSize:"0.78rem", padding:"4px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-          <button onClick={() => setExtras(x => x.filter((_,j) => j!==i))} style={{ background:"none", border:"none", cursor:"pointer", color:th.textFaint, fontSize:"1rem" }}>×</button>
-        </div>
-      ))}
-      <button onClick={() => setExtras(x => [...x, {label:"",amount:""}])}
-        style={{ fontSize:"0.75rem", padding:"4px 10px", borderRadius:8, background:th.surface, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>+ {lang==="de"?"Hinzufügen":"Add"}</button>
-      <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 12px", borderRadius:10, background:th.accentLight, border:`1px solid ${th.accent}` }}>
-        <span style={{ fontWeight:700, fontSize:"0.85rem", color:th.text }}>{t.budgetTotal}</span>
-        <span style={{ fontWeight:700, fontSize:"0.95rem", color:th.accent }}>~€{total.toFixed(0)}</span>
+      <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:"0.8rem", marginTop:4 }}>
+        <span style={{ color:th.textMuted, whiteSpace:"nowrap" }}>{t.budgetExtras}</span>
+        <input type="number" value={extras} onChange={e => setExtras(e.target.value)} min={0}
+          style={{ width:80, padding:"4px 8px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, fontSize:"0.8rem" }} />
+        <span style={{ color:th.textFaint }}>€</span>
+      </div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", borderRadius:10, background:th.accentLight, border:`1px solid ${th.accent}`, marginTop:4 }}>
+        <span style={{ fontWeight:700, color:th.text }}>{t.budgetTotal}</span>
+        <span style={{ fontWeight:800, fontSize:"1.1rem", color:th.accent }}>~€{Math.round(total)}</span>
       </div>
       <div style={{ fontSize:"0.68rem", color:th.textFaint }}>{t.budgetNote}</div>
     </div>
   );
 }
 
-function ShareView({ locations, cityId, startDate, numDays, lang, t }) {
-  const { th } = useTheme();
-  const [shareUrl, setShareUrl] = useState("");
-  const [copied, setCopied] = useState(false);
+function RouteTimeline({ locations, locationDays, tripDays, travelMode, city, lang, t, th }) {
   const safeLocations = Array.isArray(locations) ? locations : [];
-
-  const createLink = () => {
-    const data = { cityId, startDate, numDays, locations: safeLocations.map(l => ({ name:l.name, lat:l.lat, lng:l.lng, icon:l.icon, type:l.type })) };
-    const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-    const base = window.location.href.split("?")[0];
-    setShareUrl(`${base}?plan=${encoded}`);
-  };
-
-  const doCopy = () => {
-    if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
-  };
-
+  const safeTripDays = Array.isArray(tripDays) ? tripDays : [];
+  if (safeLocations.length < 2) {
+    return <div style={{ color:th.textMuted, fontSize:"0.82rem", textAlign:"center", padding:"20px 0" }}>{t.noRouteHint}</div>;
+  }
+  const byDay = {};
+  safeTripDays.forEach(d => { byDay[d] = []; });
+  safeLocations.forEach(loc => {
+    const day = locationDays?.[loc.id] ?? safeTripDays[0];
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(loc);
+  });
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-      <button onClick={createLink} className="btn-primary"
-        style={{ padding:"9px 18px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.82rem" }}>
-        🔗 {t.createLink}
-      </button>
-      {shareUrl && (
-        <>
-          <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.shareHint}</div>
-          <div style={{ display:"flex", gap:6 }}>
-            <input readOnly value={shareUrl} style={{ flex:1, fontSize:"0.72rem", padding:"6px 10px", borderRadius:8, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
-            <button onClick={doCopy} style={{ padding:"6px 12px", borderRadius:8, background:copied?th.success:th.surface, border:`1px solid ${th.border}`, color:copied?th.bg:th.text, cursor:"pointer", fontSize:"0.75rem", fontWeight:700, whiteSpace:"nowrap" }}>
-              {copied ? t.copied : t.copy}
-            </button>
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+      {safeTripDays.map((day, di) => {
+        const dayLocs = byDay[day] || [];
+        if (dayLocs.length === 0) return null;
+        const color = getDayColor(di);
+        return (
+          <div key={day}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+              <div style={{ width:10, height:10, borderRadius:"50%", background:color }} />
+              <span style={{ fontWeight:700, fontSize:"0.82rem", color:th.text }}>{formatDateLabel(day, lang)} – Tag {di+1}</span>
+              <span style={{ fontSize:"0.72rem", color:th.textMuted }}>{dayLocs.length} {t.stops}</span>
+            </div>
+            <div style={{ position:"relative", paddingLeft:20 }}>
+              <div style={{ position:"absolute", left:4, top:0, bottom:0, width:2, background:`${color}44`, borderRadius:2 }} />
+              {dayLocs.map((loc, li) => (
+                <div key={loc.id}>
+                  <div style={{ position:"relative", display:"flex", gap:10, alignItems:"flex-start", marginBottom:8 }}>
+                    <div style={{ position:"absolute", left:-20, top:8, width:10, height:10, borderRadius:"50%", background:color, border:`2px solid ${th.surface}`, zIndex:1 }} />
+                    <div style={{ flex:1, background:th.card, border:`1px solid ${th.border}`, borderRadius:10, padding:"8px 10px" }}>
+                      <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.text }}>{loc.icon} {loc.name}</div>
+                      <div style={{ fontSize:"0.7rem", color:th.textMuted, marginTop:2 }}>{loc.type}{loc.duration ? ` · ⏱ ${loc.duration}` : ""}</div>
+                    </div>
+                  </div>
+                  {li < dayLocs.length - 1 && (
+                    <div style={{ paddingLeft:0, marginBottom:6 }}>
+                      <TravelTimeBadge from={loc} to={dayLocs[li+1]} mode={travelMode} th={th} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </>
-      )}
+        );
+      })}
     </div>
   );
 }
 
-function SavedPlansView({ savedPlans, onLoad, onDelete, lang, t }) {
-  const { th } = useTheme();
-  if (!savedPlans.length) return <div style={{ fontSize:"0.82rem", color:th.textMuted }}>{t.noPlans}</div>;
+function MapPlaceholder({ locations, locationDays, tripDays, city, th }) {
+  const safeLocations = Array.isArray(locations) ? locations : [];
+  const cityData = city || CITIES.paris;
+  const center = { lat: cityData.lat, lng: cityData.lng };
+  const svgW = 340, svgH = 200;
+  const allLats = [center.lat, ...safeLocations.filter(l=>l.lat).map(l=>l.lat)];
+  const allLngs = [center.lng, ...safeLocations.filter(l=>l.lng).map(l=>l.lng)];
+  const minLat = Math.min(...allLats), maxLat = Math.max(...allLats);
+  const minLng = Math.min(...allLngs), maxLng = Math.max(...allLngs);
+  const padLat = Math.max((maxLat - minLat) * 0.3, 0.01);
+  const padLng = Math.max((maxLng - minLng) * 0.3, 0.01);
+  const latRange = maxLat - minLat + padLat * 2;
+  const lngRange = maxLng - minLng + padLng * 2;
+  const toSvg = (lat, lng) => ({
+    x: ((lng - minLng + padLng) / lngRange) * svgW,
+    y: svgH - ((lat - minLat + padLat) / latRange) * svgH
+  });
+  const locPoints = safeLocations.filter(l=>l.lat&&l.lng).map((l,i) => {
+    const day = locationDays?.[l.id] ?? (tripDays?.[0] || null);
+    const dayIdx = tripDays ? tripDays.indexOf(day) : 0;
+    return { ...toSvg(l.lat, l.lng), color: getDayColor(dayIdx < 0 ? 0 : dayIdx), label: l.icon || "📍", name: l.name, idx: i };
+  });
+
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-      {savedPlans.map(plan => (
-        <div key={plan.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 12px", borderRadius:10, background:th.surface, border:`1px solid ${th.border}` }}>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.text }}>{plan.name}</div>
-            <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{CITIES[plan.cityId]?.name || plan.cityId} · {plan.locations?.length||0} Orte · {plan.numDays} Tage</div>
-          </div>
-          <button onClick={() => onLoad(plan)} style={{ fontSize:"0.72rem", padding:"4px 10px", borderRadius:8, background:th.accentLight, border:`1px solid ${th.accent}`, color:th.accent, cursor:"pointer", fontWeight:700 }}>{t.load}</button>
-          <button onClick={() => onDelete(plan.id)} style={{ background:"none", border:"none", cursor:"pointer", color:th.textFaint, fontSize:"1rem" }}>×</button>
-        </div>
-      ))}
+    <div style={{ borderRadius:12, overflow:"hidden", border:`1px solid ${th.border}`, background:th.card, position:"relative" }}>
+      <svg width="100%" viewBox={`0 0 ${svgW} ${svgH}`} style={{ display:"block" }}>
+        <rect width={svgW} height={svgH} fill={th.surface} />
+        <rect x={svgW*0.1} y={svgH*0.15} width={svgW*0.8} height={svgH*0.7} rx={8} fill={th.bg} stroke={th.border} strokeWidth={1} opacity={0.5}/>
+        {[...Array(5)].map((_,i) => (
+          <line key={`h${i}`} x1={0} y1={svgH*(i+1)/6} x2={svgW} y2={svgH*(i+1)/6} stroke={th.border} strokeWidth={0.5} opacity={0.4} />
+        ))}
+        {[...Array(6)].map((_,i) => (
+          <line key={`v${i}`} x1={svgW*(i+1)/7} y1={0} x2={svgW*(i+1)/7} y2={svgH} stroke={th.border} strokeWidth={0.5} opacity={0.4} />
+        ))}
+        {locPoints.length > 1 && locPoints.map((pt, i) => i < locPoints.length - 1 && (
+          <line key={`line${i}`} x1={pt.x} y1={pt.y} x2={locPoints[i+1].x} y2={locPoints[i+1].y} stroke={th.accent} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.6} />
+        ))}
+        {locPoints.map((pt, i) => (
+          <g key={i}>
+            <circle cx={pt.x} cy={pt.y} r={14} fill={pt.color} opacity={0.18} />
+            <circle cx={pt.x} cy={pt.y} r={9} fill={pt.color} opacity={0.85} />
+            <text x={pt.x} y={pt.y+4} textAnchor="middle" fontSize={9} fill="#fff" fontWeight="bold">{i+1}</text>
+          </g>
+        ))}
+        <text x={svgW/2} y={svgH-6} textAnchor="middle" fontSize={9} fill={th.textFaint}>{cityData.name} · {safeLocations.length} Orte</text>
+      </svg>
     </div>
   );
 }
 
-function Navbar({ lang, setLang, t, canUndo, canRedo, onUndo, onRedo }) {
-  const { mode, th } = useTheme();
+function WeatherWidget({ city, startDate, numDays, lang, th }) {
+  const conditions = ["☀️ Sonnig","🌤 Leicht bewölkt","⛅ Bewölkt","🌦 Wechselhaft","🌧 Regnerisch"];
+  const temps = { paris:[14,16,17,15,13], london:[11,12,10,9,13], berlin:[12,15,14,11,10], rom:[20,22,21,19,18], barcelona:[18,20,19,21,17], wien:[13,15,14,12,11], amsterdam:[10,12,11,9,13], prag:[11,14,13,10,12], lissabon:[17,19,18,20,16], new_york:[13,15,14,12,11] };
+  const cityTemps = temps[city?.id] || [15,16,14,13,15];
+  const days = generateTripDays(startDate || new Date().toISOString().slice(0,10), Math.min(numDays||4, 5));
   return (
-    <nav style={{ position:"sticky", top:0, zIndex:1000, background:th.navBg, backdropFilter:"blur(12px)", borderBottom:`1px solid ${th.border}`, padding:"0 16px", height:52, display:"flex", alignItems:"center", gap:12 }}>
-      <div style={{ fontWeight:900, fontSize:"1.05rem", color:th.accent, fontFamily:"'Playfair Display', Georgia, serif", letterSpacing:"-0.02em", flex:1 }}>✈ {t.appName}</div>
-      <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-        <button onClick={onUndo} disabled={!canUndo} title="Undo" style={{ background:"none", border:"none", cursor:canUndo?"pointer":"default", color:canUndo?th.accent:th.textFaint, fontSize:"1rem", padding:"4px 6px" }}>↩</button>
-        <button onClick={onRedo} disabled={!canRedo} title="Redo" style={{ background:"none", border:"none", cursor:canRedo?"pointer":"default", color:canRedo?th.accent:th.textFaint, fontSize:"1rem", padding:"4px 6px" }}>↪</button>
-        <button onClick={toggleTheme} title="Toggle theme" style={{ background:"none", border:"none", cursor:"pointer", fontSize:"1.1rem", padding:"4px 6px" }}>{mode==="dark"?"☀️":"🌙"}</button>
-        <button onClick={() => setLang(l => l==="de"?"en":"de")} style={{ fontSize:"0.7rem", padding:"4px 10px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer", fontWeight:700 }}>
-          {lang==="de"?"EN":"DE"}
-        </button>
-      </div>
-    </nav>
+    <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:4 }}>
+      {days.map((d,i) => {
+        const cond = conditions[i % conditions.length];
+        const temp = cityTemps[i % cityTemps.length];
+        return (
+          <div key={d} style={{ minWidth:70, textAlign:"center", padding:"8px 6px", borderRadius:10, background:th.card, border:`1px solid ${th.border}`, flexShrink:0 }}>
+            <div style={{ fontSize:"0.65rem", color:th.textMuted, marginBottom:4 }}>{formatDateLabel(d, lang)}</div>
+            <div style={{ fontSize:"1.2rem" }}>{cond.split(" ")[0]}</div>
+            <div style={{ fontSize:"0.78rem", fontWeight:700, color:th.text, marginTop:2 }}>{temp}°C</div>
+            <div style={{ fontSize:"0.6rem", color:th.textFaint, marginTop:2 }}>{cond.split(" ").slice(1).join(" ")}</div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 export default function App() {
-  const { th } = useTheme();
+  const { mode, th } = useTheme();
   const [lang, setLang] = useState("de");
   const t = TRANSLATIONS[lang];
 
   const [cityId, setCityId] = useState("paris");
+  const city = CITIES[cityId] || CITIES.paris;
+
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0,10));
   const [numDays, setNumDays] = useState(4);
   const [tripDays, setTripDays] = useState(() => generateTripDays(new Date().toISOString().slice(0,10), 4));
@@ -833,518 +802,478 @@ export default function App() {
   const [locationNotes, setLocationNotes] = useState({});
 
   const [linkInput, setLinkInput] = useState("");
-  const [linkError, setLinkError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [linkError, setLinkError] = useState("");
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
 
   const [travelMode, setTravelMode] = useState("walking");
   const [activeTab, setActiveTab] = useState("route");
   const [filterDay, setFilterDay] = useState("all");
-  const [savedPlans, setSavedPlans] = useState([]);
+
+  const [savedPlans, setSavedPlans] = useState(() => safeLocalGet("rp_plans_v2", []));
   const [planName, setPlanName] = useState("");
-  const [saveMsg, setSaveMsg] = useState("");
+  const [saveFlash, setSaveFlash] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copyFlash, setCopyFlash] = useState(false);
+
+  const [apiKey, setApiKey] = useState(() => safeLocalGet("rp_apikey", ""));
+  const [apiInput, setApiInput] = useState("");
+  const [apiSaved, setApiSaved] = useState(false);
+  const [showApiPanel, setShowApiPanel] = useState(false);
+
   const [showCityPicker, setShowCityPicker] = useState(false);
-  const [skeletonVisible, setSkeletonVisible] = useState(false);
-
-  const [customCities, setCustomCities] = useState({});
   const [customCityInput, setCustomCityInput] = useState("");
-  const [showCustomCityInput, setShowCustomCityInput] = useState(false);
 
-  const allCities = { ...CITIES, ...customCities };
-  const city = allCities[cityId] || CITIES["paris"];
+  const safeLocations = Array.isArray(locations) ? locations : [];
 
-  const handleAddCustomCity = () => {
-    const name = customCityInput.trim();
-    if (!name) return;
-    const id = "custom_" + name.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
-    const newCity = {
-      id, name, emoji: "🌍", country: "🌐",
-      lat: 48.8566, lng: 2.3522, timezone: "UTC",
-      sampleLocations: [], demoLinks: [], linkMatchers: [],
-      entryCosts: {}, ratings: {}, locationInfo: {}, openingHours: {}, metroLines: {},
-    };
-    setCustomCities(prev => ({ ...prev, [id]: newCity }));
-    setCityId(id);
-    setLocations([]);
-    setLocationDays({});
-    setCustomCityInput("");
-    setShowCustomCityInput(false);
-    setShowCityPicker(false);
-  };
-
-  // Load CSS + Leaflet on client only
   useEffect(() => {
-    if (!document.getElementById("app-theme-styles")) {
-      const s = document.createElement("style");
-      s.id = "app-theme-styles";
-      s.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@300;400;600;700&display=swap');
-        :root { --app-max: 960px; --app-pad: clamp(8px, 2vw, 24px); }
-        @keyframes fadeSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes skeletonPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes markerPop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.2);opacity:1} 100%{transform:scale(1);opacity:1} }
-        @keyframes spin { to{transform:rotate(360deg)} }
-        .card-anim { animation: fadeSlideIn 0.4s cubic-bezier(.22,1,.36,1) both; }
-        .skeleton-anim { animation: skeletonPulse 1.4s ease-in-out infinite; }
-        .app-card-hover { transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s, background 0.25s; }
-        .app-card-hover:hover { transform: translateY(-2px); }
-        .tab-btn { transition: background 0.15s, color 0.15s; font-family: 'Source Sans 3',system-ui,sans-serif; letter-spacing:0.04em; text-transform:uppercase; font-size:0.65rem !important; }
-        .btn-primary { transition: background 0.15s, box-shadow 0.15s, transform 0.1s; }
-        .btn-primary:hover { transform: translateY(-1px); }
-        .btn-primary:active { transform: translateY(0); }
-        .marker-pop { animation: markerPop 0.4s ease both; }
-        h1,h2,h3 { font-family: 'Playfair Display',Georgia,serif !important; }
-        body { font-family: 'Source Sans 3',system-ui,sans-serif; transition: background 0.3s; }
-        * { box-sizing: border-box !important; }
-        body, #root { overflow-x: hidden !important; max-width: 100vw !important; }
-        .app-shell { display: grid; grid-template-columns: 1fr; min-height: 100vh; }
-        @media (min-width: 700px) {
-          .app-shell { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0; }
-          .app-col-left { border-right: none; }
-        }
-        @media (min-width: 1100px) {
-          .app-shell { grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr); }
-          .app-col-right { border-left: none; }
-        }
-        .app-col { padding: var(--app-pad); display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: calc(100vh - 52px); }
-        @media (max-width: 699px) { .app-col { max-height: none; overflow-y: visible; } }
-        input, select, textarea { font-size: 16px !important; }
-        button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { width:6px; height:6px; }
-        ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { border-radius:3px; }
-      `;
-      document.head.appendChild(s);
-    }
-    let vp = document.querySelector('meta[name="viewport"]');
-    if (!vp) { vp = document.createElement('meta'); vp.name = 'viewport'; document.head.appendChild(vp); }
-    vp.content = 'width=device-width,initial-scale=1,maximum-scale=1';
-    if (!window.L) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      document.head.appendChild(script);
-    }
+    const newDays = generateTripDays(startDate, numDays);
+    setTripDays(newDays);
+    setLocationDays(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(id => {
+        if (!newDays.includes(updated[id])) updated[id] = newDays[0];
+      });
+      return updated;
+    });
+  }, [startDate, numDays]);
+
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      ::-webkit-scrollbar { width:5px; height:5px; }
+      ::-webkit-scrollbar-track { background:transparent; }
+      ::-webkit-scrollbar-thumb { background:#5a4a30; border-radius:10px; }
+      select option { background: #26211a; color: #ede0c8; }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
   }, []);
 
-  // Persist body bg
-  useEffect(() => {
-    document.body.style.background = th.bg;
-    document.body.style.color = th.text;
-  }, [th]);
-
-  // Load saved plans from localStorage
-  useEffect(() => {
-    const stored = safeLocalGet("reiseplaner_plans_v2", []);
-    setSavedPlans(Array.isArray(stored) ? stored : []);
-  }, []);
-
-  const handleAnalyzeLink = () => {
+  const analyzeLink = useCallback(async () => {
+    if (!linkInput.trim()) { setLinkError(t.errorEmpty); return; }
+    setLinkError("");
+    setAnalyzing(true);
+    setSkeletonVisible(true);
+    await new Promise(r => setTimeout(r, 900));
     const url = linkInput.trim();
-    if (!url) { setLinkError(t.errorEmpty); return; }
-    setLinkError(""); setAnalyzing(true); setSkeletonVisible(true);
-    setTimeout(() => {
-      const matchers = city.linkMatchers || [];
-      const match = matchers.find(m => m.pattern.test(url));
-      if (match !== undefined) {
-        const sample = city.sampleLocations[match.locationIndex];
-        if (sample && !locations.find(l => l.id === sample.id)) {
-          const newLoc = { ...sample, id: Date.now() };
-          setLocations(prev => [...(Array.isArray(prev)?prev:[]), newLoc]);
-          setLocationDays(d => ({ ...d, [newLoc.id]: tripDays[0] }));
-        }
-      } else {
-        setLinkError(t.errorNotFound);
+    let matched = null;
+    for (const matcher of (city.linkMatchers || [])) {
+      if (matcher.pattern.test(url)) {
+        matched = city.sampleLocations?.[matcher.locationIndex];
+        break;
       }
-      setLinkInput(""); setAnalyzing(false);
-      setTimeout(() => setSkeletonVisible(false), 600);
-    }, 900);
-  };
+    }
+    if (!matched) {
+      const lower = url.toLowerCase();
+      matched = city.sampleLocations?.find(loc =>
+        lower.includes(loc.name.toLowerCase().split(" ")[0].toLowerCase())
+      );
+    }
+    if (matched) {
+      const newLoc = { ...matched, id: Date.now() + Math.random() };
+      setLocations(prev => [...(Array.isArray(prev)?prev:[]), newLoc]);
+      setLocationDays(prev => ({ ...prev, [newLoc.id]: tripDays[0] }));
+      setLinkInput("");
+    } else {
+      setLinkError(t.errorNotFound);
+    }
+    setAnalyzing(false);
+    setSkeletonVisible(false);
+  }, [linkInput, city, tripDays, t, setLocations]);
 
-  const handleRemoveLocation = (id) => {
+  const addDemoLocation = useCallback((loc) => {
+    const newLoc = { ...loc, id: Date.now() + Math.random() };
+    setLocations(prev => [...(Array.isArray(prev)?prev:[]), newLoc]);
+    setLocationDays(prev => ({ ...prev, [newLoc.id]: tripDays[0] }));
+  }, [tripDays, setLocations]);
+
+  const removeLocation = useCallback((id) => {
     setLocations(prev => (Array.isArray(prev)?prev:[]).filter(l => l.id !== id));
-    setLocationDays(d => { const n = {...d}; delete n[id]; return n; });
-    setLocationNotes(d => { const n = {...d}; delete n[id]; return n; });
-  };
+    setLocationDays(prev => { const n={...prev}; delete n[id]; return n; });
+    setLocationNotes(prev => { const n={...prev}; delete n[id]; return n; });
+  }, [setLocations]);
 
-  const handleDayChange = (locId, day) => setLocationDays(d => ({ ...d, [locId]: day }));
-  const handleNoteChange = (locId, note) => setLocationNotes(d => ({ ...d, [locId]: note }));
+  const handleDayChange = useCallback((locId, day) => {
+    setLocationDays(prev => ({ ...prev, [locId]: day }));
+  }, []);
 
-  const handleSavePlan = () => {
-    if (!planName.trim() || locations.length === 0) return;
-    const plan = { id: Date.now(), name: planName.trim(), cityId, startDate, numDays, tripDays, locations, locationDays, locationNotes };
-    const updated = [...savedPlans.filter(p => p.name !== plan.name), plan];
+  const handleNoteChange = useCallback((locId, note) => {
+    setLocationNotes(prev => ({ ...prev, [locId]: note }));
+  }, []);
+
+  const savePlan = () => {
+    if (!safeLocations.length) return;
+    const plan = normalizePlan({ id: Date.now(), name: planName || `${city.name} – ${startDate}`, cityId, startDate, numDays, tripDays, locations: safeLocations, locationDays, locationNotes });
+    const updated = [plan, ...savedPlans.filter(p => p.name !== plan.name)].slice(0, 20);
     setSavedPlans(updated);
-    safeLocalSet("reiseplaner_plans_v2", updated);
-    setSaveMsg(t.saved);
-    setTimeout(() => setSaveMsg(""), 2000);
+    safeLocalSet("rp_plans_v2", updated);
+    setSaveFlash(true);
+    setTimeout(() => setSaveFlash(false), 2000);
   };
 
-  const handleLoadPlan = (plan) => {
-    const normalized = normalizePlan(plan);
-    if (!normalized) return;
-    setCityId(normalized.cityId);
-    setStartDate(normalized.startDate);
-    setNumDays(normalized.numDays);
-    setTripDays(normalized.tripDays);
-    setLocations(normalized.locations);
-    setLocationDays(normalized.locationDays);
-    setLocationNotes(normalized.locationNotes);
-    setPlanName(normalized.name);
+  const loadPlan = (plan) => {
+    const norm = normalizePlan(plan);
+    if (!norm) return;
+    setCityId(norm.cityId);
+    setStartDate(norm.startDate);
+    setNumDays(norm.numDays);
+    setTripDays(norm.tripDays);
+    setLocations(norm.locations);
+    setLocationDays(norm.locationDays);
+    setLocationNotes(norm.locationNotes);
+    setPlanName(norm.name);
   };
 
-  const handleDeletePlan = (id) => {
+  const deletePlan = (id) => {
     const updated = savedPlans.filter(p => p.id !== id);
     setSavedPlans(updated);
-    safeLocalSet("reiseplaner_plans_v2", updated);
+    safeLocalSet("rp_plans_v2", updated);
   };
 
-  const handleLoadDemo = (idx) => {
-    const sample = city.sampleLocations[idx];
-    if (!sample || locations.find(l => l.name === sample.name)) return;
-    const newLoc = { ...sample, id: Date.now() };
-    setLocations(prev => [...(Array.isArray(prev)?prev:[]), newLoc]);
-    setLocationDays(d => ({ ...d, [newLoc.id]: tripDays[0] }));
+  const createShareLink = () => {
+    try {
+      const data = { cityId, startDate, numDays, locations: safeLocations, locationDays, locationNotes };
+      const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+      const url = `${window.location.href.split("?")[0]}?plan=${encoded}`;
+      setShareUrl(url);
+    } catch { setShareUrl(""); }
   };
 
-  const filteredLocations = locations.filter(l => filterDay === "all" || locationDays[l.id] === filterDay);
+  const copyShareUrl = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopyFlash(true);
+      setTimeout(() => setCopyFlash(false), 2000);
+    });
+  };
 
-  const closedWarnings = locations.filter(l => {
-    const day = locationDays[l.id] ?? tripDays[0];
-    const info = getOpeningInfo(l.name, day, city);
+  const saveApiKey = () => {
+    safeLocalSet("rp_apikey", apiInput);
+    setApiKey(apiInput);
+    setApiSaved(true);
+    setTimeout(() => setApiSaved(false), 2000);
+  };
+
+  const deleteApiKey = () => {
+    safeLocalSet("rp_apikey", "");
+    setApiKey("");
+    setApiInput("");
+  };
+
+  const filteredLocations = filterDay === "all"
+    ? safeLocations
+    : safeLocations.filter(l => (locationDays[l.id] ?? tripDays[0]) === filterDay);
+
+  const closedWarnings = safeLocations.filter(loc => {
+    const day = locationDays[loc.id] ?? tripDays[0];
+    const info = getOpeningInfo(loc.name, day, city);
     return info && !info.isOpen;
   });
 
-  // Route/Timeline view
-  const dayGroups = tripDays.map(day => ({
-    day,
-    locs: locations.filter(l => (locationDays[l.id] ?? tripDays[0]) === day)
-  })).filter(g => g.locs.length > 0);
+  const dayColorMap = {};
+  tripDays.forEach((d,i) => { dayColorMap[d] = getDayColor(i); });
 
   return (
-    <div style={{ minHeight:"100vh", background:th.bg, color:th.text, fontFamily:"'Source Sans 3',system-ui,sans-serif" }}>
-      
-      <Navbar lang={lang} setLang={setLang} t={t} canUndo={canUndo} canRedo={canRedo} onUndo={undo} onRedo={redo} />
+    <div style={{ minHeight:"100vh", background:th.bg, color:th.text, transition:"background 0.3s, color 0.3s" }}>
+      {/* Navbar */}
+      <div style={{ position:"sticky", top:0, zIndex:100, background:th.navBg, borderBottom:`1px solid ${th.border}`, backdropFilter:"blur(12px)", padding:"0 16px" }}>
+        <div style={{ maxWidth:900, margin:"0 auto", display:"flex", alignItems:"center", gap:12, height:52 }}>
+          <span style={{ fontSize:"1.2rem" }}>{city.emoji}</span>
+          <span style={{ fontWeight:800, fontSize:"1rem", color:th.text, letterSpacing:"-0.02em" }}>{t.appName}</span>
+          <span style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:20, background:th.accentLight, color:th.accent, fontWeight:700 }}>v5.0</span>
+          <div style={{ flex:1 }} />
+          <button onClick={() => setShowCityPicker(v=>!v)} style={{ fontSize:"0.75rem", padding:"4px 10px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>
+            {city.country} {city.name}
+          </button>
+          <select value={lang} onChange={e=>setLang(e.target.value)} style={{ fontSize:"0.75rem", padding:"4px 8px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>
+            <option value="de">🇩🇪 DE</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
+          <button onClick={toggleTheme} style={{ fontSize:"1rem", padding:"4px 8px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, cursor:"pointer" }}>
+            {mode === "dark" ? "☀️" : "🌙"}
+          </button>
+          <button onClick={() => setShowApiPanel(v=>!v)} style={{ fontSize:"0.65rem", padding:"3px 8px", borderRadius:20, background:apiKey?th.successBg:th.warningBg, border:`1px solid ${apiKey?th.success:th.warning}`, color:apiKey?th.success:th.warning, cursor:"pointer" }}>
+            {apiKey ? t.apiActive : t.apiMissing}
+          </button>
+        </div>
+      </div>
 
-      <div className="app-shell">
-
-        {/* ===== LINKE SPALTE ===== */}
-        <div className="app-col app-col-left" style={{ borderRight: "1px solid " + th.border }}>
-
-        {/* City + Trip */}
-        <CollapsibleSection title={t.sectionTrip} icon="🗓" th={th} defaultOpen={true}>
-          <div style={{ display:"flex", flexDirection:"column", gap:10, paddingTop:4 }}>
-            <button onClick={() => setShowCityPicker(v => !v)} style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", borderRadius:12, background:th.card, border:`1px solid ${th.border}`, cursor:"pointer", color:th.text }}>
-              <span style={{ fontSize:"1.3rem" }}>{city.emoji}</span>
-              <div style={{ flex:1, textAlign:"left" }}>
-                <div style={{ fontWeight:700, fontSize:"0.88rem", color:th.text }}>{city.name} {city.country}</div>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{t.switchCity}</div>
-              </div>
-              <span style={{ color:th.textMuted }}>›</span>
-            </button>
-
-            {showCityPicker && (
-              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                  {[...CITY_ORDER, ...Object.keys(customCities)].map(cid => {
-                    const c = allCities[cid]; if (!c) return null;
-                    return (
-                      <button key={cid} onClick={() => { setCityId(cid); setLocations([]); setLocationDays({}); setShowCityPicker(false); }}
-                        style={{ padding:"6px 12px", borderRadius:20, fontSize:"0.78rem", background:cityId===cid?th.accent:th.surface, color:cityId===cid?th.bg:th.text, border:`1px solid ${cityId===cid?th.accent:th.border}`, cursor:"pointer", fontWeight:cityId===cid?700:400 }}>
-                        {c.emoji} {c.name}
-                      </button>
-                    );
-                  })}
-                </div>
-                {showCustomCityInput ? (
-                  <div style={{ display:"flex", gap:8, marginTop:4 }}>
-                    <input
-                      value={customCityInput}
-                      onChange={e => setCustomCityInput(e.target.value)}
-                      onKeyDown={e => e.key==="Enter" && handleAddCustomCity()}
-                      placeholder={t.customCityPlaceholder}
-                      style={{ flex:1, padding:"7px 10px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, fontSize:"0.82rem" }}
-                      autoFocus
-                    />
-                    <button onClick={handleAddCustomCity}
-                      style={{ padding:"7px 14px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.82rem" }}>
-                      {t.customCityAdd}
-                    </button>
-                    <button onClick={() => setShowCustomCityInput(false)}
-                      style={{ background:"none", border:"none", cursor:"pointer", color:th.textFaint, fontSize:"1.1rem" }}>×</button>
+      {/* City Picker */}
+      {showCityPicker && (
+        <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={() => setShowCityPicker(false)}>
+          <div style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:20, padding:20, width:"100%", maxWidth:480, maxHeight:"80vh", overflowY:"auto" }} onClick={e=>e.stopPropagation()}>
+            <div style={{ fontWeight:800, fontSize:"1rem", color:th.text, marginBottom:16 }}>🌍 {t.selectCity}</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              {Object.values(CITIES).map(c => (
+                <button key={c.id} onClick={() => { setCityId(c.id); setLocations([]); setLocationDays({}); setLocationNotes({}); setShowCityPicker(false); }}
+                  style={{ display:"flex", alignItems:"center", gap:8, padding:"10px 14px", borderRadius:12, background:cityId===c.id?th.accentLight:th.card, border:`1px solid ${cityId===c.id?th.accent:th.border}`, cursor:"pointer", color:th.text, fontWeight:cityId===c.id?700:400 }}>
+                  <span style={{ fontSize:"1.2rem" }}>{c.emoji}</span>
+                  <div style={{ textAlign:"left" }}>
+                    <div style={{ fontSize:"0.82rem", fontWeight:700 }}>{c.name}</div>
+                    <div style={{ fontSize:"0.68rem", color:th.textMuted }}>{c.country}</div>
                   </div>
-                ) : (
-                  <button onClick={() => setShowCustomCityInput(true)}
-                    style={{ padding:"6px 12px", borderRadius:20, fontSize:"0.78rem", background:th.surface, color:th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer", marginTop:2, alignSelf:"flex-start" }}>
-                    🌍 {t.customCity}
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div style={{ display:"flex", gap:10 }}>
-              <div style={{ flex:2 }}>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:4 }}>{t.labelStartDate}</div>
-                <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setTripDays(generateTripDays(e.target.value, numDays)); }}
-                  style={{ width:"100%", padding:"8px 10px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, fontSize:"0.82rem" }} />
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:4 }}>{t.labelDays}</div>
-                <input type="number" min={1} max={30} value={numDays} onChange={e => { const v = Math.max(1,Math.min(30,parseInt(e.target.value)||1)); setNumDays(v); setTripDays(generateTripDays(startDate, v)); }}
-                  style={{ width:"100%", padding:"8px 10px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, fontSize:"0.82rem" }} />
-              </div>
-            </div>
-
-            <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:2 }}>
-              {tripDays.map((d,i) => (
-                <div key={d} style={{ flexShrink:0, padding:"4px 10px", borderRadius:20, fontSize:"0.7rem", background:`${getDayColor(i)}22`, border:`1px solid ${getDayColor(i)}66`, color:th.text, fontWeight:600 }}>
-                  {formatDateLabel(d, lang)}
-                </div>
-              ))}
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        <div style={{ height:4 }} />
-
-        {/* Link Input */
-        <CollapsibleSection title={t.addPlace} icon="➕" th={th} defaultOpen={true}>
-          <div style={{ display:"flex", flexDirection:"column", gap:8, paddingTop:4 }}>
-            <div style={{ display:"flex", gap:8 }}>
-              <input value={linkInput} onChange={e => setLinkInput(e.target.value)}
-                onKeyDown={e => e.key==="Enter" && handleAnalyzeLink()}
-                placeholder={t.linkPlaceholder}
-                style={{ flex:1, padding:"10px 12px", borderRadius:12, background:th.input, color:th.text, border:`1px solid ${linkError?th.warning:th.inputBorder}`, fontSize:"0.82rem" }} />
-              <button onClick={handleAnalyzeLink} disabled={analyzing} className="btn-primary"
-                style={{ padding:"10px 16px", borderRadius:12, background:th.accent, color:th.bg, border:"none", cursor:analyzing?"wait":"pointer", fontWeight:700, fontSize:"0.82rem", whiteSpace:"nowrap" }}>
-                {analyzing ? <Spinner size={16} color={th.bg} /> : t.analyze}
-              </button>
-            </div>
-            {linkError && <div style={{ fontSize:"0.75rem", color:th.warning }}>{linkError}</div>}
-            <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.demo}</div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {(city.sampleLocations||[]).map((loc,i) => (
-                <button key={i} onClick={() => handleLoadDemo(i)}
-                  style={{ fontSize:"0.72rem", padding:"4px 10px", borderRadius:20, background:th.tag, color:th.tagText, border:`1px solid ${th.border}`, cursor:"pointer" }}>
-                  {loc.icon} {loc.name}
                 </button>
               ))}
             </div>
+            <div style={{ marginTop:16, display:"flex", gap:8 }}>
+              <input value={customCityInput} onChange={e=>setCustomCityInput(e.target.value)} placeholder={t.customCityPlaceholder}
+                style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+              <button onClick={() => { if(customCityInput.trim()){setCustomCityInput("");setShowCityPicker(false);}}}
+                style={{ padding:"8px 14px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700 }}>{t.customCityAdd}</button>
+            </div>
+            <button onClick={() => setShowCityPicker(false)} style={{ marginTop:12, width:"100%", padding:"8px", borderRadius:10, background:th.card, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>{t.close}</button>
           </div>
-        </CollapsibleSection>
+        </div>
+      )}
 
-        </div>{/* Ende linke Spalte */}
+      {/* API Panel */}
+      {showApiPanel && (
+        <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={() => setShowApiPanel(false)}>
+          <div style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:20, padding:20, width:"100%", maxWidth:360 }} onClick={e=>e.stopPropagation()}>
+            <div style={{ fontWeight:800, fontSize:"1rem", color:th.text, marginBottom:8 }}>🔑 {t.apiTitle}</div>
+            <div style={{ fontSize:"0.75rem", color:th.textMuted, marginBottom:12 }}>{t.apiHint}</div>
+            <input type="password" value={apiInput} onChange={e=>setApiInput(e.target.value)} placeholder="sk-..."
+              style={{ width:"100%", fontSize:"0.82rem", padding:"8px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, marginBottom:10 }} />
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={saveApiKey} style={{ flex:1, padding:"8px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700 }}>
+                {apiSaved ? t.apiSaved : t.apiSave}
+              </button>
+              <button onClick={deleteApiKey} style={{ padding:"8px 12px", borderRadius:10, background:th.warningBg, border:`1px solid ${th.warning}`, color:th.warning, cursor:"pointer" }}>
+                {t.apiDelete}
+              </button>
+            </div>
+            <button onClick={() => setShowApiPanel(false)} style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:10, background:th.card, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>{t.close}</button>
+          </div>
+        </div>
+      )}
 
-        {/* ===== MITTLERE SPALTE ===== */}
-        <div className="app-col app-col-mid">
+      {/* Main */}
+      <div style={{ maxWidth:900, margin:"0 auto", padding:"16px 12px 40px" }}>
 
-        {/* Closed Warnings */
+        {/* Closed Warnings */}
         {closedWarnings.length > 0 && (
-          <div style={{ padding:"10px 14px", borderRadius:12, background:th.warningBg, border:`1px solid ${th.warning}`, marginBottom:12 }}>
-            <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.warning, marginBottom:4 }}>⚠ {t.warningTitle}</div>
-            {closedWarnings.map(l => (
-              <div key={l.id} style={{ fontSize:"0.75rem", color:th.warning }}>· {l.name} {t.warningClosed}</div>
+          <div style={{ background:th.warningBg, border:`1px solid ${th.warning}`, borderRadius:12, padding:"10px 14px", marginBottom:12, animation:"fadeIn 0.3s ease" }}>
+            <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.warning, marginBottom:4 }}>⚠️ {t.warningTitle}</div>
+            {closedWarnings.map(loc => (
+              <div key={loc.id} style={{ fontSize:"0.78rem", color:th.warning }}>
+                <b>{loc.name}</b> {t.warningClosed}
+              </div>
             ))}
             <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:4 }}>{t.warningHint}</div>
           </div>
         )}
 
-        {/* Places List */}
-        {locations.length > 0 && (
-          <CollapsibleSection title={t.myPlaces} icon="📍" badge={`${locations.length} ${t.places}`} th={th} defaultOpen={true}>
-            <div style={{ display:"flex", flexDirection:"column", gap:8, paddingTop:4 }}>
-              <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4 }}>
-                <button onClick={() => setFilterDay("all")} className="tab-btn"
-                  style={{ flexShrink:0, padding:"4px 10px", borderRadius:20, background:filterDay==="all"?th.accent:th.surface, color:filterDay==="all"?th.bg:th.textMuted, border:`1px solid ${filterDay==="all"?th.accent:th.border}`, cursor:"pointer" }}>
-                  {t.allDays}
-                </button>
-                {tripDays.map((d,i) => (
-                  <button key={d} onClick={() => setFilterDay(d)} className="tab-btn"
-                    style={{ flexShrink:0, padding:"4px 10px", borderRadius:20, background:filterDay===d?getDayColor(i):th.surface, color:filterDay===d?th.bg:th.textMuted, border:`1px solid ${filterDay===d?getDayColor(i):th.border}`, cursor:"pointer" }}>
-                    {formatDateLabel(d, lang)}
-                  </button>
-                ))}
+        <div style={{ display:"grid", gridTemplateColumns:"minmax(0,1fr) minmax(0,320px)", gap:14, alignItems:"start" }}>
+          {/* Left Column */}
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+
+            {/* Trip Period */}
+            <CollapsibleSection title={t.sectionTrip} icon="📅" th={th} defaultOpen={true}>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:10, paddingTop:4 }}>
+                <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                  <label style={{ fontSize:"0.7rem", color:th.textMuted, fontWeight:600 }}>{t.labelStartDate}</label>
+                  <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                    style={{ fontSize:"0.82rem", padding:"6px 10px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                  <label style={{ fontSize:"0.7rem", color:th.textMuted, fontWeight:600 }}>{t.labelDays} ({numDays} {t.labelDaysSuffix})</label>
+                  <input type="range" min={1} max={14} value={numDays} onChange={e=>setNumDays(Number(e.target.value))}
+                    style={{ width:140, accentColor:th.accent, marginTop:6 }} />
+                </div>
               </div>
-              {filteredLocations.map((loc, i) => {
-                const dayIdx = tripDays.indexOf(locationDays[loc.id] ?? tripDays[0]);
-                return (
-                  <LocationCard key={loc.id} loc={loc} index={i}
-                    dayColor={getDayColor(dayIdx >= 0 ? dayIdx : 0)}
-                    onRemove={handleRemoveLocation} onDayChange={handleDayChange}
-                    tripDays={tripDays} locationDays={locationDays}
-                    locationNotes={locationNotes} onNoteChange={handleNoteChange}
-                    city={city} lang={lang} t={t} travelMode={travelMode}
-                    showSkeleton={skeletonVisible && i === filteredLocations.length - 1} />
-                );
-              })}
-            </div>
-          </CollapsibleSection>
-        )}
-
-        <div style={{ height:4 }} />
-
-        {/* Map */
-        <CollapsibleSection title={t.sectionMap} icon="🗺" th={th} defaultOpen={locations.length > 0}>
-          <div style={{ paddingTop:8 }}>
-            <MapView locations={locations} city={city} travelMode={travelMode} locationDays={locationDays} tripDays={tripDays} />
-          </div>
-        </CollapsibleSection>
-
-        <div style={{ height:4 }} />
-
-        {/* Route & Timeline */
-        <CollapsibleSection title={t.sectionRoute} icon="🛣" th={th} defaultOpen={false}>
-          <div style={{ paddingTop:8 }}>
-            <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-              {["route","timeline"].map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className="tab-btn"
-                  style={{ flex:1, padding:"7px", borderRadius:10, background:activeTab===tab?th.accent:th.surface, color:activeTab===tab?th.bg:th.textMuted, border:`1px solid ${activeTab===tab?th.accent:th.border}`, cursor:"pointer", fontWeight:700 }}>
-                  {tab==="route"?t.route:t.timeline}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ display:"flex", gap:6, marginBottom:12 }}>
-              {["walking","transit"].map(m => (
-                <button key={m} onClick={() => setTravelMode(m)} className="tab-btn"
-                  style={{ flex:1, padding:"5px", borderRadius:8, background:travelMode===m?th.accentLight:th.surface, color:travelMode===m?th.accent:th.textMuted, border:`1px solid ${travelMode===m?th.accent:th.border}`, cursor:"pointer" }}>
-                  {m==="walking"?"🚶 "+t.walking:"🚇 "+t.transit}
-                </button>
-              ))}
-            </div>
-
-            {locations.length < 2 && <div style={{ fontSize:"0.8rem", color:th.textMuted, textAlign:"center", padding:"20px 0" }}>{t.noRouteHint}</div>}
-
-            {activeTab === "route" && locations.length >= 2 && (
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {dayGroups.map((group, gi) => (
-                  <div key={group.day}>
-                    <div style={{ fontSize:"0.72rem", fontWeight:700, color:getDayColor(tripDays.indexOf(group.day)), marginBottom:6, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                      📅 {formatDateLabel(group.day, lang)}
-                    </div>
-                    {group.locs.map((loc, i) => (
-                      <div key={loc.id}>
-                        <div style={{ display:"flex", gap:10, alignItems:"center", padding:"8px 12px", borderRadius:10, background:th.card, border:`1px solid ${th.border}` }}>
-                          <div style={{ width:26, height:26, borderRadius:"50%", background:`${getDayColor(tripDays.indexOf(group.day))}22`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"0.85rem", border:`1.5px solid ${getDayColor(tripDays.indexOf(group.day))}` }}>
-                            {i+1}
-                          </div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.text }}>{loc.name}</div>
-                            <div style={{ fontSize:"0.7rem", color:th.textMuted }}>{loc.area || loc.type}</div>
-                          </div>
-                          {loc.duration && <span style={{ fontSize:"0.7rem", color:th.textFaint }}>⏱ {loc.duration}</span>}
-                        </div>
-                        {i < group.locs.length - 1 && (
-                          <div style={{ display:"flex", alignItems:"center", gap:8, padding:"4px 16px" }}>
-                            <div style={{ width:1, height:20, background:th.border, margin:"0 12px" }} />
-                            <TravelTimeBadge from={group.locs[i]} to={group.locs[i+1]} mode={travelMode} th={th} />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:10 }}>
+                {tripDays.map((d,i) => (
+                  <div key={d} style={{ fontSize:"0.68rem", padding:"3px 10px", borderRadius:20, background:`${getDayColor(i)}22`, border:`1px solid ${getDayColor(i)}88`, color:th.text }}>
+                    {formatDateLabel(d, lang)}
                   </div>
                 ))}
               </div>
-            )}
+            </CollapsibleSection>
 
-            {activeTab === "timeline" && locations.length >= 2 && (
-              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                {dayGroups.map((group, gi) => {
-                  let timeMin = 9 * 60;
-                  return (
-                    <div key={group.day}>
-                      <div style={{ fontSize:"0.72rem", fontWeight:700, color:getDayColor(tripDays.indexOf(group.day)), marginBottom:6, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                        📅 {formatDateLabel(group.day, lang)}
-                      </div>
-                      {group.locs.map((loc, i) => {
-                        const h = String(Math.floor(timeMin/60)).padStart(2,"0");
-                        const m = String(timeMin%60).padStart(2,"0");
-                        const durMatch = (loc.duration||"").match(/[\d,.]+/);
-                        const durH = durMatch ? parseFloat(durMatch[0].replace(",",".")) : 1;
-                        timeMin += Math.round(durH * 60);
-                        const tt = i < group.locs.length-1 ? calcTravelTime(loc, group.locs[i+1]) : null;
-                        const transfer = tt ? (travelMode==="walking" ? tt.walkMin : tt.transitMin) : 0;
-                        timeMin += transfer;
-                        return (
-                          <div key={loc.id} style={{ display:"flex", gap:10, marginBottom:6 }}>
-                            <div style={{ width:46, flexShrink:0, textAlign:"right", fontSize:"0.72rem", color:th.textMuted, paddingTop:8, fontWeight:600 }}>{h}:{m}</div>
-                            <div style={{ width:2, background:`${getDayColor(tripDays.indexOf(group.day))}44`, borderRadius:2, flexShrink:0, position:"relative" }}>
-                              <div style={{ position:"absolute", top:8, left:-4, width:10, height:10, borderRadius:"50%", background:getDayColor(tripDays.indexOf(group.day)), border:`2px solid ${th.bg}` }} />
-                            </div>
-                            <div style={{ flex:1, padding:"6px 10px", borderRadius:10, background:th.card, border:`1px solid ${th.border}`, marginBottom:2 }}>
-                              <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.text }}>{loc.name}</div>
-                              <div style={{ fontSize:"0.7rem", color:th.textMuted }}>⏱ {loc.duration}</div>
-                              {tt && <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:3 }}>→ {transfer} min {travelMode==="walking"?t.walkingTime:t.transitTime}</div>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
+            {/* Add Location */}
+            <CollapsibleSection title={t.addPlace} icon="➕" th={th} defaultOpen={true}>
+              <div style={{ display:"flex", flexDirection:"column", gap:10, paddingTop:4 }}>
+                <div style={{ display:"flex", gap:8 }}>
+                  <input value={linkInput} onChange={e=>{setLinkInput(e.target.value);setLinkError("");}}
+                    onKeyDown={e=>{if(e.key==="Enter")analyzeLink();}}
+                    placeholder={t.linkPlaceholder}
+                    style={{ flex:1, fontSize:"0.82rem", padding:"8px 12px", borderRadius:12, background:th.input, color:th.text, border:`1px solid ${linkError?th.warning:th.inputBorder}` }} />
+                  <button onClick={analyzeLink} disabled={analyzing}
+                    style={{ padding:"8px 14px", borderRadius:12, background:analyzing?th.surface:th.accent, color:analyzing?th.textMuted:th.bg, border:`1px solid ${th.border}`, cursor:analyzing?"not-allowed":"pointer", fontWeight:700, display:"flex", alignItems:"center", gap:6 }}>
+                    {analyzing ? <Spinner size={14} /> : null}
+                    {analyzing ? t.analyzing : t.analyze}
+                  </button>
+                </div>
+                {linkError && <div style={{ fontSize:"0.75rem", color:th.warning }}>{linkError}</div>}
+                {skeletonVisible && <SkeletonCard th={th} />}
+                <div>
+                  <div style={{ fontSize:"0.7rem", color:th.textMuted, marginBottom:6 }}>{t.demo}</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    {(city.sampleLocations||[]).map(loc => (
+                      <button key={loc.id} onClick={()=>addDemoLocation(loc)}
+                        style={{ fontSize:"0.72rem", padding:"4px 10px", borderRadius:20, background:th.tag, border:`1px solid ${th.border}`, color:th.tagText, cursor:"pointer" }}>
+                        {loc.icon} {loc.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
+            </CollapsibleSection>
+
+            {/* Locations List */}
+            {safeLocations.length > 0 && (
+              <CollapsibleSection title={`${t.myPlaces} (${safeLocations.length})`} icon="📍" th={th} defaultOpen={true}
+                badge={`${safeLocations.length} ${t.places}`}>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:10, paddingTop:4 }}>
+                  <button onClick={()=>setFilterDay("all")} style={{ fontSize:"0.7rem", padding:"3px 10px", borderRadius:20, background:filterDay==="all"?th.accent:th.surface, color:filterDay==="all"?th.bg:th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer" }}>{t.allDays}</button>
+                  {tripDays.map((d,i) => (
+                    <button key={d} onClick={()=>setFilterDay(d)} style={{ fontSize:"0.7rem", padding:"3px 10px", borderRadius:20, background:filterDay===d?getDayColor(i):th.surface, color:filterDay===d?th.bg:th.textMuted, border:`1px solid ${filterDay===d?getDayColor(i):th.border}`, cursor:"pointer" }}>
+                      {formatDateLabel(d, lang)}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+                  <button onClick={undo} disabled={!canUndo} style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:8, background:th.surface, border:`1px solid ${th.border}`, color:canUndo?th.textMuted:th.textFaint, cursor:canUndo?"pointer":"default" }}>↩ Undo</button>
+                  <button onClick={redo} disabled={!canRedo} style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:8, background:th.surface, border:`1px solid ${th.border}`, color:canRedo?th.textMuted:th.textFaint, cursor:canRedo?"pointer":"default" }}>↪ Redo</button>
+                </div>
+
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {filteredLocations.map((loc, i) => {
+                    const day = locationDays[loc.id] ?? tripDays[0];
+                    const dayIdx = tripDays.indexOf(day);
+                    const color = getDayColor(dayIdx < 0 ? 0 : dayIdx);
+                    return (
+                      <LocationCard key={loc.id} loc={loc} index={i} dayColor={color}
+                        onRemove={removeLocation} onDayChange={handleDayChange}
+                        tripDays={tripDays} locationDays={locationDays}
+                        locationNotes={locationNotes} onNoteChange={handleNoteChange}
+                        city={city} lang={lang} t={t} travelMode={travelMode} />
+                    );
+                  })}
+                </div>
+              </CollapsibleSection>
             )}
+
+            {/* Map */}
+            <CollapsibleSection title={t.sectionMap} icon="🗺️" th={th} defaultOpen={true}>
+              <div style={{ paddingTop:4 }}>
+                <MapPlaceholder locations={safeLocations} locationDays={locationDays} tripDays={tripDays} city={city} th={th} />
+              </div>
+            </CollapsibleSection>
+
+            {/* Route & Timeline */}
+            <CollapsibleSection title={t.sectionRoute} icon="🧭" th={th} defaultOpen={true}>
+              <div style={{ paddingTop:4 }}>
+                <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+                  {["route","timeline"].map(tab => (
+                    <button key={tab} onClick={()=>setActiveTab(tab)}
+                      style={{ fontSize:"0.75rem", padding:"4px 12px", borderRadius:20, background:activeTab===tab?th.accent:th.surface, color:activeTab===tab?th.bg:th.textMuted, border:`1px solid ${th.border}`, cursor:"pointer", fontWeight:activeTab===tab?700:400 }}>
+                      {tab==="route"?t.route:t.timeline}
+                    </button>
+                  ))}
+                  <div style={{ marginLeft:"auto", display:"flex", gap:6 }}>
+                    {["walking","transit"].map(mode => (
+                      <button key={mode} onClick={()=>setTravelMode(mode)}
+                        style={{ fontSize:"0.72rem", padding:"3px 10px", borderRadius:20, background:travelMode===mode?th.accentLight:th.surface, color:travelMode===mode?th.accent:th.textMuted, border:`1px solid ${travelMode===mode?th.accent:th.border}`, cursor:"pointer" }}>
+                        {mode==="walking"?"🚶":"🚇"} {mode==="walking"?t.walking:t.transit}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <RouteTimeline locations={safeLocations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} t={t} th={th} />
+              </div>
+            </CollapsibleSection>
+
           </div>
-        </CollapsibleSection>
 
-        </div>{/* Ende mittlere Spalte */}
+          {/* Right Column */}
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
 
-        {/* ===== RECHTE SPALTE ===== */}
-        <div className="app-col app-col-right" style={{ borderLeft: "1px solid " + th.border }}>
+            {/* Weather */}
+            <CollapsibleSection title={t.weather} icon="🌤" th={th} defaultOpen={true}>
+              <div style={{ paddingTop:4 }}>
+                <WeatherWidget city={city} startDate={startDate} numDays={numDays} lang={lang} th={th} />
+              </div>
+            </CollapsibleSection>
 
-        {/* Packing List */
-        <CollapsibleSection title={t.packingList} icon="🎒" th={th} defaultOpen={false}>
-          <div style={{ paddingTop:8 }}>
-            <PackingList locations={locations} numDays={numDays} lang={lang} />
+            {/* Budget */}
+            {safeLocations.length > 0 && (
+              <CollapsibleSection title={t.budgetTitle} icon="💰" th={th} defaultOpen={true}>
+                <div style={{ paddingTop:4 }}>
+                  <BudgetPanel locations={safeLocations} city={city} lang={lang} t={t} th={th} />
+                </div>
+              </CollapsibleSection>
+            )}
+
+            {/* Packing List */}
+            <CollapsibleSection title={t.packingList} icon="🧳" th={th} defaultOpen={false}>
+              <div style={{ paddingTop:4 }}>
+                <PackingList locations={safeLocations} numDays={numDays} lang={lang} />
+              </div>
+            </CollapsibleSection>
+
+            {/* Save Plans */}
+            <CollapsibleSection title={t.savedPlans} icon="📂" th={th} defaultOpen={false}>
+              <div style={{ display:"flex", flexDirection:"column", gap:8, paddingTop:4 }}>
+                <div style={{ display:"flex", gap:8 }}>
+                  <input value={planName} onChange={e=>setPlanName(e.target.value)} placeholder={t.planNamePlaceholder}
+                    style={{ flex:1, fontSize:"0.8rem", padding:"6px 10px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}` }} />
+                  <button onClick={savePlan} style={{ padding:"6px 14px", borderRadius:10, background:saveFlash?th.success:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, transition:"background 0.2s" }}>
+                    {saveFlash ? t.saved : t.save}
+                  </button>
+                </div>
+                {savedPlans.length === 0 && (
+                  <div style={{ fontSize:"0.78rem", color:th.textFaint, textAlign:"center", padding:"10px 0" }}>{t.noPlans}</div>
+                )}
+                {savedPlans.map(plan => (
+                  <div key={plan.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", borderRadius:10, background:th.card, border:`1px solid ${th.border}` }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:"0.8rem", fontWeight:700, color:th.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{plan.name}</div>
+                      <div style={{ fontSize:"0.68rem", color:th.textFaint }}>{plan.locations?.length || 0} {t.places} · {plan.startDate}</div>
+                    </div>
+                    <button onClick={()=>loadPlan(plan)} style={{ fontSize:"0.7rem", padding:"4px 10px", borderRadius:8, background:th.accentLight, border:`1px solid ${th.accent}`, color:th.accent, cursor:"pointer" }}>{t.load}</button>
+                    <button onClick={()=>deletePlan(plan.id)} style={{ fontSize:"0.7rem", padding:"4px 8px", borderRadius:8, background:th.warningBg, border:`1px solid ${th.warning}`, color:th.warning, cursor:"pointer" }}>×</button>
+                  </div>
+                ))}
+              </div>
+            </CollapsibleSection>
+
+            {/* Share */}
+            <CollapsibleSection title={t.share} icon="🔗" th={th} defaultOpen={false}>
+              <div style={{ display:"flex", flexDirection:"column", gap:8, paddingTop:4 }}>
+                <button onClick={createShareLink} style={{ padding:"8px 14px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700 }}>
+                  🔗 {t.createLink}
+                </button>
+                {shareUrl && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                    <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{t.shareHint}</div>
+                    <div style={{ display:"flex", gap:6 }}>
+                      <input readOnly value={shareUrl} style={{ flex:1, fontSize:"0.68rem", padding:"5px 8px", borderRadius:8, background:th.input, color:th.textMuted, border:`1px solid ${th.inputBorder}`, overflow:"hidden", textOverflow:"ellipsis" }} />
+                      <button onClick={copyShareUrl} style={{ padding:"5px 10px", borderRadius:8, background:copyFlash?th.success:th.surface, border:`1px solid ${th.border}`, color:copyFlash?th.bg:th.textMuted, cursor:"pointer", fontWeight:700, transition:"background 0.2s" }}>
+                        {copyFlash ? t.copied : t.copy}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CollapsibleSection>
+
           </div>
-        </CollapsibleSection>
-
-        <div style={{ height:4 }} />
-
-        {/* Budget */
-        <CollapsibleSection title={t.budget} icon="💰" th={th} defaultOpen={false}>
-          <div style={{ paddingTop:8 }}>
-            <BudgetView locations={locations} city={city} lang={lang} t={t} />
-          </div>
-        </CollapsibleSection>
-
-        <div style={{ height:4 }} />
-
-        {/* Save Plans */
-        <CollapsibleSection title={t.savePlans} icon="💾" th={th} defaultOpen={false}>
-          <div style={{ display:"flex", flexDirection:"column", gap:10, paddingTop:8 }}>
-            <div style={{ display:"flex", gap:8 }}>
-              <input value={planName} onChange={e => setPlanName(e.target.value)}
-                placeholder={t.planNamePlaceholder}
-                style={{ flex:1, padding:"8px 12px", borderRadius:10, background:th.input, color:th.text, border:`1px solid ${th.inputBorder}`, fontSize:"0.82rem" }} />
-              <button onClick={handleSavePlan} className="btn-primary"
-                style={{ padding:"8px 16px", borderRadius:10, background:th.accent, color:th.bg, border:"none", cursor:"pointer", fontWeight:700, fontSize:"0.82rem" }}>
-                {saveMsg || t.save}
-              </button>
-            </div>
-            <div style={{ fontSize:"0.75rem", color:th.textMuted, fontWeight:700, marginTop:4 }}>{t.savedPlans}</div>
-            <SavedPlansView savedPlans={savedPlans} onLoad={handleLoadPlan} onDelete={handleDeletePlan} lang={lang} t={t} />
-          </div>
-        </CollapsibleSection>
-
-        <div style={{ height:4 }} />
-
-        {/* Share */
-        <CollapsibleSection title={t.share} icon="🔗" th={th} defaultOpen={false}>
-          <div style={{ paddingTop:8 }}>
-            <ShareView locations={locations} cityId={cityId} startDate={startDate} numDays={numDays} lang={lang} t={t} />
-          </div>
-        </CollapsibleSection>
-
-        <div style={{ height:8 }} />
-        <div style={{ textAlign:"center", fontSize:"0.7rem", color:th.textFaint, paddingBottom:16 }}>
-          {t.footerText}
         </div>
 
-        </div>{/* Ende rechte Spalte */}
-      </div>{/* Ende app-shell */}
+        {/* Footer */}
+        <div style={{ textAlign:"center", marginTop:32, fontSize:"0.72rem", color:th.textFaint }}>
+          <div style={{ marginBottom:4 }}>✈️ {t.footerText}</div>
+          <div style={{ color:th.textFaint, opacity:0.6 }}>Rheinische Post Mediengruppe · {new Date().getFullYear()}</div>
+        </div>
+      </div>
     </div>
   );
 }
