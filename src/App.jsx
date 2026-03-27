@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.1",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.2",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.1",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.2",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -998,7 +998,7 @@ export default function App() {
         <div style={{ maxWidth:900, margin:"0 auto", display:"flex", alignItems:"center", gap:12, height:52 }}>
           <span style={{ fontSize:"1.2rem" }}>{city.emoji}</span>
           <span style={{ fontWeight:800, fontSize:"1rem", color:th.text, letterSpacing:"-0.02em" }}>{t.appName}</span>
-          <span style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:20, background:th.accentLight, color:th.accent, fontWeight:700 }}>v5.1</span>
+          <span style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:20, background:th.accentLight, color:th.accent, fontWeight:700 }}>v5.2</span>
           <div style={{ flex:1 }} />
           <button onClick={() => setShowCityPicker(v=>!v)} style={{ fontSize:"0.75rem", padding:"4px 10px", borderRadius:20, background:th.surface, border:`1px solid ${th.border}`, color:th.textMuted, cursor:"pointer" }}>
             {city.country} {city.name}
@@ -1012,7 +1012,7 @@ export default function App() {
           </button>
           <button onClick={() => setShowApiPanel(v=>!v)} style={{ fontSize:"0.65rem", padding:"3px 8px", borderRadius:20, background:apiKey?th.successBg:th.warningBg, border:`1px solid ${apiKey?th.success:th.warning}`, color:apiKey?th.success:th.warning, cursor:"pointer" }}>
             {apiKey ? t.apiActive : t.apiMissing}
-          </button>}
+          </button>
         </div>
       </div>
 
@@ -1277,13 +1277,14 @@ export default function App() {
               </div>
             </CollapsibleSection>
 
-          </div>
-        </div>
+          </div>{/* end Right Column */}
+
+        </div>{/* end flex column */}
 
         {/* Footer */}
         <div style={{ textAlign:"center", marginTop:32, fontSize:"0.72rem", color:th.textFaint }}>
           <div style={{ marginBottom:4 }}>✈️ {t.footerText}</div>
-          <div style={{ color:th.textFaint, opacity:0.6 }}>Rheinische Post Mediengruppe · {new Date().getFullYear()}</div>
+          <div style={{ color:th.textFaint, opacity:0.6 }}>{new Date().getFullYear()}</div>
         </div>
       </div>
     </div>
