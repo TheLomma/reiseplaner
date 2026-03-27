@@ -1,28 +1,11 @@
-# 🧳 Paris Reiseplaner – Web App v1.6
-
-Interaktive Reiseplanungs-App für Paris mit KI-Unterstützung.
-
-## Features
-- 🔗 Ort hinzufügen per Google Maps Link oder URL
-- 📍 Drag & Drop Sortierung, Tagesfilter, Bewertungen & Öffnungszeiten
-- 🗺️ Interaktive Karte mit Leaflet, Google Maps Export
-- 📅 Automatischer Tagesplan (Timeline)
-- 💰 Budget-Tracker mit Eintrittspreisen + Extras
-- 📄 PDF-Export
-- 📋 Pläne speichern (max 10 im Browser)
-- 🤝 Teilbare Links für Reisebegleiter
-- 🌤️ Wetter-Widget (Open-Meteo API)
-- 🌍 Mehrsprachig (Deutsch & Englisch)
-- 🔐 Optionaler OpenAI API-Key für echte Link-Analyse
+[README.md](https://github.com/user-attachments/files/26306300/README.md)
+# Reiseplaner v5.2
+React + Vite + PWA
 
 ## Setup
-```bash
-npm install
-npm run dev
-```
+npm install && npm run dev
 
-## Tech Stack
-React 18, Vite, Tailwind CSS, Leaflet, OpenAI API (optional), Open-Meteo API
-
-## Lizenz
-MIT
+## Icons
+public/icon-180.png  -> Apple Touch Icon
+public/icon-192.png  -> PWA Icon Android
+public/icon-512.png  -> PWA Icon maskable
