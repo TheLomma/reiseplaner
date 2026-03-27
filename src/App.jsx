@@ -1081,7 +1081,7 @@ export default function App() {
           </div>
         )}
 
-        <div style={{ display:"grid", gridTemplateColumns:"minmax(0,1fr) minmax(0,320px)", gap:14, alignItems:"start" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
           {/* Left Column */}
           <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
 
