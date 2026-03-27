@@ -35,6 +35,64 @@ const THEMES = {
   }
 };
 
+if (typeof window !== "undefined" && !document.getElementById("pwa-icon-inject")) {
+  // Generate a 180x180 canvas icon for iOS home screen
+  const iconCanvas = document.createElement("canvas");
+  iconCanvas.width = 180; iconCanvas.height = 180;
+  const ctx = iconCanvas.getContext("2d");
+  // Background gradient
+  const grad = ctx.createLinearGradient(0,0,180,180);
+  grad.addColorStop(0, "#2e2820"); grad.addColorStop(1, "#1e1a14");
+  ctx.fillStyle = grad;
+  const r = 36;
+  ctx.beginPath(); ctx.moveTo(r,0); ctx.lineTo(180-r,0); ctx.quadraticCurveTo(180,0,180,r);
+  ctx.lineTo(180,180-r); ctx.quadraticCurveTo(180,180,180-r,180);
+  ctx.lineTo(r,180); ctx.quadraticCurveTo(0,180,0,180-r);
+  ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.closePath(); ctx.fill();
+  // Globe circle
+  ctx.strokeStyle = "#c4a882"; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.arc(90,80,46,0,Math.PI*2); ctx.stroke();
+  // Meridian lines
+  ctx.beginPath(); ctx.ellipse(90,80,22,46,0,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(44,80); ctx.lineTo(136,80); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(52,55); ctx.lineTo(128,55); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(52,105); ctx.lineTo(128,105); ctx.stroke();
+  // Plane emoji
+  ctx.font = "bold 38px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText("✈", 90, 80);
+  // Label
+  ctx.fillStyle = "#c4a882"; ctx.font = "bold 16px 'Source Sans 3', sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.fillText("Reiseplaner", 90, 158);
+  const iconDataUrl = iconCanvas.toDataURL("image/png");
+  // Inject apple-touch-icon
+  const linkEl = document.createElement("link");
+  linkEl.id = "pwa-icon-inject";
+  linkEl.rel = "apple-touch-icon";
+  linkEl.setAttribute("sizes", "180x180");
+  linkEl.href = iconDataUrl;
+  document.head.appendChild(linkEl);
+  // iOS status bar
+  const metaStatusBar = document.createElement("meta");
+  metaStatusBar.name = "apple-mobile-web-app-status-bar-style";
+  metaStatusBar.content = "black-translucent";
+  document.head.appendChild(metaStatusBar);
+  // iOS capable
+  const metaCapable = document.createElement("meta");
+  metaCapable.name = "apple-mobile-web-app-capable";
+  metaCapable.content = "yes";
+  document.head.appendChild(metaCapable);
+  // App title
+  const metaTitle = document.createElement("meta");
+  metaTitle.name = "apple-mobile-web-app-title";
+  metaTitle.content = "Reiseplaner";
+  document.head.appendChild(metaTitle);
+  // Favicon
+  let fav = document.querySelector('link[rel="icon"]');
+  if (!fav) { fav = document.createElement("link"); fav.rel="icon"; document.head.appendChild(fav); }
+  fav.href = iconDataUrl;
+}
+
 if (typeof window !== "undefined" && !document.getElementById("app-theme-styles")) {
   const s = document.createElement("style");
   s.id = "app-theme-styles";
