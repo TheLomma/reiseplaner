@@ -291,7 +291,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.5",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.6",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -320,7 +320,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.5",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.6",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1567,7 +1567,7 @@ Antworte NUR mit JSON:
               <RouteTimeline locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
             </>
           )}
-          {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} />}
+          {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} lang={lang} />}
           {activeTab==="budget" && <BudgetPanel locations={locations} city={city} lang={lang} th={th} />}
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
           {activeTab==="share" && <SharePanel lang={lang} th={th} />}
