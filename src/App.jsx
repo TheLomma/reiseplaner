@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.7",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.8",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.7",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.8",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -887,7 +887,26 @@ Antworte NUR mit JSON:
             const di = tripDays.indexOf(locationDays[loc.id]);
             const col = di >= 0 ? DAY_COLORS[di % DAY_COLORS.length] : "#c4a882";
             const icon = L.divIcon({ className:"", html:`<div style="background:${col};width:34px;height:34px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${loc.icon||"\ud83d\udccd"}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
-            const m = L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`<b>${loc.name}</b><br/>${loc.type||""}<br/>${loc.area?"\ud83d\udccd "+loc.area+"<br/>":""}${loc.openingHoursText?"\ud83d\udd50 "+loc.openingHoursText+"<br/>":""}${loc.entryCostText?"\ud83c\udf9f "+loc.entryCostText:""}`);
+            const cost = (() => { const c = city?.entryCosts; if (!c) return null; const k = Object.keys(c).find(k => loc.name?.toLowerCase().includes(k.toLowerCase())); return k ? c[k] : null; })();
+            const rating = (() => { const r = city?.ratings; if (!r) return null; const k = Object.keys(r).find(k => loc.name?.toLowerCase().includes(k.toLowerCase())); return k ? r[k] : null; })();
+            const costStr = cost ? (cost.min===0&&cost.max===0 ? '✅ Kostenlos' : `🎟 ${cost.currency}${cost.min}${cost.max!==cost.min?'–'+cost.max:''}`) : '';
+            const ratingStr = rating ? `⭐ ${rating.stars.toFixed(1)} (${rating.reviews?.toLocaleString()})${rating.badge?' · '+rating.badge:''}` : '';
+            const hoursStr = loc.openingHoursText ? `🕐 ${loc.openingHoursText}` : '';
+            const areaStr = loc.area ? `📍 ${loc.area}` : '';
+            const typeStr = loc.type ? `<span style="background:${col}22;color:${col};border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600">${loc.type}</span>` : '';
+            const popupHtml = `<div style="min-width:180px;max-width:220px;font-family:sans-serif">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <div style="background:${col};width:10px;height:10px;border-radius:50%;flex-shrink:0"></div>
+                <b style="font-size:14px">${loc.icon||'📍'} ${loc.name}</b>
+              </div>
+              ${typeStr ? `<div style="margin-bottom:5px">${typeStr}</div>` : ''}
+              ${areaStr ? `<div style="font-size:12px;color:#666;margin-bottom:3px">${areaStr}</div>` : ''}
+              ${hoursStr ? `<div style="font-size:12px;color:#555;margin-bottom:3px">${hoursStr}</div>` : ''}
+              ${costStr ? `<div style="font-size:12px;color:#555;margin-bottom:3px">${costStr}</div>` : ''}
+              ${ratingStr ? `<div style="font-size:12px;color:#b8860b;margin-bottom:3px">${ratingStr}</div>` : ''}
+              ${loc.address ? `<div style="margin-top:6px"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" style="font-size:11px;color:#5b8dd9">🗺 Google Maps öffnen</a></div>` : ''}
+            </div>`;
+            const m = L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(popupHtml, {maxWidth:240});
             markersRef.current.push(m); bounds.push([loc.lat,loc.lng]);
           });
           const byDay = {};
