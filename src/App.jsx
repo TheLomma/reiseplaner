@@ -203,6 +203,71 @@ const CITIES = {
   },
 };
 
+const DEMO_TRIPS = {
+  paris: {
+    cityId: "paris",
+    numDays: 3,
+    startDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().slice(0,10),
+    locations: [
+      {id:101,name:"Eiffelturm",type:"Sehenswürdigkeit",address:"Champ de Mars, 75007 Paris",lat:48.8584,lng:2.2945,area:"7. Arrondissement",duration:"1,5 Std.",icon:"🗼"},
+      {id:102,name:"Arc de Triomphe",type:"Sehenswürdigkeit",address:"Pl. Charles de Gaulle, 75008 Paris",lat:48.8738,lng:2.295,area:"8. Arrondissement",duration:"1 Std.",icon:"🏛️"},
+      {id:103,name:"Le Grand Véfour",type:"Restaurant",address:"17 Rue de Beaujolais, 75001 Paris",lat:48.8637,lng:2.337,area:"1. Arrondissement",duration:"2 Std.",icon:"🍽️"},
+      {id:104,name:"Louvre Museum",type:"Museum",address:"Rue de Rivoli, 75001 Paris",lat:48.8606,lng:2.3376,area:"1. Arrondissement",duration:"3 Std.",icon:"🖼️",openingHoursText:"09:00–18:00",closedDays:["Dienstag","Tuesday"]},
+      {id:105,name:"Café de Flore",type:"Cafe",address:"172 Bd Saint-Germain, 75006 Paris",lat:48.8539,lng:2.3328,area:"Saint-Germain",duration:"1 Std.",icon:"☕",openingHoursText:"07:30–01:30",closedDays:[]},
+      {id:106,name:"Sacré-Cœur",type:"Sehenswürdigkeit",address:"35 Rue du Chevalier de la Barre, 75018 Paris",lat:48.8867,lng:2.3431,area:"Montmartre",duration:"1 Std.",icon:"⛪",openingHoursText:"06:00–22:30",closedDays:[]},
+      {id:107,name:"Marché d'Aligre",type:"Markt",address:"Place d'Aligre, 75012 Paris",lat:48.8498,lng:2.3747,area:"12. Arrondissement",duration:"1 Std.",icon:"🛒",openingHoursText:"Di–So 08:00–13:00",closedDays:["Montag","Monday"]},
+      {id:108,name:"Brasserie Lipp",type:"Restaurant",address:"151 Bd Saint-Germain, 75006 Paris",lat:48.8540,lng:2.3330,area:"Saint-Germain",duration:"1,5 Std.",icon:"🥩",openingHoursText:"12:00–23:00",closedDays:[]},
+      {id:109,name:"Musée d'Orsay",type:"Museum",address:"1 Rue de la Légion d'Honneur, 75007 Paris",lat:48.8600,lng:2.3266,area:"7. Arrondissement",duration:"2 Std.",icon:"🎨",openingHoursText:"09:30–18:00",closedDays:["Montag","Monday"]},
+    ],
+    locationDays: { 101: null, 102: null, 103: null, 104: null, 105: null, 106: null, 107: null, 108: null, 109: null },
+    locationNotes: { 101: "Tickets online vorbuchen!", 104: "Mona Lisa – früh kommen!", 106: "Sonnenuntergang von der Kuppel" },
+    assignDays: (startDate) => {
+      const d = generateTripDays(startDate, 3);
+      return { 101: d[0], 102: d[0], 103: d[0], 104: d[1], 105: d[1], 106: d[1], 107: d[2], 108: d[2], 109: d[2] };
+    },
+  },
+  london: {
+    cityId: "london",
+    numDays: 3,
+    startDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().slice(0,10),
+    locations: [
+      {id:201,name:"Tower of London",type:"Sehenswürdigkeit",address:"London EC3N 4AB",lat:51.5081,lng:-0.0759,area:"City of London",duration:"2 Std.",icon:"🏰"},
+      {id:202,name:"Big Ben",type:"Sehenswürdigkeit",address:"Westminster, London SW1A 0AA",lat:51.5007,lng:-0.1246,area:"Westminster",duration:"0,5 Std.",icon:"🕐"},
+      {id:203,name:"Borough Market",type:"Markt",address:"8 Southwark St, London SE1 1TL",lat:51.5055,lng:-0.091,area:"Southwark",duration:"1,5 Std.",icon:"🥘"},
+      {id:204,name:"The Ritz London",type:"Restaurant",address:"150 Piccadilly, London W1J 9BR",lat:51.5071,lng:-0.1422,area:"Mayfair",duration:"2 Std.",icon:"🍴",openingHoursText:"12:00–14:30, 18:00–22:00",closedDays:[]},
+      {id:205,name:"British Museum",type:"Museum",address:"Great Russell St, London WC1B 3DG",lat:51.5194,lng:-0.1270,area:"Bloomsbury",duration:"2,5 Std.",icon:"🏛️",openingHoursText:"10:00–17:00",closedDays:[]},
+      {id:206,name:"Notting Hill",type:"Stadtviertel",address:"Notting Hill, London W11",lat:51.5095,lng:-0.2005,area:"Notting Hill",duration:"1,5 Std.",icon:"🌸",openingHoursText:"Immer zugänglich",closedDays:[]},
+      {id:207,name:"Dishoom Covent Garden",type:"Restaurant",address:"12 Upper St Martin's Ln, London WC2H 9FB",lat:51.5120,lng:-0.1269,area:"Covent Garden",duration:"1,5 Std.",icon:"🍛",openingHoursText:"08:00–23:00",closedDays:[]},
+      {id:208,name:"Hyde Park",type:"Park",address:"London W2 2UH",lat:51.5073,lng:-0.1657,area:"Westminster",duration:"1 Std.",icon:"🌳",openingHoursText:"05:00–24:00",closedDays:[]},
+    ],
+    locationNotes: { 201: "Beefeater-Tour buchen!", 204: "Reservierung nötig", 205: "Rosetta Stone ansehen" },
+    assignDays: (startDate) => {
+      const d = generateTripDays(startDate, 3);
+      return { 201: d[0], 202: d[0], 203: d[0], 204: d[1], 205: d[1], 206: d[1], 207: d[2], 208: d[2] };
+    },
+  },
+  berlin: {
+    cityId: "berlin",
+    numDays: 3,
+    startDate: new Date(Date.now() + 7*24*60*60*1000).toISOString().slice(0,10),
+    locations: [
+      {id:301,name:"Brandenburger Tor",type:"Sehenswürdigkeit",address:"Pariser Platz, 10117 Berlin",lat:52.5163,lng:13.3777,area:"Mitte",duration:"0,5 Std.",icon:"🏛️"},
+      {id:302,name:"Museumsinsel",type:"Museum",address:"10178 Berlin",lat:52.5169,lng:13.4019,area:"Mitte",duration:"3 Std.",icon:"🏛️"},
+      {id:303,name:"Zur letzten Instanz",type:"Restaurant",address:"Waisenstraße 14-16, 10179 Berlin",lat:52.5156,lng:13.4142,area:"Mitte",duration:"1,5 Std.",icon:"🍺",openingHoursText:"12:00–23:00",closedDays:["Montag","Monday"]},
+      {id:304,name:"East Side Gallery",type:"Sehenswürdigkeit",address:"Mühlenstr. 3-100, 10243 Berlin",lat:52.5053,lng:13.4395,area:"Friedrichshain",duration:"1 Std.",icon:"🎨"},
+      {id:305,name:"Markthalle Neun",type:"Markt",address:"Eisenbahnstraße 42-43, 10997 Berlin",lat:52.4994,lng:13.4274,area:"Kreuzberg",duration:"1 Std.",icon:"🛒",openingHoursText:"Do 17:00–22:00, Sa 10:00–18:00",closedDays:[]},
+      {id:306,name:"Café Einstein Stammhaus",type:"Cafe",address:"Kurfürstenstraße 58, 10785 Berlin",lat:52.5044,lng:13.3598,area:"Tiergarten",duration:"1 Std.",icon:"☕",openingHoursText:"08:00–23:00",closedDays:[]},
+      {id:307,name:"Berliner Dom",type:"Sehenswürdigkeit",address:"Am Lustgarten, 10178 Berlin",lat:52.5190,lng:13.4009,area:"Mitte",duration:"1 Std.",icon:"⛪",openingHoursText:"09:00–20:00",closedDays:[]},
+      {id:308,name:"Prater Biergarten",type:"Restaurant",address:"Kastanienallee 7-9, 10435 Berlin",lat:52.5377,lng:13.4131,area:"Prenzlauer Berg",duration:"2 Std.",icon:"🌿",openingHoursText:"12:00–24:00",closedDays:[]},
+    ],
+    locationNotes: { 302: "Pergamonmuseum – Tickets vorbuchen!", 304: "Bruderkuss fotografieren", 306: "Wiener Frühstück probieren" },
+    assignDays: (startDate) => {
+      const d = generateTripDays(startDate, 3);
+      return { 301: d[0], 302: d[0], 303: d[0], 304: d[1], 305: d[1], 306: d[1], 307: d[2], 308: d[2] };
+    },
+  },
+};
+
 const DAY_COLORS = ["#e07b54","#5b8dd9","#6abf69","#d4a84b","#a66dd4","#4bb8c4","#d46d8a","#7aab7a","#c4a882","#8b6a3e","#5a8fa3","#c97a5a"];
 function getDayColor(i) { return DAY_COLORS[i % DAY_COLORS.length]; }
 
@@ -226,7 +291,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.3",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.4",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -255,7 +320,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.3",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.4",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -611,7 +676,7 @@ Antworte NUR mit JSON:
         {showApiInput && (
           <div style={{ marginBottom:12, padding:"10px 12px", background:th.surface, borderRadius:10, border:`1px solid ${th.border}` }}>
             <div style={{ fontSize:"0.75rem", color:th.textMuted, marginBottom:6 }}>🔑 {t.apiTitle} · <span style={{color:th.textFaint}}>{t.apiHint}</span></div>
-            <div style={{ display:"flex", gap:6 }}>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
               <input type="password" value={apiKeyInput} onChange={e=>setApiKeyInput(e.target.value)} placeholder="sk-..." style={{ flex:1, background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"5px 9px", fontSize:"0.8rem", color:th.text }} />
               <button onClick={saveApiKey} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:8, padding:"5px 12px", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>{apiKeySaved?t.apiSaved:t.apiSave}</button>
               {apiKey && <button onClick={deleteApiKey} style={{ background:"none", border:`1px solid ${th.border}`, borderRadius:8, padding:"5px 10px", color:th.warning, fontSize:"0.75rem", cursor:"pointer" }}>{t.apiDelete}</button>}
@@ -624,7 +689,7 @@ Antworte NUR mit JSON:
             placeholder={t.linkPlaceholder}
             style={{ flex:1, background:th.input, border:`1px solid ${error?th.warning:th.inputBorder}`, borderRadius:10, padding:"8px 12px", fontSize:"0.85rem", color:th.text, outline:"none" }}/>
           <button onClick={analyze} disabled={loading}
-            style={{ background:th.accent, color:th.bg, border:"none", borderRadius:10, padding:"8px 16px", fontWeight:700, fontSize:"0.85rem", cursor:loading?"wait":"pointer", display:"flex", alignItems:"center", gap:6 }}>
+            style={{ background:th.accent, color:th.bg, border:"none", borderRadius:10, padding:"8px 16px", fontWeight:700, fontSize:"0.85rem", cursor:loading?"wait":"pointer", display:"flex", alignItems:"center", gap:6, alignItems:"center" }}>
             {loading ? <Spinner size={14} color={th.bg}/> : null}{loading ? t.analyzing : t.analyze}
           </button>
         </div>
@@ -733,7 +798,7 @@ Antworte NUR mit JSON:
       <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:14, padding:"12px 14px", marginBottom:14 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
           <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.accent }}>🤖 {lang==="de" ? "KI-Routenoptimierung" : "AI Route Optimization"}</div>
-          <button onClick={optimize} disabled={loading} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:9, padding:"5px 14px", fontWeight:700, fontSize:"0.78rem", cursor:loading?"wait":"pointer", display:"flex", alignItems:"center", gap:6 }}>
+          <button onClick={optimize} disabled={loading} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:9, padding:"5px 14px", fontWeight:700, fontSize:"0.78rem", cursor:loading?"wait":"pointer", display:"flex", alignItems:"center", gap:6, alignItems:"center" }}>
             {loading ? <Spinner size={12} color={th.bg}/> : "✨"} {loading ? (lang==="de"?"Analysiere...":"Analyzing...") : (lang==="de"?"Route optimieren":"Optimize Route")}
           </button>
         </div>
@@ -1063,7 +1128,7 @@ Antworte NUR mit JSON:
         {link && (
           <div style={{ marginTop:8 }}>
             <div style={{ fontSize:"0.72rem", color:th.textMuted, marginBottom:4 }}>{t.shareHint}</div>
-            <div style={{ display:"flex", gap:6 }}>
+            <div style={{ display:"flex", gap:6, alignItems:"center" }}>
               <input readOnly value={link} style={{ flex:1, background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"4px 8px", fontSize:"0.72rem", color:th.textMuted }} />
               <button onClick={copy} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:8, padding:"4px 10px", fontWeight:700, fontSize:"0.75rem", cursor:"pointer" }}>{copied ? t.copied : t.copy}</button>
             </div>
@@ -1256,47 +1321,71 @@ Antworte NUR mit JSON:
     );
   }
 
-    function CitySelector({ currentCityId, onSelect, lang, th }) {
-    const t = TRANSLATIONS[lang];
-    const [custom, setCustom] = useState("");
-    return (
-      <div style={{ marginBottom:16 }}>
-        <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>{t.selectCity}</div>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-          {Object.values(CITIES).map(c => (
-            <button key={c.id} onClick={()=>onSelect(c.id)}
-              style={{ fontSize:"0.8rem", padding:"5px 12px", borderRadius:10, border:`1.5px solid ${currentCityId===c.id ? th.accent : th.border}`, background: currentCityId===c.id ? th.accentLight : "transparent", color: currentCityId===c.id ? th.accent : th.textMuted, cursor:"pointer", fontWeight: currentCityId===c.id ? 700 : 400 }}>
-              {c.country} {c.name}
+    function CitySelector({ currentCityId, onSelect, lang, th, onLoadDemoTrip }) {
+      const t = TRANSLATIONS[lang];
+      const hasDemo = !!DEMO_TRIPS[currentCityId];
+      return (
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase", marginBottom:8 }}>{t.selectCity}</div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6, alignItems:"center" }}>
+            {Object.values(CITIES).map(c => (
+              <button key={c.id} onClick={()=>onSelect(c.id)}
+                style={{ fontSize:"0.8rem", padding:"5px 12px", borderRadius:10, border:`1.5px solid ${currentCityId===c.id ? th.accent : th.border}`, background: currentCityId===c.id ? th.accentLight : "transparent", color: currentCityId===c.id ? th.accent : th.textMuted, cursor:"pointer", fontWeight: currentCityId===c.id ? 700 : 400 }}>
+                {c.country} {c.name}
+              </button>
+            ))}
+          </div>
+          {hasDemo && onLoadDemoTrip && (
+            <button
+              onClick={() => onLoadDemoTrip(currentCityId)}
+              style={{
+                marginTop: 10,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                background: `linear-gradient(135deg, ${th.gold}22, ${th.gold}11)`,
+                border: `1.5px solid ${th.gold}`,
+                borderRadius: 11,
+                padding: "7px 18px",
+                color: th.gold,
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                letterSpacing: 0.3,
+                boxShadow: `0 2px 12px ${th.gold}22`,
+                transition: "all 0.18s",
+              }}
+            >
+              🧪 {lang === "de" ? `Demo-Reise laden · ${CITIES[currentCityId]?.name}` : `Load Demo Trip · ${CITIES[currentCityId]?.name}`}
             </button>
-          ))}
+          )}
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  export default function App() {
-    const { mode, th } = useTheme();
-    const [lang, setLang] = useState(() => safeLocalGet("rp_lang", "de"));
-    const t = TRANSLATIONS[lang];
-    const [cityId, setCityId] = useState(() => safeLocalGet("rp_city", "paris"));
-    const city = CITIES[cityId] || CITIES.paris;
-    const [locations, setLocations, undoRedo] = useUndoRedo([]);
-    const [locationDays, setLocationDays] = useState({});
-    const [locationNotes, setLocationNotes] = useState({});
-    const [travelMode, setTravelMode] = useState("walking");
-    const [activeTab, setActiveTab] = useState("route");
-    const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0,10));
-    const [numDays, setNumDays] = useState(4);
-    const tripDays = generateTripDays(startDate, numDays);
+      export default function App() {
+      const { mode, th } = useTheme();
+      const [lang, setLang] = useState(() => safeLocalGet("rp_lang", "de"));
+      const t = TRANSLATIONS[lang];
+      const [cityId, setCityId] = useState(() => safeLocalGet("rp_city", "paris"));
+      const city = CITIES[cityId] || CITIES.paris;
+      const [locations, setLocations, undoRedo] = useUndoRedo([]);
+      const [locationDays, setLocationDays] = useState({});
+      const [locationNotes, setLocationNotes] = useState({});
+      const [travelMode, setTravelMode] = useState("walking");
+      const [activeTab, setActiveTab] = useState("route");
+      const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0,10));
+      const [numDays, setNumDays] = useState(4);
+      const tripDays = generateTripDays(startDate, numDays);
 
-    useEffect(() => { safeLocalSet("rp_lang", lang); }, [lang]);
-    useEffect(() => { safeLocalSet("rp_city", cityId); }, [cityId]);
-    useEffect(() => {
-      const current = { cityId, startDate, numDays, tripDays, locations, locationDays, locationNotes };
-      safeLocalSet("rp_current_v2", current);
-    }, [cityId, startDate, numDays, locations, locationDays, locationNotes]);
+      useEffect(() => { safeLocalSet("rp_lang", lang); }, [lang]);
+      useEffect(() => { safeLocalSet("rp_city", cityId); }, [cityId]);
+      useEffect(() => {
+        const current = { cityId, startDate, numDays, tripDays, locations, locationDays, locationNotes };
+        safeLocalSet("rp_current_v2", current);
+      }, [cityId, startDate, numDays, locations, locationDays, locationNotes]);
 
-    const addLocation = useCallback((loc, day) => {
+      const addLocation = useCallback((loc, day) => {
       const newLoc = { ...loc, id: Date.now() + Math.random() };
       setLocations(prev => [...prev, newLoc]);
       if (day) setLocationDays(prev => ({ ...prev, [newLoc.id]: day }));
@@ -1373,10 +1462,25 @@ Antworte NUR mit JSON:
 
         <div style={{ maxWidth:900, margin:"0 auto", padding:"20px 16px" }}>
 
-          {/* CITY SELECTOR */}
-          <CitySelector currentCityId={cityId} onSelect={id=>{setCityId(id);setLocations([]);setLocationDays({});setLocationNotes({});}} lang={lang} th={th} />
+          {/* CITY SELECTOR + DEMO */}
+            <CitySelector
+              currentCityId={cityId}
+              onSelect={id=>{setCityId(id);setLocations([]);setLocationDays({});setLocationNotes({});}}
+              lang={lang} th={th}
+              onLoadDemoTrip={(key)=>{
+                const trip=DEMO_TRIPS[key];
+                if(!trip) return;
+                const sd=new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0,10);
+                setCityId(trip.cityId);
+                setStartDate(sd);
+                setNumDays(trip.numDays);
+                setLocations(trip.locations.map(l=>({...l})));
+                setLocationDays(trip.assignDays(sd));
+                setLocationNotes(trip.locationNotes||{});
+              }}
+            />
 
-          {/* TRIP PERIOD */}
+            {/* TRIP PERIOD */}
           <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:16 }}>
             <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>{t.sectionTrip}</div>
             <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"center" }}>
