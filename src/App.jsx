@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.2",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.3",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.2",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.3",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -471,7 +471,18 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
     const cost = getEntryCost(loc.name, city);
     const rating = getRating(loc.name, city);
     const info = getLocationInfo(loc.name, city);
-    const opening = assignedDay ? getOpeningInfo(loc.name, assignedDay, city) : null;
+    const opening = (() => {
+      if (!assignedDay) return null;
+      if (loc.closedDays && loc.closedDays.length > 0) {
+        const d2 = new Date(assignedDay + "T12:00:00");
+        const dNames = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+        const eNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        const closed = loc.closedDays.some(cd => cd === dNames[d2.getDay()] || cd === eNames[d2.getDay()]);
+        return { isOpen: !closed, hours: loc.openingHoursText || null, note: null, fromAI: true };
+      }
+      if (loc.openingHoursText) return { isOpen: true, hours: loc.openingHoursText, note: null, fromAI: true };
+      return getOpeningInfo(loc.name, assignedDay, city);
+    })();
     const dayIndex = tripDays.indexOf(assignedDay);
     const dayColor = dayIndex >= 0 ? getDayColor(dayIndex) : th.accent;
     const isClosed = opening && !opening.isOpen;
@@ -548,30 +559,84 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
     );
   }
 
-  function LinkAnalyzer({ city, onAdd, lang, th }) {
+  function LinkAnalyzer({ city, onAdd, tripDays, lang, th }) {
     const t = TRANSLATIONS[lang];
     const [url, setUrl] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [showDemo, setShowDemo] = useState(false);
-    const analyze = useCallback(() => {
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [apiKey, setApiKey] = useState(() => safeLocalGet("rp_openai_key", ""));
+    const [showApiInput, setShowApiInput] = useState(false);
+    const [apiKeyInput, setApiKeyInput] = useState(() => safeLocalGet("rp_openai_key", ""));
+    const [apiKeySaved, setApiKeySaved] = useState(false);
+
+    const saveApiKey = () => {
+      safeLocalSet("rp_openai_key", apiKeyInput);
+      setApiKey(apiKeyInput);
+      setApiKeySaved(true);
+      setTimeout(() => { setApiKeySaved(false); setShowApiInput(false); }, 1500);
+    };
+    const deleteApiKey = () => {
+      safeLocalSet("rp_openai_key", "");
+      setApiKey(""); setApiKeyInput("");
+    };
+
+    const analyze = useCallback(async () => {
       const trimmed = url.trim();
       if (!trimmed) { setError(t.errorEmpty); return; }
       setLoading(true); setError("");
+      if (apiKey) {
+        try {
+          const prompt = `Analysiere diese URL und extrahiere Ortsinformationen. URL: ${trimmed}
+
+Antworte NUR mit JSON:
+{"name":"Name","type":"Sehenswürdigkeit|Restaurant|Museum|Park|Markt|Cafe|Bar|Andere","address":"Adresse","area":"Stadtteil","lat":0.0,"lng":0.0,"duration":"1 Std.","icon":"Emoji","openingHoursText":"Öffnungszeiten oder null","closedDays":[],"entryCostText":"Preis oder null"}`;
+          const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], temperature: 0.2, max_tokens: 400 }),
+          });
+          if (!res.ok) throw new Error("API Fehler " + res.status);
+          const data = await res.json();
+          const txt = data.choices[0].message.content.trim();
+          const m = txt.match(/\{[\s\S]*\}/);
+          if (!m) throw new Error("Kein JSON");
+          const result = JSON.parse(m[0]);
+          const loc = { id: Date.now() + Math.random(), name: result.name || "Unbekannt", type: result.type || "Sehenswürdigkeit", address: result.address || "", area: result.area || "", lat: result.lat || null, lng: result.lng || null, duration: result.duration || "", icon: result.icon || "📍", openingHoursText: result.openingHoursText || null, closedDays: result.closedDays || [], entryCostText: result.entryCostText || null, sourceUrl: trimmed };
+          onAdd(loc, selectedDay); setUrl(""); setLoading(false); return;
+        } catch(e) { setError("KI-Fehler: " + e.message); setLoading(false); return; }
+      }
       setTimeout(() => {
         const matchers = city?.linkMatchers || [];
         const match = matchers.find(m => m.pattern.test(trimmed));
         if (match) {
           const loc = city.sampleLocations[match.locationIndex];
-          if (loc) { onAdd({ ...loc, id: Date.now() + Math.random() }); setUrl(""); setLoading(false); return; }
+          if (loc) { onAdd({ ...loc, id: Date.now() + Math.random() }, selectedDay); setUrl(""); setLoading(false); return; }
         }
         setError(t.errorNotFound); setLoading(false);
       }, 900);
-    }, [url, city, t, onAdd]);
+    }, [url, city, t, onAdd, apiKey, selectedDay]);
     return (
-      <div style={{ marginBottom:16 }}>
-        <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>{t.insertLink}</div>
-        <div style={{ display:"flex", gap:8 }}>
+      <div style={{ marginBottom:16, background:th.card, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+          <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase" }}>{t.insertLink}</div>
+          <button onClick={()=>setShowApiInput(s=>!s)} style={{ fontSize:"0.68rem", padding:"2px 10px", borderRadius:7, border:`1px solid ${apiKey?th.success:th.warning}`, background:"transparent", color:apiKey?th.success:th.warning, cursor:"pointer", fontWeight:600 }}>
+            {apiKey ? "✓ "+t.apiActive : "⚠ "+t.apiMissing}
+          </button>
+        </div>
+        {showApiInput && (
+          <div style={{ marginBottom:12, padding:"10px 12px", background:th.surface, borderRadius:10, border:`1px solid ${th.border}` }}>
+            <div style={{ fontSize:"0.75rem", color:th.textMuted, marginBottom:6 }}>🔑 {t.apiTitle} · <span style={{color:th.textFaint}}>{t.apiHint}</span></div>
+            <div style={{ display:"flex", gap:6 }}>
+              <input type="password" value={apiKeyInput} onChange={e=>setApiKeyInput(e.target.value)} placeholder="sk-..." style={{ flex:1, background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"5px 9px", fontSize:"0.8rem", color:th.text }} />
+              <button onClick={saveApiKey} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:8, padding:"5px 12px", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>{apiKeySaved?t.apiSaved:t.apiSave}</button>
+              {apiKey && <button onClick={deleteApiKey} style={{ background:"none", border:`1px solid ${th.border}`, borderRadius:8, padding:"5px 10px", color:th.warning, fontSize:"0.75rem", cursor:"pointer" }}>{t.apiDelete}</button>}
+            </div>
+            {apiKey ? <div style={{ marginTop:4, fontSize:"0.7rem", color:th.success }}>✓ Key aktiv — beliebige URLs werden per KI analysiert</div> : <div style={{ marginTop:4, fontSize:"0.7rem", color:th.textFaint }}>Ohne Key: nur Demo-Links erkennbar</div>}
+          </div>
+        )}
+        <div style={{ display:"flex", gap:8, marginBottom:8 }}>
           <input value={url} onChange={e=>{setUrl(e.target.value);setError("");}} onKeyDown={e=>e.key==="Enter"&&analyze()}
             placeholder={t.linkPlaceholder}
             style={{ flex:1, background:th.input, border:`1px solid ${error?th.warning:th.inputBorder}`, borderRadius:10, padding:"8px 12px", fontSize:"0.85rem", color:th.text, outline:"none" }}/>
@@ -828,8 +893,10 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
       safeLocalSet("rp_current_v2", current);
     }, [cityId, startDate, numDays, locations, locationDays, locationNotes]);
 
-    const addLocation = useCallback((loc) => {
-      setLocations(prev => [...prev, { ...loc, id: Date.now() + Math.random() }]);
+    const addLocation = useCallback((loc, day) => {
+      const newLoc = { ...loc, id: Date.now() + Math.random() };
+      setLocations(prev => [...prev, newLoc]);
+      if (day) setLocationDays(prev => ({ ...prev, [newLoc.id]: day }));
     }, [setLocations]);
 
     const removeLocation = useCallback((id) => {
@@ -935,7 +1002,7 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
           )}
 
           {/* LINK ANALYZER */}
-          <LinkAnalyzer city={city} onAdd={addLocation} lang={lang} th={th} />
+          <LinkAnalyzer city={city} onAdd={addLocation} tripDays={tripDays} lang={lang} th={th} />
 
           {/* LOCATIONS */}
           <div style={{ marginBottom:16 }}>
@@ -1003,3 +1070,5 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
       </div>
     );
   }
+
+           
