@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.3",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.4",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.3",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.4",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -747,6 +747,90 @@ Antworte NUR mit JSON:
     );
   }
 
+  function MapView({ locations, locationDays, tripDays, travelMode, city, th }) {
+    const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
+    const markersRef = useRef([]);
+    const linesRef = useRef([]);
+
+    useEffect(() => {
+      if (!window.L) {
+        if (!document.getElementById("leaflet-css")) {
+          const link = document.createElement("link");
+          link.id = "leaflet-css";
+          link.rel = "stylesheet";
+          link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+          document.head.appendChild(link);
+        }
+        if (!document.getElementById("leaflet-js")) {
+          const script = document.createElement("script");
+          script.id = "leaflet-js";
+          script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+          script.onload = () => initMap();
+          document.head.appendChild(script);
+        }
+      } else { initMap(); }
+      return () => {
+        if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
+      };
+    }, []);
+
+    useEffect(() => {
+      if (window.L && mapInstanceRef.current) updateMarkers();
+    }, [locations, locationDays, tripDays, travelMode]);
+
+    function initMap() {
+      if (mapInstanceRef.current || !mapRef.current) return;
+      const center = city ? [city.lat, city.lng] : [48.8566, 2.3522];
+      const map = window.L.map(mapRef.current).setView(center, 13);
+      window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap", maxZoom: 19 }).addTo(map);
+      mapInstanceRef.current = map;
+      updateMarkers();
+    }
+
+    function updateMarkers() {
+      const L = window.L; const map = mapInstanceRef.current;
+      if (!L || !map) return;
+      markersRef.current.forEach(m => map.removeLayer(m)); markersRef.current = [];
+      linesRef.current.forEach(l => map.removeLayer(l)); linesRef.current = [];
+      const valid = locations.filter(l => l.lat && l.lng);
+      if (!valid.length) return;
+      const bounds = [];
+      valid.forEach(loc => {
+        const di = tripDays.indexOf(locationDays[loc.id]);
+        const col = di >= 0 ? DAY_COLORS[di % DAY_COLORS.length] : "#c4a882";
+        const icon = L.divIcon({ className:"", html:`<div style="background:${col};width:34px;height:34px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${loc.icon||"\ud83d\udccd"}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
+        const m = L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`<b>${loc.name}</b><br/>${loc.type||""}<br/>${loc.area?"\ud83d\udccd "+loc.area+"<br/>":""}${loc.openingHoursText?"\ud83d\udd50 "+loc.openingHoursText+"<br/>":""}${loc.entryCostText?"\ud83c\udf9f "+loc.entryCostText:""}`);
+        markersRef.current.push(m); bounds.push([loc.lat,loc.lng]);
+      });
+      const byDay = {};
+      tripDays.forEach(d => { byDay[d] = []; });
+      valid.forEach(loc => { const d = locationDays[loc.id]; if (d && byDay[d]) byDay[d].push(loc); });
+      tripDays.forEach((d,di) => {
+        const locs = byDay[d]; if (locs.length < 2) return;
+        const col = DAY_COLORS[di % DAY_COLORS.length];
+        const coords = locs.map(l => [l.lat,l.lng]);
+        const style = travelMode==="walking" ? {color:col,weight:3,dashArray:"6 6",opacity:0.85} : travelMode==="transit" ? {color:col,weight:4,dashArray:"2 10",opacity:0.9} : {color:col,weight:4,opacity:0.85};
+        const line = L.polyline(coords,style).addTo(map);
+        linesRef.current.push(line);
+      });
+      if (bounds.length > 1) map.fitBounds(bounds, {padding:[40,40]});
+      else if (bounds.length === 1) map.setView(bounds[0], 15);
+    }
+
+    return (
+      <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${th.border}`,height:400,position:"relative"}}>
+        <div ref={mapRef} style={{width:"100%",height:"100%"}} />
+        {!locations.filter(l=>l.lat&&l.lng).length && (
+          <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:th.surface,pointerEvents:"none"}}>
+            <div style={{fontSize:"2.5rem"}}>🗺️</div>
+            <div style={{fontSize:"0.82rem",color:th.textMuted,marginTop:6}}>Füge Orte mit Koordinaten hinzu</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function MapPlaceholder({ locations, city, th }) {
     const center = city || { lat:48.8566, lng:2.3522, name:"Paris" };
     return (
@@ -1055,7 +1139,7 @@ Antworte NUR mit JSON:
 
           {/* TAB CONTENT */}
           {activeTab==="route" && <RouteTimeline locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />}
-          {activeTab==="map" && <MapPlaceholder locations={locations} city={city} th={th} />}
+          {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} />}
           {activeTab==="budget" && <BudgetPanel locations={locations} city={city} lang={lang} th={th} />}
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
           {activeTab==="share" && <SharePanel lang={lang} th={th} />}
