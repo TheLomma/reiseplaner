@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.0",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.1",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.0",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.1",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1090,7 +1090,116 @@ Antworte NUR mit JSON:
     );
   }
 
-  function CitySelector({ currentCityId, onSelect, lang, th }) {
+  function PDFExportPanel({ lang, th, locations, locationDays, locationNotes, tripDays, city, startDate, numDays }) {
+      const t = TRANSLATIONS[lang];
+      const [loading, setLoading] = useState(false);
+      const [done, setDone] = useState(false);
+      const loadJsPDF = () => new Promise((res, rej) => {
+        if (window.jspdf) { res(); return; }
+        const s = document.createElement("script");
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+      const exportPDF = async () => {
+        setLoading(true); setDone(false);
+        try { await loadJsPDF(); } catch(e) { setLoading(false); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+        const W=210, M=18; let y=20;
+        const checkY = (n=14) => { if(y+n>278){doc.addPage();y=20;} };
+        doc.setFillColor(30,26,20); doc.rect(0,0,W,297,"F");
+        doc.setFontSize(26); doc.setTextColor(196,168,130); doc.setFont("helvetica","bold");
+        doc.text(city.name, W/2, 100, {align:"center"});
+        doc.setFontSize(12); doc.setTextColor(168,144,112); doc.setFont("helvetica","normal");
+        doc.text(`${startDate}  |  ${numDays} ${lang==="de"?"Tage":"days"}  |  ${locations.length} ${lang==="de"?"Orte":"places"}`, W/2, 114, {align:"center"});
+        doc.setFontSize(8); doc.setTextColor(100,80,64);
+        doc.text("Reiseplaner v6.1", W/2, 280, {align:"center"});
+        const byDay={}; tripDays.forEach(d=>{byDay[d]=[];});
+        locations.forEach(loc=>{const d=locationDays[loc.id];if(d&&byDay[d])byDay[d].push(loc);});
+        const activeDays=tripDays.filter(d=>byDay[d].length>0);
+        activeDays.forEach((d,di)=>{
+          doc.addPage(); y=0;
+          doc.setFillColor(46,40,32); doc.rect(0,0,W,16,"F");
+          doc.setFontSize(11); doc.setTextColor(196,168,130); doc.setFont("helvetica","bold");
+          doc.text(`${lang==="de"?"Tag":"Day"} ${di+1} - ${d}`, M, 11);
+          doc.setFontSize(8); doc.setTextColor(120,96,80);
+          doc.text(`${byDay[d].length} ${lang==="de"?"Orte":"places"}`, W-M, 11, {align:"right"});
+          y=24;
+          byDay[d].forEach(loc=>{
+            checkY(26);
+            doc.setFillColor(40,34,26); doc.roundedRect(M,y,W-M*2,22,2,2,"F");
+            doc.setFontSize(10); doc.setTextColor(237,224,200); doc.setFont("helvetica","bold");
+            doc.text(loc.name, M+4, y+8);
+            const meta=[loc.type,loc.area,loc.duration].filter(Boolean).join(" | ");
+            if(meta){doc.setFontSize(7.5);doc.setTextColor(168,144,112);doc.setFont("helvetica","normal");doc.text(meta,M+4,y+15);}
+            const note=locationNotes[loc.id];
+            if(note){doc.setFontSize(7);doc.setTextColor(140,120,96);doc.setFont("helvetica","italic");doc.text(`Notiz: ${note}`,M+4,y+20);}
+            y+=26;
+          });
+        });
+        doc.addPage(); y=0;
+        doc.setFillColor(46,40,32); doc.rect(0,0,W,16,"F");
+        doc.setFontSize(11); doc.setTextColor(196,168,130); doc.setFont("helvetica","bold");
+        doc.text(lang==="de"?"Budget":"Budget", M, 11);
+        y=24; let total=0;
+        locations.forEach(loc=>{
+          checkY(9); const cost=getEntryCost(loc.name,city); const avg=cost?(cost.min+cost.max)/2:null;
+          if(avg!==null)total+=avg;
+          doc.setFontSize(9);doc.setTextColor(220,208,188);doc.setFont("helvetica","normal");
+          doc.text(loc.name,M,y);
+          doc.setTextColor(168,144,112);
+          doc.text(avg!==null?(avg===0?(lang==="de"?"Kostenlos":"Free"):`${cost.currency}${avg.toFixed(2)}`):"?",W-M,y,{align:"right"});
+          y+=8;
+        });
+        doc.setDrawColor(74,62,46);doc.line(M,y,W-M,y);y+=7;
+        doc.setFontSize(11);doc.setTextColor(212,168,75);doc.setFont("helvetica","bold");
+        doc.text(`${lang==="de"?"Gesamt":"Total"}: ${total.toFixed(2)}`,W-M,y,{align:"right"});
+        const packItems=safeLocalGet("rp_packing_v1",[]);
+        if(packItems.length>0){
+          doc.addPage();y=0;
+          doc.setFillColor(46,40,32);doc.rect(0,0,W,16,"F");
+          doc.setFontSize(11);doc.setTextColor(196,168,130);doc.setFont("helvetica","bold");
+          doc.text(lang==="de"?"Packliste":"Packing List",M,11);y=24;
+          const catMap=t.packingCats; const byCat={};
+          packItems.forEach(it=>{if(!byCat[it.cat])byCat[it.cat]=[];byCat[it.cat].push(it);});
+          Object.entries(catMap).forEach(([k,label])=>{
+            if(!byCat[k]?.length)return;checkY(10);
+            doc.setFontSize(8);doc.setTextColor(120,96,80);doc.setFont("helvetica","bold");
+            doc.text(label.replace(/[^\u0000-\u007F]/g,"").trim()||k,M,y);y+=7;
+            byCat[k].forEach(it=>{
+              checkY(7);doc.setFontSize(9);doc.setFont("helvetica","normal");
+              doc.setTextColor(it.checked?110:220,it.checked?90:208,it.checked?70:188);
+              doc.text(`${it.checked?"[x]":"[ ]"} ${it.label}`,M+4,y);y+=7;
+            });y+=2;
+          });
+        }
+        doc.save(`reiseplan-${city.id}-${startDate}.pdf`);
+        setLoading(false);setDone(true);setTimeout(()=>setDone(false),2500);
+      };
+      const hasDays=tripDays.some(d=>locations.some(l=>locationDays[l.id]===d));
+      const dayCount=tripDays.filter(d=>locations.some(l=>locationDays[l.id]===d)).length;
+      return (
+        <div style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:16,padding:"18px",marginTop:12}}>
+          <div style={{fontWeight:700,fontSize:"0.85rem",color:th.accent,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>
+            {lang==="de"?"PDF-Export":"PDF Export"}
+          </div>
+          <div style={{fontSize:"0.8rem",color:th.textMuted,marginBottom:14,lineHeight:1.5}}>
+            {lang==="de"
+              ?`Erstellt einen vollstaendigen Reiseplan als PDF: ${dayCount} Tage, Budget und Packliste.`
+              :`Exports a complete travel plan as PDF: ${dayCount} days, budget and packing list.`}
+          </div>
+          {!hasDays&&<div style={{fontSize:"0.75rem",color:th.warning,marginBottom:10}}>{lang==="de"?"Noch keine Orte mit Tagen zugewiesen.":"No places assigned to days yet."}</div>}
+          <button onClick={exportPDF} disabled={loading||!hasDays}
+            style={{background:hasDays?th.accent:th.border,color:hasDays?th.bg:th.textFaint,border:"none",borderRadius:10,padding:"10px 22px",fontWeight:700,fontSize:"0.88rem",cursor:hasDays&&!loading?"pointer":"not-allowed",display:"flex",alignItems:"center",gap:8,opacity:hasDays?1:0.6}}>
+            {loading&&<Spinner size={14} color={th.bg}/>}
+            {loading?(lang==="de"?"Generiere...":"Generating..."):done?(lang==="de"?"Gespeichert!":"Saved!"):(lang==="de"?"PDF herunterladen":"Download PDF")}
+          </button>
+          {done&&<div style={{marginTop:8,fontSize:"0.75rem",color:th.success}}>{lang==="de"?"PDF wurde heruntergeladen.":"PDF downloaded."}</div>}
+        </div>
+      );
+    }
+
+    function CitySelector({ currentCityId, onSelect, lang, th }) {
     const t = TRANSLATIONS[lang];
     const [custom, setCustom] = useState("");
     return (
@@ -1269,10 +1378,10 @@ Antworte NUR mit JSON:
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","weather"].map(tab => (
+            {["route","map","budget","plans","share","weather","packing","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
-                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:t.weather}
+                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="weather"?t.weather:tab==="packing"?t.packingList:"📄 PDF"}
               </button>
             ))}
           </div>
@@ -1301,7 +1410,11 @@ Antworte NUR mit JSON:
           {activeTab==="budget" && <BudgetPanel locations={locations} city={city} lang={lang} th={th} />}
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
           {activeTab==="share" && <SharePanel lang={lang} th={th} />}
-          {activeTab==="weather" && <WeatherWidget city={city} startDate={startDate} lang={lang} th={th} />}
+          {activeTab==="weather" && <WeatherWidget city={city} startDate={startDate} lang={lang} th={th} />
+            }
+            {activeTab==="packing" && <PackingListPanel lang={lang} th={th} />
+            }
+            {activeTab==="pdf" && <PDFExportPanel lang={lang} th={th} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
 
         </div>
 
