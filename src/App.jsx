@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.1",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.2",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.1",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.2",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -1113,7 +1113,7 @@ Antworte NUR mit JSON:
         doc.setFontSize(12); doc.setTextColor(168,144,112); doc.setFont("helvetica","normal");
         doc.text(`${startDate}  |  ${numDays} ${lang==="de"?"Tage":"days"}  |  ${locations.length} ${lang==="de"?"Orte":"places"}`, W/2, 114, {align:"center"});
         doc.setFontSize(8); doc.setTextColor(100,80,64);
-        doc.text("Reiseplaner v6.1", W/2, 280, {align:"center"});
+        doc.text("Reiseplaner v6.2", W/2, 280, {align:"center"});
         const byDay={}; tripDays.forEach(d=>{byDay[d]=[];});
         locations.forEach(loc=>{const d=locationDays[loc.id];if(d&&byDay[d])byDay[d].push(loc);});
         const activeDays=tripDays.filter(d=>byDay[d].length>0);
@@ -1198,6 +1198,80 @@ Antworte NUR mit JSON:
         </div>
       );
     }
+
+  function PackingListPanel({ lang, th }) {
+    const t = TRANSLATIONS[lang];
+    const [items, setItems] = useState(() => safeLocalGet("rp_packing_v1", []));
+    const [newLabel, setNewLabel] = useState("");
+    const [newCat, setNewCat] = useState("other");
+
+    const save = (updated) => {
+      setItems(updated);
+      safeLocalSet("rp_packing_v1", updated);
+    };
+
+    const addItem = () => {
+      if (!newLabel.trim()) return;
+      save([...items, { id: Date.now(), label: newLabel.trim(), cat: newCat, checked: false }]);
+      setNewLabel("");
+    };
+
+    const toggle = (id) => save(items.map(i => i.id === id ? { ...i, checked: !i.checked } : i));
+    const remove = (id) => save(items.filter(i => i.id !== id));
+    const clearChecked = () => save(items.filter(i => !i.checked));
+
+    const cats = Object.entries(t.packingCats);
+
+    return (
+      <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px" }}>
+        <div style={{ fontWeight:700, fontSize:"0.85rem", color:th.accent, marginBottom:12, textTransform:"uppercase", letterSpacing:1 }}>{t.packingList}</div>
+        <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+          <input
+            value={newLabel}
+            onChange={e => setNewLabel(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && addItem()}
+            placeholder={t.packingPlaceholder}
+            style={{ flex:1, minWidth:120, background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"6px 10px", fontSize:"0.82rem", color:th.text }}
+          />
+          <select value={newCat} onChange={e => setNewCat(e.target.value)}
+            style={{ background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"6px 8px", fontSize:"0.8rem", color:th.text }}>
+            {cats.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <button onClick={addItem}
+            style={{ background:th.accent, color:th.bg, border:"none", borderRadius:8, padding:"6px 14px", fontWeight:700, fontSize:"0.82rem", cursor:"pointer" }}>
+            {t.packingAdd}
+          </button>
+        </div>
+        {items.length === 0 && <div style={{ color:th.textFaint, fontSize:"0.82rem" }}>{t.packingEmpty}</div>}
+        {cats.map(([catKey, catLabel]) => {
+          const catItems = items.filter(i => i.cat === catKey);
+          if (!catItems.length) return null;
+          return (
+            <div key={catKey} style={{ marginBottom:10 }}>
+              <div style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:700, marginBottom:4 }}>{catLabel}</div>
+              {catItems.map(item => (
+                <div key={item.id} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:`1px solid ${th.border}` }}>
+                  <input type="checkbox" checked={item.checked} onChange={() => toggle(item.id)}
+                    style={{ accentColor:th.accent, width:15, height:15, cursor:"pointer" }} />
+                  <span style={{ flex:1, fontSize:"0.83rem", color: item.checked ? th.textFaint : th.text, textDecoration: item.checked ? "line-through" : "none" }}>
+                    {item.label}
+                  </span>
+                  <button onClick={() => remove(item.id)}
+                    style={{ background:"none", border:"none", color:th.textFaint, cursor:"pointer", fontSize:"0.9rem" }}>✕</button>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+        {items.some(i => i.checked) && (
+          <button onClick={clearChecked}
+            style={{ marginTop:8, background:"none", border:`1px solid ${th.border}`, borderRadius:8, padding:"4px 12px", color:th.textMuted, fontSize:"0.75rem", cursor:"pointer" }}>
+            {t.packingClear}
+          </button>
+        )}
+      </div>
+    );
+  }
 
     function CitySelector({ currentCityId, onSelect, lang, th }) {
     const t = TRANSLATIONS[lang];
