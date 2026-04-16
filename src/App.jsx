@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.9",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.0",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -247,7 +247,7 @@ const TRANSLATIONS = {
     notePlaceholder:"Notiz (z.B. Tickets vorbuchen!)",noteLabel:"Notiz",noteHide:"Ausblenden",
     sectionTrip:"Reisezeitraum",sectionMap:"Karte",sectionRoute:"Route & Timeline",
     labelStartDate:"Startdatum",labelDays:"Reisetage",labelDaysSuffix:"Tage",
-    packingList:"Packliste",weather:"Wetter",budget:"Budget",
+    packingList:"Packliste",packingAdd:"Hinzufügen",packingPlaceholder:"Neues Item...",packingEmpty:"Noch nichts auf der Liste.",packingClear:"Erledigte löschen",packingCats:{docs:"📄 Dokumente",clothes:"👕 Kleidung",tech:"🔌 Technik",hygiene:"🧴 Hygiene",other:"📦 Sonstiges"},weather:"Wetter",budget:"Budget",
   },
   en: {
     appName:"Travel Planner",addPlace:"Add Place",insertLink:"INSERT LINK",
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.9",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.0",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -280,7 +280,7 @@ const TRANSLATIONS = {
     notePlaceholder:"Note (e.g. Book tickets!)",noteLabel:"Note",noteHide:"Hide",
     sectionTrip:"Travel Period",sectionMap:"Map",sectionRoute:"Route & Timeline",
     labelStartDate:"Start date",labelDays:"Travel days",labelDaysSuffix:"days",
-    packingList:"Packing List",weather:"Weather",budget:"Budget",
+    packingList:"Packing List",packingAdd:"Add",packingPlaceholder:"New item...",packingEmpty:"Nothing on the list yet.",packingClear:"Remove checked",packingCats:{docs:"📄 Documents",clothes:"👕 Clothing",tech:"🔌 Tech",hygiene:"🧴 Hygiene",other:"📦 Other"},weather:"Weather",budget:"Budget",
   }
 };
 
@@ -1312,5 +1312,7 @@ Antworte NUR mit JSON:
       </div>
     );
   }
+
+           
 
            
