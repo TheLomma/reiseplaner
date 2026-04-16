@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.8",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.9",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.8",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.9",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -954,10 +954,23 @@ Antworte NUR mit JSON:
 
         if (bounds.length > 1) map.fitBounds(bounds, {padding:[40,40]});
         else if (bounds.length === 1) map.setView(bounds[0], 15);
-      }
+        }
 
-    return (
-      <div><div style={{marginBottom:4,fontSize:"0.7rem",color:th.textMuted,textAlign:"right"}}>{travelMode==="walking"?"🚶 Zu Fuß · echte Fußwege (OSRM)":travelMode==="transit"?"🚇 ÖPNV · Luftlinie (Näherung)":"🚗 Auto · echte Straßenroute (OSRM)"}</div>
+      const activeDays = tripDays.filter(d => locations.some(l => locationDays[l.id] === d && l.lat && l.lng));
+      return (
+      <div>
+          {/* Legende */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:6}}>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+              {activeDays.map(d => {
+                const di = tripDays.indexOf(d);
+                const col = DAY_COLORS[di % DAY_COLORS.length];
+                const n = locations.filter(l => locationDays[l.id]===d && l.lat && l.lng).length;
+                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d,"de")}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
+              })}
+            </div>
+            <span style={{background:th.accentLight,color:th.accent,borderRadius:8,padding:"2px 10px",fontWeight:600,fontSize:"0.7rem"}}>{travelMode==="walking"?"🚶 Zu Fuß · OSRM":travelMode==="transit"?"🚇 ÖPNV · Luftlinie":"🚗 Auto · OSRM"}</span>
+          </div>
           <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${th.border}`,height:400,position:"relative"}}>
         <div ref={mapRef} style={{width:"100%",height:"100%"}} />
         {!locations.filter(l=>l.lat&&l.lng).length && (
