@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.4",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.5",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.4",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.5",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -693,6 +693,93 @@ Antworte NUR mit JSON:
         </div>
         <div style={{ marginTop:8, fontWeight:700, color:th.gold, fontSize:"1rem" }}>{t.budgetTotal}: {total.toFixed(2)}</div>
         <div style={{ fontSize:"0.68rem", color:th.textFaint, marginTop:2 }}>{t.budgetNote}</div>
+      </div>
+    );
+  }
+
+  function RouteOptimizer({ locations, locationDays, tripDays, travelMode, onApply, lang, th }) {
+    const t = TRANSLATIONS[lang];
+    const [loading, setLoading] = useState(false);
+    const [suggestion, setSuggestion] = useState(null);
+    const [error, setError] = useState("");
+    const apiKey = safeLocalGet("rp_openai_key", "");
+
+    const optimize = async () => {
+      if (!apiKey) { setError(lang==="de" ? "Kein API-Key gesetzt." : "No API key set."); return; }
+      const locs = locations.filter(l => locationDays[l.id]);
+      if (locs.length < 2) { setError(lang==="de" ? "Mind. 2 Orte mit Tag nötig." : "Need at least 2 places with a day."); return; }
+      setLoading(true); setError(""); setSuggestion(null);
+      try {
+        const locList = locs.map(l => `- ${l.name} (Tag: ${locationDays[l.id]}, Typ: ${l.type||""}, Öffnungszeiten: ${l.openingHoursText||"unbekannt"}, Koordinaten: ${l.lat||"?"},${l.lng||"?"})` ).join("\n");
+        const prompt = `Du bist ein Reiseassistent. Optimiere die Reihenfolge dieser Orte pro Tag, um unnötige Wege zu vermeiden und Öffnungszeiten zu berücksichtigen.
+
+Orte:
+${locList}
+
+Antworte NUR mit JSON:
+{"days":{"DATUM":["Ortsname1","Ortsname2"],"DATUM2":[...]},"tips":["Tipp1","Tipp2","Tipp3"]}`;
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], temperature: 0.3, max_tokens: 600 }),
+        });
+        if (!res.ok) throw new Error("API " + res.status);
+        const data = await res.json();
+        const txt = data.choices[0].message.content.trim();
+        const m = txt.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("Kein JSON");
+        setSuggestion(JSON.parse(m[0]));
+      } catch(e) { setError("Fehler: " + e.message); }
+      setLoading(false);
+    };
+
+    const apply = () => {
+      if (!suggestion?.days) return;
+      const newDays = { ...locationDays };
+      Object.entries(suggestion.days).forEach(([date, names]) => {
+        names.forEach(name => {
+          const loc = locations.find(l => l.name === name);
+          if (loc) newDays[loc.id] = date;
+        });
+      });
+      onApply(newDays);
+      setSuggestion(null);
+    };
+
+    return (
+      <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:14, padding:"12px 14px", marginBottom:14 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+          <div style={{ fontWeight:700, fontSize:"0.82rem", color:th.accent }}>🤖 {lang==="de" ? "KI-Routenoptimierung" : "AI Route Optimization"}</div>
+          <button onClick={optimize} disabled={loading} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:9, padding:"5px 14px", fontWeight:700, fontSize:"0.78rem", cursor:loading?"wait":"pointer", display:"flex", alignItems:"center", gap:6 }}>
+            {loading ? <Spinner size={12} color={th.bg}/> : "✨"} {loading ? (lang==="de"?"Analysiere...":"Analyzing...") : (lang==="de"?"Route optimieren":"Optimize Route")}
+          </button>
+        </div>
+        {!apiKey && <div style={{ fontSize:"0.72rem", color:th.warning }}>⚠ {lang==="de" ? "API-Key nötig für KI-Optimierung" : "API key required for AI optimization"}</div>}
+        {error && <div style={{ fontSize:"0.72rem", color:th.warning, marginTop:4 }}>{error}</div>}
+        {suggestion && (
+          <div style={{ marginTop:8 }}>
+            {suggestion.tips && suggestion.tips.length > 0 && (
+              <div style={{ marginBottom:8 }}>
+                <div style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:600, marginBottom:4 }}>💡 {lang==="de"?"KI-Tipps":"AI Tips"}:</div>
+                {suggestion.tips.map((tip,i) => <div key={i} style={{ fontSize:"0.72rem", color:th.textMuted, marginBottom:2 }}>• {tip}</div>)}
+              </div>
+            )}
+            {suggestion.days && Object.entries(suggestion.days).map(([date, names], di) => (
+              <div key={date} style={{ marginBottom:6 }}>
+                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(date, lang)}</div>
+                {names.map((n,i) => <div key={i} style={{ fontSize:"0.75rem", color:th.text, paddingLeft:10 }}>{i+1}. {n}</div>)}
+              </div>
+            ))}
+            <div style={{ display:"flex", gap:8, marginTop:10 }}>
+              <button onClick={apply} style={{ background:th.success, color:"#fff", border:"none", borderRadius:8, padding:"5px 14px", fontWeight:700, fontSize:"0.78rem", cursor:"pointer" }}>
+                ✓ {lang==="de"?"Übernehmen":"Apply"}
+              </button>
+              <button onClick={()=>setSuggestion(null)} style={{ background:"none", border:`1px solid ${th.border}`, borderRadius:8, padding:"5px 10px", color:th.textMuted, fontSize:"0.75rem", cursor:"pointer" }}>
+                {lang==="de"?"Verwerfen":"Discard"}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1138,7 +1225,12 @@ Antworte NUR mit JSON:
           )}
 
           {/* TAB CONTENT */}
-          {activeTab==="route" && <RouteTimeline locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />}
+          {activeTab==="route" && (
+            <>
+              <RouteOptimizer locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} onApply={(newDays)=>setLocationDays(newDays)} lang={lang} th={th} />
+              <RouteTimeline locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
+            </>
+          )}
           {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} />}
           {activeTab==="budget" && <BudgetPanel locations={locations} city={city} lang={lang} th={th} />}
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
