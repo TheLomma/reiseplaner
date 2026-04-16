@@ -235,7 +235,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.6",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v5.7",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.6",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v5.7",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
@@ -876,49 +876,63 @@ Antworte NUR mit JSON:
     }
 
     async function updateMarkers() {
-        const L = window.L; const map = mapInstanceRef.current;
-        if (!L || !map) return;
-        markersRef.current.forEach(m => map.removeLayer(m)); markersRef.current = [];
-        linesRef.current.forEach(l => map.removeLayer(l)); linesRef.current = [];
-        const valid = locations.filter(l => l.lat && l.lng);
-        if (!valid.length) return;
-        const bounds = [];
-        valid.forEach(loc => {
-          const di = tripDays.indexOf(locationDays[loc.id]);
-          const col = di >= 0 ? DAY_COLORS[di % DAY_COLORS.length] : "#c4a882";
-          const icon = L.divIcon({ className:"", html:`<div style="background:${col};width:34px;height:34px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${loc.icon||"\ud83d\udccd"}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
-          const m = L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`<b>${loc.name}</b><br/>${loc.type||""}<br/>${loc.area?"\ud83d\udccd "+loc.area+"<br/>":""}${loc.openingHoursText?"\ud83d\udd50 "+loc.openingHoursText+"<br/>":""}${loc.entryCostText?"\ud83c\udf9f "+loc.entryCostText:""}`);
-          markersRef.current.push(m); bounds.push([loc.lat,loc.lng]);
-        });
-        const byDay = {};
-        tripDays.forEach(d => { byDay[d] = []; });
-        valid.forEach(loc => { const d = locationDays[loc.id]; if (d && byDay[d]) byDay[d].push(loc); });
-        for (let di = 0; di < tripDays.length; di++) {
-          const d = tripDays[di]; const locs = byDay[d]; if (locs.length < 2) continue;
-          const col = DAY_COLORS[di % DAY_COLORS.length];
-          const waypoints = locs.map(l => [l.lat, l.lng]);
-          const styleW = {color:col,weight:3,dashArray:"8 6",opacity:0.9,lineCap:"round"};
-          const styleT = {color:col,weight:5,dashArray:"3 10",opacity:0.85,lineCap:"round"};
-          const styleD = {color:col,weight:4,opacity:0.9,lineCap:"round"};
-          const lineStyle = travelMode==="walking" ? styleW : travelMode==="transit" ? styleT : styleD;
-          let drawCoords = waypoints;
-          let drawStyle = {...lineStyle, dashArray:"6 10", opacity:0.5};
-          if (travelMode !== "transit") {
-            try {
-              const profile = travelMode==="driving" ? "car" : "foot";
-              const coordStr = waypoints.map(([lat,lng]) => `${lng},${lat}`).join(";");
-              const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${coordStr}?overview=full&geometries=geojson`);
-              if (res.ok) {
-                const data = await res.json();
-                if (data.code === "Ok" && data.routes?.[0]) {
-                  drawCoords = data.routes[0].geometry.coordinates.map(([lng,lat]) => [lat,lng]);
-                  drawStyle = lineStyle;
+          const L = window.L; const map = mapInstanceRef.current;
+          if (!L || !map) return;
+          markersRef.current.forEach(m => map.removeLayer(m)); markersRef.current = [];
+          linesRef.current.forEach(l => map.removeLayer(l)); linesRef.current = [];
+          const valid = locations.filter(l => l.lat && l.lng);
+          if (!valid.length) return;
+          const bounds = [];
+          valid.forEach(loc => {
+            const di = tripDays.indexOf(locationDays[loc.id]);
+            const col = di >= 0 ? DAY_COLORS[di % DAY_COLORS.length] : "#c4a882";
+            const icon = L.divIcon({ className:"", html:`<div style="background:${col};width:34px;height:34px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${loc.icon||"\ud83d\udccd"}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
+            const m = L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`<b>${loc.name}</b><br/>${loc.type||""}<br/>${loc.area?"\ud83d\udccd "+loc.area+"<br/>":""}${loc.openingHoursText?"\ud83d\udd50 "+loc.openingHoursText+"<br/>":""}${loc.entryCostText?"\ud83c\udf9f "+loc.entryCostText:""}`);
+            markersRef.current.push(m); bounds.push([loc.lat,loc.lng]);
+          });
+          const byDay = {};
+          tripDays.forEach(d => { byDay[d] = []; });
+          valid.forEach(loc => { const d = locationDays[loc.id]; if (d && byDay[d]) byDay[d].push(loc); });
+          for (let di = 0; di < tripDays.length; di++) {
+            const d = tripDays[di]; const locs = byDay[d]; if (locs.length < 2) continue;
+            const col = DAY_COLORS[di % DAY_COLORS.length];
+            const waypoints = locs.map(l => [l.lat, l.lng]);
+            let drawCoords = waypoints;
+            let drawStyle;
+            if (travelMode === "transit") {
+              drawStyle = {color:col, weight:4, dashArray:"6 10", opacity:0.8, lineCap:"round"};
+              const line = L.polyline(drawCoords, drawStyle).addTo(map);
+              linesRef.current.push(line);
+              const arrows = locs.slice(1).map((loc, i) => {
+                const prev = locs[i];
+                const midLat = (prev.lat + loc.lat) / 2;
+                const midLng = (prev.lng + loc.lng) / 2;
+                const arrowIcon = L.divIcon({ className:"", html:`<div style="color:${col};font-size:14px;font-weight:bold;">➤</div>`, iconSize:[16,16], iconAnchor:[8,8] });
+                return L.marker([midLat, midLng], {icon: arrowIcon, interactive: false}).addTo(map);
+              });
+              arrows.forEach(a => linesRef.current.push(a));
+            } else {
+              const profile = travelMode === "driving" ? "car" : "foot";
+              const styleW = {color:col, weight:3, dashArray:"8 6", opacity:0.9, lineCap:"round"};
+              const styleD = {color:col, weight:4, opacity:0.9, lineCap:"round"};
+              drawStyle = travelMode === "walking" ? styleW : styleD;
+              let usedReal = false;
+              try {
+                const coordStr = waypoints.map(([lat,lng]) => `${lng},${lat}`).join(";");
+                const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${coordStr}?overview=full&geometries=geojson`);
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.code === "Ok" && data.routes?.[0]) {
+                    drawCoords = data.routes[0].geometry.coordinates.map(([lng,lat]) => [lat,lng]);
+                    usedReal = true;
+                  }
                 }
-              }
-            } catch(e) {}
+              } catch(e) {}
+              if (!usedReal) drawStyle = {...drawStyle, dashArray:"6 10", opacity:0.5};
+              linesRef.current.push(L.polyline(drawCoords, drawStyle).addTo(map));
+            }
           }
-          linesRef.current.push(L.polyline(drawCoords, drawStyle).addTo(map));
-        }
+
         if (bounds.length > 1) map.fitBounds(bounds, {padding:[40,40]});
         else if (bounds.length === 1) map.setView(bounds[0], 15);
       }
