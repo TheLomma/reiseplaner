@@ -959,11 +959,36 @@ Antworte NUR mit JSON:
     );
   }
 
-  function MapView({ locations, locationDays, tripDays, travelMode, city, th }) {
+  function MapView({ locations, locationDays, tripDays, travelMode, city, th, lang = "de" }) {
     const mapRef = useRef(null);
-    const mapInstanceRef = useRef(null);
-    const markersRef = useRef([]);
-    const linesRef = useRef([]);
+      const mapInstanceRef = useRef(null);
+      const markersRef = useRef([]);
+      const linesRef = useRef([]);
+      const [exporting, setExporting] = useState(false);
+      const [exportDone, setExportDone] = useState(false);
+
+      const exportMapPNG = async () => {
+        if (!mapRef.current) return;
+        setExporting(true); setExportDone(false);
+        // Load html2canvas if not present
+        await new Promise((res, rej) => {
+          if (window.html2canvas) { res(); return; }
+          const s = document.createElement("script");
+          s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+        try {
+          const canvas = await window.html2canvas(mapRef.current, { useCORS: true, allowTaint: true, scale: 2 });
+          const link = document.createElement("a");
+          link.download = `reisekarte-${city?.name || "map"}.png`;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          setExportDone(true);
+          setTimeout(() => setExportDone(false), 2000);
+        } catch(e) { console.error(e); }
+        setExporting(false);
+      };
 
     useEffect(() => {
       if (!window.L) {
@@ -1091,10 +1116,15 @@ Antworte NUR mit JSON:
                 const di = tripDays.indexOf(d);
                 const col = DAY_COLORS[di % DAY_COLORS.length];
                 const n = locations.filter(l => locationDays[l.id]===d && l.lat && l.lng).length;
-                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d,"de")}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
+                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d, lang)}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
               })}
             </div>
-            <span style={{background:th.accentLight,color:th.accent,borderRadius:8,padding:"2px 10px",fontWeight:600,fontSize:"0.7rem"}}>{travelMode==="walking"?"🚶 Zu Fuß · OSRM":travelMode==="transit"?"🚇 ÖPNV · Luftlinie":"🚗 Auto · OSRM"}</span>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
+              <span style={{background:th.accentLight,color:th.accent,borderRadius:8,padding:"2px 10px",fontWeight:600,fontSize:"0.7rem"}}>{travelMode==="walking"?"🚶 Zu Fuß · OSRM":travelMode==="transit"?"🚇 ÖPNV · Luftlinie":"🚗 Auto · OSRM"}</span>
+              <button onClick={exportMapPNG} disabled={exporting} style={{background:th.accentLight,color:th.accent,border:`1px solid ${th.border}`,borderRadius:8,padding:"3px 10px",fontSize:"0.72rem",fontWeight:700,cursor:exporting?"wait":"pointer",display:"flex",alignItems:"center",gap:4}}>
+                {exporting ? <Spinner size={12} color={th.accent}/> : exportDone ? "✓" : "📷"} {exporting ? "Export..." : exportDone ? (lang==="de"?"Gespeichert!":"Saved!") : "PNG"}
+              </button>
+            </div>
           </div>
           <div style={{borderRadius:16,overflow:"hidden",border:`1px solid ${th.border}`,height:400,position:"relative"}}>
         <div ref={mapRef} style={{width:"100%",height:"100%"}} />
