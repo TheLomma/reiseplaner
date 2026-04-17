@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.8",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.9",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.8",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.9",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -510,12 +510,13 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
     );
   }
 
-  function LocationCard({ loc, city, tripDays, locationDays, locationNotes, onDayChange, onNoteChange, onRemove, lang, th, dragHandleProps, isDragging }) {
+  function LocationCard({ loc, city, tripDays, locationDays, locationNotes, locationTimes, onDayChange, onNoteChange, onTimeChange, onRemove, lang, th, dragHandleProps, isDragging }) {
     const t = TRANSLATIONS[lang];
     const [showInfo, setShowInfo] = useState(false);
     const [showNote, setShowNote] = useState(false);
     const assignedDay = locationDays[loc.id];
     const note = locationNotes[loc.id] || "";
+    const assignedTime = locationTimes?.[loc.id] || "";
     const cost = getEntryCost(loc.name, city);
     const rating = getRating(loc.name, city);
     const info = getLocationInfo(loc.name, city);
@@ -569,6 +570,18 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
               <div style={{ marginTop:8, padding:"8px 10px", background:th.accentLight, borderRadius:10, fontSize:"0.78rem", color:th.text }}>
                 <div style={{ marginBottom:4, fontStyle:"italic" }}>{info.short}</div>
                 <ul style={{ margin:0, paddingLeft:16 }}>{info.highlights.map((h,i)=><li key={i} style={{ color:th.textMuted }}>{h}</li>)}</ul>
+              </div>
+            )}
+            {assignedDay && (
+              <div style={{ marginTop:6, display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ fontSize:"0.7rem", color:th.textFaint }}>🕐</span>
+                <input
+                  type="time"
+                  value={assignedTime}
+                  onChange={e => onTimeChange(loc.id, e.target.value)}
+                  style={{ background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"3px 8px", fontSize:"0.78rem", color:th.text, cursor:"pointer" }}
+                />
+                {assignedTime && <span style={{ fontSize:"0.7rem", color:th.accent, fontWeight:600 }}>{assignedTime} Uhr</span>}
               </div>
             )}
             {showNote && (
@@ -896,7 +909,7 @@ Antworte NUR mit JSON:
     );
   }
 
-  function RouteTimeline({ locations, locationDays, tripDays, travelMode, city, lang, th }) {
+  function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th }) {
     const t = TRANSLATIONS[lang];
     const byDay = {};
     tripDays.forEach(d => { byDay[d] = []; });
@@ -1436,6 +1449,7 @@ Antworte NUR mit JSON:
       const [locations, setLocations, undoRedo] = useUndoRedo([]);
       const [locationDays, setLocationDays] = useState({});
       const [locationNotes, setLocationNotes] = useState({});
+        const [locationTimes, setLocationTimes] = useState({});
       const [travelMode, setTravelMode] = useState("walking");
       const [activeTab, setActiveTab] = useState("route");
       const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0,10));
@@ -1456,16 +1470,21 @@ Antworte NUR mit JSON:
     }, [setLocations]);
 
     const removeLocation = useCallback((id) => {
-      setLocations(prev => prev.filter(l => l.id !== id));
-      setLocationDays(prev => { const n={...prev}; delete n[id]; return n; });
-      setLocationNotes(prev => { const n={...prev}; delete n[id]; return n; });
+        setLocations(prev => prev.filter(l => l.id !== id));
+        setLocationDays(prev => { const n={...prev}; delete n[id]; return n; });
+        setLocationNotes(prev => { const n={...prev}; delete n[id]; return n; });
+        setLocationTimes(prev => { const n={...prev}; delete n[id]; return n; });
     }, [setLocations]);
 
     const setDay = useCallback((id, day) => {
       setLocationDays(prev => { const n={...prev}; if(day) n[id]=day; else delete n[id]; return n; });
     }, []);
 
-    const setNote = useCallback((id, note) => {
+    const setTime = useCallback((id, time) => {
+        setLocationTimes(prev => ({...prev, [id]: time}));
+      }, []);
+
+      const setNote = useCallback((id, note) => {
       setLocationNotes(prev => ({...prev, [id]: note}));
     }, []);
 
@@ -1593,7 +1612,7 @@ Antworte NUR mit JSON:
                 <LocationCard
                   loc={loc} city={city} tripDays={tripDays}
                   locationDays={locationDays} locationNotes={locationNotes}
-                  onDayChange={setDay} onNoteChange={setNote} onRemove={removeLocation}
+                  onDayChange={setDay} onNoteChange={setNote} onTimeChange={setTime} locationTimes={locationTimes} onRemove={removeLocation}
                   lang={lang} th={th}
                   dragHandleProps={{ onMouseDown:()=>{} }}
                   isDragging={dragIdx===i}
@@ -1629,7 +1648,7 @@ Antworte NUR mit JSON:
           {activeTab==="route" && (
             <>
               <RouteOptimizer locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} onApply={(newDays)=>setLocationDays(newDays)} lang={lang} th={th} />
-              <RouteTimeline locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
+              <RouteTimeline locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
             </>
           )}
           {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} lang={lang} />}
