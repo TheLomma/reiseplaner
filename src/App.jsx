@@ -289,9 +289,10 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.7",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.8",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
+    searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
     days:["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
     free:"Kostenlos",selectCity:"Stadt wählen",
     notePlaceholder:"Notiz (z.B. Tickets vorbuchen!)",noteLabel:"Notiz",noteHide:"Ausblenden",
@@ -318,9 +319,10 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.7",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.8",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
+    searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
     days:["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
     free:"Free",selectCity:"Select City",
     notePlaceholder:"Note (e.g. Book tickets!)",noteLabel:"Note",noteHide:"Hide",
@@ -600,6 +602,70 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
         {loc.address && (
           <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`} target="_blank" rel="noopener noreferrer"
             style={{ display:"inline-block", marginTop:6, fontSize:"0.72rem", color:th.accent, textDecoration:"none" }}>🗺 {t.openInMaps}</a>
+        )}
+      </div>
+    );
+  }
+
+  function PlaceSearch({ onAdd, tripDays, lang, th }) {
+    const t = TRANSLATIONS[lang];
+    const [query, setQuery] = useState("");
+    const [srchLoading, setSrchLoading] = useState(false);
+    const [srchResults, setSrchResults] = useState([]);
+    const [srchError, setSrchError] = useState("");
+    const [srchDay, setSrchDay] = useState(null);
+    const gIcon = (r) => { const tp=(r.type||"").toLowerCase(),cl=(r.class||"").toLowerCase(); if(tp==="restaurant")return"🍽️"; if(tp==="cafe")return"☕"; if(tp==="museum")return"🏛️"; if(tp==="park"||cl==="leisure")return"🌳"; if(cl==="tourism")return"🗺️"; return"📍"; };
+    const gType = (r) => { const tp=(r.type||"").toLowerCase(),cl=(r.class||"").toLowerCase(); if(tp==="restaurant")return"Restaurant"; if(tp==="cafe")return"Cafe"; if(tp==="museum")return"Museum"; if(tp==="park"||cl==="leisure")return"Park"; if(cl==="tourism")return lang==="de"?"Sehenswürdigkeit":"Attraction"; return lang==="de"?"Ort":"Place"; };
+    const doSearch = useCallback(async () => {
+      if (!query.trim()) return;
+      setSrchLoading(true); setSrchError(""); setSrchResults([]);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`,{headers:{"Accept-Language":lang==="de"?"de":"en"}});
+        const data = await res.json();
+        if (!data.length) setSrchError(t.searchNoResults); else setSrchResults(data);
+      } catch { setSrchError(lang==="de"?"Netzwerkfehler.":"Network error."); }
+      setSrchLoading(false);
+    }, [query, lang, t]);
+    const addR = (r) => {
+      onAdd({ id:Date.now()+Math.random(), name:r.name||r.display_name.split(",")[0], type:gType(r), icon:gIcon(r), address:r.display_name, area:r.address?.city||r.address?.town||r.address?.village||"", lat:parseFloat(r.lat), lng:parseFloat(r.lon), duration:"1 Std." }, srchDay);
+      setSrchResults([]); setQuery("");
+    };
+    return (
+      <div style={{ marginBottom:16, background:th.card, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px" }}>
+        <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>🔍 {t.searchTab}</div>
+        <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+          <input value={query} onChange={e=>{setQuery(e.target.value);setSrchError("");}} onKeyDown={e=>e.key==="Enter"&&doSearch()}
+            placeholder={t.searchPlaceholder}
+            style={{ flex:1, background:th.input, border:`1px solid ${srchError?th.warning:th.inputBorder}`, borderRadius:10, padding:"8px 12px", fontSize:"0.85rem", color:th.text, outline:"none" }}/>
+          <button onClick={doSearch} disabled={srchLoading}
+            style={{ background:th.accent, color:th.bg, border:"none", borderRadius:10, padding:"8px 16px", fontWeight:700, fontSize:"0.85rem", cursor:srchLoading?"wait":"pointer", display:"flex", alignItems:"center", gap:6 }}>
+            {srchLoading?<Spinner size={14} color={th.bg}/>:"🔍"} {srchLoading?t.searching:t.search}
+          </button>
+        </div>
+        {srchError && <div style={{ fontSize:"0.75rem", color:th.warning, marginBottom:6 }}>{srchError}</div>}
+        {srchResults.length>0 && (
+          <div style={{ display:"flex", flexDirection:"column", gap:4, marginBottom:6 }}>
+            {tripDays.length>0 && (
+              <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:4, alignItems:"center" }}>
+                <span style={{ fontSize:"0.7rem", color:th.textFaint }}>{lang==="de"?"Tag:":"Day:"}</span>
+                <button onClick={()=>setSrchDay(null)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1px solid ${!srchDay?th.accent:th.border}`, background:!srchDay?th.accentLight:"transparent", color:!srchDay?th.accent:th.textMuted, cursor:"pointer" }}>{lang==="de"?"Kein":"None"}</button>
+                {tripDays.map((d,i)=>(
+                  <button key={d} onClick={()=>setSrchDay(srchDay===d?null:d)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1.5px solid ${srchDay===d?getDayColor(i):th.border}`, background:srchDay===d?getDayColor(i)+"22":"transparent", color:srchDay===d?getDayColor(i):th.textMuted, cursor:"pointer", fontWeight:srchDay===d?700:400 }}>{formatDateLabel(d,lang)}</button>
+                ))}
+              </div>
+            )}
+            {srchResults.map((r,i)=>(
+              <div key={i} onClick={()=>addR(r)} style={{ display:"flex", alignItems:"center", gap:8, background:th.surface, border:`1px solid ${th.border}`, borderRadius:10, padding:"8px 10px", cursor:"pointer" }}>
+                <span style={{ fontSize:"1.2rem", flexShrink:0 }}>{gIcon(r)}</span>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontWeight:600, fontSize:"0.83rem", color:th.text, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.name||r.display_name.split(",")[0]}</div>
+                  <div style={{ fontSize:"0.7rem", color:th.textMuted, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
+                </div>
+                <span style={{ background:th.accent, color:th.bg, borderRadius:7, padding:"3px 10px", fontSize:"0.72rem", fontWeight:700, flexShrink:0 }}>+</span>
+              </div>
+            ))}
+            <div style={{ fontSize:"0.65rem", color:th.textFaint, marginTop:2 }}>🌍 OpenStreetMap · Nominatim</div>
+          </div>
         )}
       </div>
     );
@@ -1507,7 +1573,8 @@ Antworte NUR mit JSON:
           )}
 
           {/* LINK ANALYZER */}
-          <LinkAnalyzer city={city} onAdd={addLocation} tripDays={tripDays} lang={lang} th={th} />
+          <PlaceSearch onAdd={addLocation} tripDays={tripDays} lang={lang} th={th} />
+            <LinkAnalyzer city={city} onAdd={addLocation} tripDays={tripDays} lang={lang} th={th} />
 
           {/* LOCATIONS */}
           <div style={{ marginBottom:16 }}>
