@@ -347,22 +347,21 @@ function formatDateLabel(dateStr, lang) {
   const d = new Date(dateStr + "T12:00:00");
   const shortDE = ["So","Mo","Di","Mi","Do","Fr","Sa"];
   const shortEN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const short = lang === "de" ? shortDE[d.getDay()] : shortEN[d.getDay()];
+  const short = (lang||"de") === "de" ? shortDE[d.getDay()] : shortEN[d.getDay()];
   const day = String(d.getDate()).padStart(2,"0");
   const month = String(d.getMonth()+1).padStart(2,"0");
   return short + " " + day + "." + month + ".";
 }
-
 function generateTripDays(startDate, numDays) {
-  const days = [];
-  const base = new Date(startDate + "T12:00:00");
-  for (let i = 0; i < numDays; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
-    days.push(d.toISOString().slice(0,10));
+    const days = [];
+    const base = new Date(startDate + "T12:00:00");
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      days.push(d.toISOString().slice(0,10));
+    }
+    return days;
   }
-  return days;
-}
 
 function normalizePlan(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -607,7 +606,7 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
             {tripDays.map((d,i) => (
               <button key={d} onClick={()=>onDayChange(loc.id, assignedDay===d ? null : d)}
                 style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:8, border:`1.5px solid ${assignedDay===d ? getDayColor(i) : th.border}`, background: assignedDay===d ? getDayColor(i)+"22" : "transparent", color: assignedDay===d ? getDayColor(i) : th.textMuted, cursor:"pointer", fontWeight: assignedDay===d ? 700 : 400 }}>
-                {formatDateLabel(d, lang)}
+                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
               </button>
             ))}
           </div>
@@ -663,7 +662,7 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
                 <span style={{ fontSize:"0.7rem", color:th.textFaint }}>{lang==="de"?"Tag:":"Day:"}</span>
                 <button onClick={()=>setSrchDay(null)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1px solid ${!srchDay?th.accent:th.border}`, background:!srchDay?th.accentLight:"transparent", color:!srchDay?th.accent:th.textMuted, cursor:"pointer" }}>{lang==="de"?"Kein":"None"}</button>
                 {tripDays.map((d,i)=>(
-                  <button key={d} onClick={()=>setSrchDay(srchDay===d?null:d)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1.5px solid ${srchDay===d?getDayColor(i):th.border}`, background:srchDay===d?getDayColor(i)+"22":"transparent", color:srchDay===d?getDayColor(i):th.textMuted, cursor:"pointer", fontWeight:srchDay===d?700:400 }}>{formatDateLabel(d,lang)}</button>
+                  <button key={d} onClick={()=>setSrchDay(srchDay===d?null:d)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1.5px solid ${srchDay===d?getDayColor(i):th.border}`, background:srchDay===d?getDayColor(i)+"22":"transparent", color:srchDay===d?getDayColor(i):th.textMuted, cursor:"pointer", fontWeight:srchDay===d?700:400 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d,lang)}</button>
                 ))}
               </div>
             )}
@@ -891,7 +890,7 @@ Antworte NUR mit JSON:
             )}
             {suggestion.days && Object.entries(suggestion.days).map(([date, names], di) => (
               <div key={date} style={{ marginBottom:6 }}>
-                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(date, lang)}</div>
+                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(date, lang)}</div>
                 {names.map((n,i) => <div key={i} style={{ fontSize:"0.75rem", color:th.text, paddingLeft:10 }}>{i+1}. {n}</div>)}
               </div>
             ))}
@@ -928,7 +927,7 @@ Antworte NUR mit JSON:
             <div key={d} style={{ marginBottom:20 }}>
               <div style={{ fontWeight:700, fontSize:"0.8rem", color, textTransform:"uppercase", letterSpacing:1, marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ width:10, height:10, borderRadius:"50%", background:color, display:"inline-block" }}/>
-                {formatDateLabel(d, lang)}
+                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
               </div>
               {locs.map((loc, li) => {
                 const travel = li > 0 ? calcTravelTime(locs[li-1], loc) : null;
@@ -1116,13 +1115,13 @@ Antworte NUR mit JSON:
                 const di = tripDays.indexOf(d);
                 const col = DAY_COLORS[di % DAY_COLORS.length];
                 const n = locations.filter(l => locationDays[l.id]===d && l.lat && l.lng).length;
-                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d, lang)}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
+                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
               })}
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <span style={{background:th.accentLight,color:th.accent,borderRadius:8,padding:"2px 10px",fontWeight:600,fontSize:"0.7rem"}}>{travelMode==="walking"?"🚶 Zu Fuß · OSRM":travelMode==="transit"?"🚇 ÖPNV · Luftlinie":"🚗 Auto · OSRM"}</span>
               <button onClick={exportMapPNG} disabled={exporting} style={{background:th.accentLight,color:th.accent,border:`1px solid ${th.border}`,borderRadius:8,padding:"3px 10px",fontSize:"0.72rem",fontWeight:700,cursor:exporting?"wait":"pointer",display:"flex",alignItems:"center",gap:4}}>
-                {exporting ? <Spinner size={12} color={th.accent}/> : exportDone ? "✓" : "📷"} {exporting ? "Export..." : exportDone ? (lang==="de"?"Gespeichert!":"Saved!") : "PNG"}
+                {exporting ? <Spinner size={12} color={th.accent}/> : exportDone ? "✓" : "📷"} {exporting ? "Export..." : exportDone ? ((lang||"de")==="de"?"Gespeichert!":"Saved!") : "PNG"}
               </button>
             </div>
           </div>
