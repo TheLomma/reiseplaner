@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v6.9",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.0",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v6.9",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.0",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -606,7 +606,7 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
             {tripDays.map((d,i) => (
               <button key={d} onClick={()=>onDayChange(loc.id, assignedDay===d ? null : d)}
                 style={{ fontSize:"0.7rem", padding:"2px 8px", borderRadius:8, border:`1.5px solid ${assignedDay===d ? getDayColor(i) : th.border}`, background: assignedDay===d ? getDayColor(i)+"22" : "transparent", color: assignedDay===d ? getDayColor(i) : th.textMuted, cursor:"pointer", fontWeight: assignedDay===d ? 700 : 400 }}>
-                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
+                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
               </button>
             ))}
           </div>
@@ -662,7 +662,7 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
                 <span style={{ fontSize:"0.7rem", color:th.textFaint }}>{lang==="de"?"Tag:":"Day:"}</span>
                 <button onClick={()=>setSrchDay(null)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1px solid ${!srchDay?th.accent:th.border}`, background:!srchDay?th.accentLight:"transparent", color:!srchDay?th.accent:th.textMuted, cursor:"pointer" }}>{lang==="de"?"Kein":"None"}</button>
                 {tripDays.map((d,i)=>(
-                  <button key={d} onClick={()=>setSrchDay(srchDay===d?null:d)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1.5px solid ${srchDay===d?getDayColor(i):th.border}`, background:srchDay===d?getDayColor(i)+"22":"transparent", color:srchDay===d?getDayColor(i):th.textMuted, cursor:"pointer", fontWeight:srchDay===d?700:400 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d,lang)}</button>
+                  <button key={d} onClick={()=>setSrchDay(srchDay===d?null:d)} style={{ fontSize:"0.68rem", padding:"1px 7px", borderRadius:7, border:`1.5px solid ${srchDay===d?getDayColor(i):th.border}`, background:srchDay===d?getDayColor(i)+"22":"transparent", color:srchDay===d?getDayColor(i):th.textMuted, cursor:"pointer", fontWeight:srchDay===d?700:400 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d,lang)}</button>
                 ))}
               </div>
             )}
@@ -890,7 +890,7 @@ Antworte NUR mit JSON:
             )}
             {suggestion.days && Object.entries(suggestion.days).map(([date, names], di) => (
               <div key={date} style={{ marginBottom:6 }}>
-                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(date, lang)}</div>
+                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(date, lang)}</div>
                 {names.map((n,i) => <div key={i} style={{ fontSize:"0.75rem", color:th.text, paddingLeft:10 }}>{i+1}. {n}</div>)}
               </div>
             ))}
@@ -927,7 +927,7 @@ Antworte NUR mit JSON:
             <div key={d} style={{ marginBottom:20 }}>
               <div style={{ fontWeight:700, fontSize:"0.8rem", color, textTransform:"uppercase", letterSpacing:1, marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
                 <span style={{ width:10, height:10, borderRadius:"50%", background:color, display:"inline-block" }}/>
-                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
+                {formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}
               </div>
               {locs.map((loc, li) => {
                 const travel = li > 0 ? calcTravelTime(locs[li-1], loc) : null;
@@ -1115,7 +1115,7 @@ Antworte NUR mit JSON:
                 const di = tripDays.indexOf(d);
                 const col = DAY_COLORS[di % DAY_COLORS.length];
                 const n = locations.filter(l => locationDays[l.id]===d && l.lat && l.lng).length;
-                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
+                return <div key={d} style={{display:"flex",alignItems:"center",gap:4,background:col+"18",border:`1px solid ${col}55`,borderRadius:8,padding:"2px 8px"}}><div style={{width:8,height:8,borderRadius:"50%",background:col}}/><span style={{fontSize:"0.7rem",color:col,fontWeight:700}}>{formatDateLabel(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")(d, lang||"de")}</span><span style={{fontSize:"0.65rem",color:col,opacity:0.8}}>{n} Ort{n!==1?"e":""}</span></div>;
               })}
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1699,7 +1699,3 @@ Antworte NUR mit JSON:
       </div>
     );
   }
-
-           
-
-           
