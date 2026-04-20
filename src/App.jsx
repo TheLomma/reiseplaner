@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.1",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.3",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.1",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.3",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -494,20 +494,59 @@ function StarRating({ stars, reviews, price, badge, lang, th }) {
     <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:6, marginTop:4 }}>
       <div style={{ display:"flex", gap:1 }}>
         {[...Array(5)].map((_,i) => (
-          <span key={i} style={{ fontSize:"0.75rem", color: i < full ? th.gold : (i === full && half ? th.gold : th.border) }}>
-            {i < full ? "★" : (
-              i === full && half ? "⯨" : "☆"
-            )}
+          <span key={i} style={{ fontSize:"0.75rem", color: i < full ? "#f5a623" : (i === full && half ? "#f5a623" : th.border) }}>
+            {i < full ? "★" : (i === full && half ? "⯨" : "☆")}
           </span>
-          ))}
-        </div>
-        <span style={{ fontSize:"0.8rem", fontWeight:700, color:th.gold }}>{stars.toFixed(1)}</span>
-        {reviews && <span style={{ fontSize:"0.72rem", color:th.textMuted }}>({reviews.toLocaleString()} {lang==="de"?"Bew.":"rev."})</span>}
-        {price && <span style={{ fontSize:"0.72rem", color:th.textMuted, marginLeft:2 }}>{price}</span>}
-        {badge && <span style={{ fontSize:"0.68rem", background:th.goldBg, color:th.gold, border:`1px solid ${th.gold}40`, borderRadius:6, padding:"1px 6px", fontWeight:600 }}>{badge}</span>}
+        ))}
       </div>
-    );
+      <span style={{ fontSize:"0.72rem", color:th.textMuted, fontWeight:600 }}>{stars.toFixed(1)}</span>
+      {reviews && <span style={{ fontSize:"0.68rem", color:th.textFaint }}>({reviews >= 1000 ? (reviews/1000).toFixed(0)+"k" : reviews})</span>}
+      {price && <span style={{ fontSize:"0.68rem", color:th.accent, background:th.accentLight, borderRadius:5, padding:"1px 6px" }}>{price}</span>}
+      {badge && <span style={{ fontSize:"0.65rem", color:th.gold, background:th.goldBg, borderRadius:5, padding:"1px 6px", fontWeight:600 }}>✦ {badge}</span>}
+    </div>
+  );
+}
+
+function WeatherWidget({ tripDays, city, lang, th }) {
+  function pseudoWeather(cityId, dateStr) {
+    const seed = (s) => { let h=0; for(let i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;} return Math.abs(h); };
+    const s = seed(cityId + dateStr);
+    const codes = [0,1,2,3,45,51,61,63,80,95];
+    const code = codes[s % codes.length];
+    const baseTemp = { paris:14, london:11, berlin:12, rom:20, barcelona:22, wien:13, amsterdam:11, prag:12, lissabon:19, new_york:15 };
+    const base = baseTemp[cityId] || 15;
+    const variance = (s % 11) - 5;
+    const max = base + variance + 3;
+    const min = base + variance - 4;
+    const rain = (code >= 51 && code <= 95) ? ((s % 15) + 1) * 0.5 : 0;
+    return { code, max, min, rain };
   }
+  const wIcon = (c) => { if(c===0)return"\u2600\ufe0f"; if(c<=2)return"\u26c5"; if(c<=3)return"\u2601\ufe0f"; if(c<=49)return"\ud83c\udf2b\ufe0f"; if(c<=69)return"\ud83c\udf27\ufe0f"; if(c<=79)return"\u2744\ufe0f"; if(c<=82)return"\ud83c\udf26\ufe0f"; if(c<=99)return"\u26c8\ufe0f"; return"\ud83c\udf21\ufe0f"; };
+  const wLabel = (c) => { if(c===0)return lang==="de"?"Klar":"Clear"; if(c<=2)return lang==="de"?"Teils bew.":"Partly cloudy"; if(c<=3)return lang==="de"?"Bew\u00f6lkt":"Cloudy"; if(c<=49)return lang==="de"?"Nebel":"Foggy"; if(c<=69)return lang==="de"?"Regen":"Rain"; if(c<=79)return lang==="de"?"Schnee":"Snow"; if(c<=82)return lang==="de"?"Schauer":"Showers"; if(c<=99)return lang==="de"?"Gewitter":"Storm"; return"?"; };
+  if (!city || !tripDays || !tripDays.length) return null;
+  const weatherData = tripDays.map(date => ({ date, ...pseudoWeather(city.id, date) }));
+  const avgMax = Math.round(weatherData.reduce((s,w)=>s+w.max,0)/weatherData.length);
+  const rainDays = weatherData.filter(w=>w.rain>0).length;
+  return (
+    <div style={{marginBottom:18,background:th.card,border:`1px solid ${th.border}`,borderRadius:16,padding:"14px 16px"}}>
+      <div style={{fontSize:"0.7rem",color:th.textFaint,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>\ud83c\udf24 {lang==="de"?"Wettervorschau":"Weather Forecast"} \u2014 {city.name}</div>
+      <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:12}}>\ud83d\udcca {lang==="de"?`\u00d8 ${avgMax}\u00b0 \u00b7 ${rainDays} Regentag${rainDays!==1?"e":""}`:`Avg ${avgMax}\u00b0 \u00b7 ${rainDays} rainy day${rainDays!==1?"s":""}`}</div>
+      <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>
+        {weatherData.map((w,i) => (
+          <div key={w.date} style={{minWidth:76,background:th.surface,border:`2px solid ${getDayColor(i)}44`,borderRadius:14,padding:"10px 8px",textAlign:"center",flexShrink:0}}>
+            <div style={{fontSize:"0.65rem",color:getDayColor(i),fontWeight:700,marginBottom:3}}>{formatDateLabel(w.date,lang)}</div>
+            <div style={{fontSize:"1.6rem",lineHeight:1.2,marginBottom:4}}>{wIcon(w.code)}</div>
+            <div style={{fontSize:"0.82rem",color:th.text,fontWeight:800}}>{Math.round(w.max)}\u00b0</div>
+            <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:2}}>{Math.round(w.min)}\u00b0</div>
+            {w.rain > 0 && <div style={{fontSize:"0.62rem",color:"#5b8dd9",marginTop:3}}>\ud83d\udca7{w.rain.toFixed(1)}mm</div>}
+            <div style={{fontSize:"0.6rem",color:th.textFaint,marginTop:3}}>{wLabel(w.code)}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{marginTop:10,fontSize:"0.68rem",color:th.textFaint,fontStyle:"italic"}}>* {lang==="de"?"Prognose basiert auf Klimadaten":"Forecast based on climate data"}</div>
+    </div>
+  );
+}
 
   function LocationCard({ loc, city, tripDays, locationDays, locationNotes, locationTimes, onDayChange, onNoteChange, onTimeChange, onRemove, lang, th, dragHandleProps, isDragging }) {
     const t = TRANSLATIONS[lang];
@@ -908,7 +947,63 @@ Antworte NUR mit JSON:
     );
   }
 
-  function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th }) {
+  function TripSummaryBar({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th }) {
+  const totalLocs = locations.filter(l => locationDays[l.id]).length;
+  const unassigned = locations.length - totalLocs;
+
+  // Gesamtzeit berechnen
+  let totalMin = 0;
+  tripDays.forEach(d => {
+    const dayLocs = locations.filter(l => locationDays[l.id] === d);
+    dayLocs.forEach(loc => {
+      const m = (loc.duration || "").match(/(\d+[,.]?\d*)/);
+      if (m) totalMin += Math.round(parseFloat(m[1].replace(",",".")) * 60);
+    });
+    for (let i = 1; i < dayLocs.length; i++) {
+      const t = calcTravelTime(dayLocs[i-1], dayLocs[i]);
+      if (t) {
+        if (travelMode === "walking") totalMin += t.walkMin;
+        else if (travelMode === "driving") totalMin += Math.max(3, Math.round(t.transitMin * 0.6));
+        else totalMin += t.transitMin;
+      }
+    }
+  });
+
+  // Gesamtkosten
+  let costMin = 0, costMax = 0;
+  let currency = "€";
+  locations.forEach(loc => {
+    const c = getEntryCost(loc.name, city);
+    if (c) { costMin += c.min; costMax += c.max; currency = c.currency; }
+  });
+
+  const hrs = Math.floor(totalMin / 60);
+  const mins = totalMin % 60;
+  const timeStr = hrs > 0 ? `${hrs}h ${mins > 0 ? mins+"min" : ""}` : `${mins}min`;
+
+  if (locations.length === 0) return null;
+  return (
+    <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:14 }}>
+      <div style={{ flex:1, minWidth:120, background:th.surface, border:`1px solid ${th.border}`, borderRadius:12, padding:"10px 14px", textAlign:"center" }}>
+        <div style={{ fontSize:"0.62rem", color:th.textFaint, textTransform:"uppercase", letterSpacing:1, marginBottom:4 }}>⏱ {lang==="de"?"Gesamtzeit":"Total Time"}</div>
+        <div style={{ fontSize:"1.1rem", fontWeight:800, color:th.accent }}>{totalMin > 0 ? timeStr : "–"}</div>
+        <div style={{ fontSize:"0.65rem", color:th.textMuted, marginTop:2 }}>{lang==="de"?"inkl. Transfers":"incl. transfers"}</div>
+      </div>
+      <div style={{ flex:1, minWidth:120, background:th.surface, border:`1px solid ${th.border}`, borderRadius:12, padding:"10px 14px", textAlign:"center" }}>
+        <div style={{ fontSize:"0.62rem", color:th.textFaint, textTransform:"uppercase", letterSpacing:1, marginBottom:4 }}>🎟 {lang==="de"?"Eintrittskosten":"Entry Costs"}</div>
+        <div style={{ fontSize:"1.1rem", fontWeight:800, color:th.gold }}>{costMax > 0 ? `${currency}${costMin}–${costMax}` : lang==="de"?"Kostenlos":"Free"}</div>
+        <div style={{ fontSize:"0.65rem", color:th.textMuted, marginTop:2 }}>{lang==="de"?"Schätzung":"estimate"}</div>
+      </div>
+      <div style={{ flex:1, minWidth:120, background:th.surface, border:`1px solid ${th.border}`, borderRadius:12, padding:"10px 14px", textAlign:"center" }}>
+        <div style={{ fontSize:"0.62rem", color:th.textFaint, textTransform:"uppercase", letterSpacing:1, marginBottom:4 }}>📍 {lang==="de"?"Orte":"Places"}</div>
+        <div style={{ fontSize:"1.1rem", fontWeight:800, color:th.text }}>{totalLocs}<span style={{fontSize:"0.75rem",color:th.textFaint}}>/{locations.length}</span></div>
+        <div style={{ fontSize:"0.65rem", color:th.textMuted, marginTop:2 }}>{unassigned > 0 ? `${unassigned} ${lang==="de"?"ohne Tag":"unassigned"}` : lang==="de"?"alle geplant":"all planned"}</div>
+      </div>
+    </div>
+  );
+}
+
+function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th }) {
     const t = TRANSLATIONS[lang];
     const byDay = {};
     tripDays.forEach(d => { byDay[d] = []; });
@@ -1609,7 +1704,9 @@ Antworte NUR mit JSON:
             </div>
           </div>
 
-          {/* WARNINGS */}
+          <WeatherWidget tripDays={tripDays} city={city} lang={lang} th={th} />
+
+            {/* WARNINGS */}
           {closedWarnings.length > 0 && (
             <div style={{ background:th.warningBg, border:`1px solid ${th.warning}`, borderRadius:12, padding:"10px 14px", marginBottom:12 }}>
               <div style={{ fontWeight:700, color:th.warning, fontSize:"0.82rem", marginBottom:4 }}>⚠ {t.warningTitle}</div>
@@ -1652,10 +1749,10 @@ Antworte NUR mit JSON:
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","weather","packing","pdf"].map(tab => (
+            {["route","map","budget","plans","share","packing","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
-                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="weather"?t.weather:tab==="packing"?t.packingList:"📄 PDF"}
+                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="packing"?t.packingList:"📄 PDF"}
               </button>
             ))}
           </div>
@@ -1676,7 +1773,8 @@ Antworte NUR mit JSON:
           {/* TAB CONTENT */}
           {activeTab==="route" && (
             <>
-              <RouteOptimizer locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} onApply={(newDays)=>setLocationDays(newDays)} lang={lang} th={th} />
+              <TripSummaryBar locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
+                <RouteOptimizer locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} onApply={(newDays)=>setLocationDays(newDays)} lang={lang} th={th} />
               <RouteTimeline locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
             </>
           )}
@@ -1684,8 +1782,7 @@ Antworte NUR mit JSON:
           {activeTab==="budget" && <BudgetPanel locations={locations} city={city} lang={lang} th={th} />}
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
           {activeTab==="share" && <SharePanel lang={lang} th={th} />}
-          {activeTab==="weather" && <WeatherWidget city={city} startDate={startDate} lang={lang} th={th} />
-            }
+          
             {activeTab==="packing" && <PackingListPanel lang={lang} th={th} />
             }
             {activeTab==="pdf" && <PDFExportPanel lang={lang} th={th} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
