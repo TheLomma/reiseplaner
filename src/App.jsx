@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.5",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.6",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.5",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.6",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -631,7 +631,7 @@ function DayNotesPanel({ tripDays, lang, th }) {
         {tripDays.map((d,i) => (
           <button key={d} onClick={()=>setActiveDay(d)}
             style={{padding:"4px 12px",borderRadius:9,border:`1.5px solid ${activeDay===d?getDayColor(i):th.border}`,background:activeDay===d?getDayColor(i)+"22":"transparent",color:activeDay===d?getDayColor(i):th.textMuted,fontWeight:activeDay===d?700:400,fontSize:"0.75rem",cursor:"pointer"}}>
-            {formatDateLabel(d,lang)}
+            {formatDateLabel(d, lang||"de")}
             {notes[d] && notes[d].trim() && <span style={{marginLeft:4,color:getDayColor(i),fontSize:"0.6rem"}}>●</span>}
           </button>
         ))}
@@ -1178,7 +1178,7 @@ Antworte NUR mit JSON:
             )}
             {suggestion.days && Object.entries(suggestion.days).map(([date, names], di) => (
               <div key={date} style={{ marginBottom:6 }}>
-                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(d, lang||"de")}</div>
+                <div style={{ fontSize:"0.72rem", color:getDayColor(tripDays.indexOf(date)), fontWeight:700 }}>{formatDateLabel(date, lang||"de")}</div>
                 {names.map((n,i) => <div key={i} style={{ fontSize:"0.75rem", color:th.text, paddingLeft:10 }}>{i+1}. {n}</div>)}
               </div>
             ))}
