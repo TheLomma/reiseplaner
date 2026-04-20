@@ -1321,27 +1321,6 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
       </div>
     );
   }
-
-  function WeatherWidget({ city, startDate, lang, th }) {
-    const t = TRANSLATIONS[lang];
-    const icons = ["☀️","⛅","🌤️","🌦️","☁️"];
-    const temps = [18,22,15,20,17];
-    return (
-      <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:14, padding:"10px 14px" }}>
-        <div style={{ fontWeight:700, fontSize:"0.8rem", color:th.accent, marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>{t.weather} · {city?.name}</div>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-          {icons.map((ic,i) => (
-            <div key={i} style={{ textAlign:"center", minWidth:36 }}>
-              <div style={{ fontSize:"1.2rem" }}>{ic}</div>
-              <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{temps[i]}°</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize:"0.65rem", color:th.textFaint, marginTop:4 }}>Demo-Wetterdaten</div>
-      </div>
-    );
-  }
-
   function SavedPlansPanel({ lang, th, onLoad }) {
     const t = TRANSLATIONS[lang];
     const [plans, setPlans] = useState(() => safeLocalGet("rp_plans_v2", []));
