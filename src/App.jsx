@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.7",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.8",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.7",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.8",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -434,6 +434,38 @@ function getOpeningInfo(name, day, city) {
   }
   const isOpen = dayKey ? (info[dayKey] !== false) : true;
   return { isOpen, hours: info.hours, note: info.note };
+}
+
+function parseDurationMin(durationStr) {
+  if (!durationStr) return 60;
+  const m = durationStr.replace(",",".").match(/(\d+\.?\d*)/);
+  if (!m) return 60;
+  return Math.round(parseFloat(m[1]) * 60);
+}
+
+function parseTimeMin(timeStr) {
+  if (!timeStr) return null;
+  const parts = timeStr.split(":");
+  if (parts.length < 2) return null;
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function detectConflicts(locs, locationTimes) {
+  const conflicts = [];
+  const withTime = locs.map(loc => {
+    const start = parseTimeMin(locationTimes?.[loc.id]);
+    const dur = parseDurationMin(loc.duration);
+    return { loc, start, end: start !== null ? start + dur : null };
+  }).filter(x => x.start !== null);
+  for (let i = 0; i < withTime.length; i++) {
+    for (let j = i + 1; j < withTime.length; j++) {
+      const a = withTime[i], b = withTime[j];
+      if (a.start < b.end && b.start < a.end) {
+        conflicts.push({ a: a.loc, b: b.loc });
+      }
+    }
+  }
+  return conflicts;
 }
 
 function haversineDistance(lat1, lng1, lat2, lng2) {
@@ -631,7 +663,7 @@ function DayNotesPanel({ tripDays, lang, th }) {
         {tripDays.map((d,i) => (
           <button key={d} onClick={()=>setActiveDay(d)}
             style={{padding:"4px 12px",borderRadius:9,border:`1.5px solid ${activeDay===d?getDayColor(i):th.border}`,background:activeDay===d?getDayColor(i)+"22":"transparent",color:activeDay===d?getDayColor(i):th.textMuted,fontWeight:activeDay===d?700:400,fontSize:"0.75rem",cursor:"pointer"}}>
-            {formatDateLabel(d, lang||"de")}
+            {formatDateLabel(d, lang||"de")}{dayConflicts.length > 0 && <span style={{ fontSize:"0.65rem", background:th.warningBg, color:th.warning, borderRadius:6, padding:"1px 7px", marginLeft:4, fontWeight:700 }}>⚠ {dayConflicts.length} {lang==="de"?"Konflikt":"Conflict"}{dayConflicts.length>1?"e":""}</span>}
             {notes[d] && notes[d].trim() && <span style={{marginLeft:4,color:getDayColor(i),fontSize:"0.6rem"}}>●</span>}
           </button>
         ))}
@@ -1253,56 +1285,87 @@ Antworte NUR mit JSON:
 }
 
 function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th, onDayChange }) {
-    const t = TRANSLATIONS[lang];
-    const byDay = {};
-    tripDays.forEach(d => { byDay[d] = []; });
-    locations.forEach(loc => {
-      const d = locationDays[loc.id];
-      if (d && byDay[d]) byDay[d].push(loc);
-    });
-    const days = tripDays.filter(d => byDay[d].length > 0);
-    if (days.length === 0) return <div style={{ color:th.textFaint, fontSize:"0.82rem", textAlign:"center", padding:"20px 0" }}>{t.noRouteHint}</div>;
-    return (
-      <div>
-        {days.map((d, di) => {
-          const locs = byDay[d];
-          const color = getDayColor(tripDays.indexOf(d));
-          return (
-            <div key={d} style={{ marginBottom:20 }}>
-              <div style={{ fontWeight:700, fontSize:"0.8rem", color, textTransform:"uppercase", letterSpacing:1, marginBottom:8, display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ width:10, height:10, borderRadius:"50%", background:color, display:"inline-block" }}/>
-                {formatDateLabel(d, lang||"de")}
-              </div>
-              {locs.map((loc, li) => {
-                const travel = li > 0 ? calcTravelTime(locs[li-1], loc) : null;
-                return (
-                  <div key={loc.id}>
-                    {travel && (
-                      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 0 4px 18px", fontSize:"0.72rem", color:th.textFaint }}>
-                        <span style={{ width:1, height:20, background:th.border, display:"inline-block" }}/>
-                        {travelMode==="walking" ? `🚶 ${travel.walkMin} min` : travelMode==="transit" ? `🚇 ${travel.transitMin} min` : `🚗 ${Math.max(3,Math.round(travel.transitMin*0.6))} min`}
-                        <span>· {travel.distKm} km</span>
-                      </div>
-                    )}
-                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 8px", background:th.surface, borderRadius:10, border:`1px solid ${th.border}` }}>
-                      <span style={{ fontSize:"1.2rem" }}>{loc.icon||"📍"}</span>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:600, fontSize:"0.85rem", color:th.text }}>{loc.name}</div>
-                        {loc.area && <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{loc.area}</div>}
-                      </div>
-                      {loc.duration && <div style={{ fontSize:"0.72rem", color:th.textFaint }}>⏱ {loc.duration}</div>}
-                    </div>
-                  </div>
-                );
-              })}
+      const t = TRANSLATIONS[lang];
+      const [dragLoc, setDragLoc] = useState(null);
+      const [dragOverDay, setDragOverDay] = useState(null);
+      const byDay = {};
+      tripDays.forEach(d => { byDay[d] = []; });
+      locations.forEach(loc => {
+        const d = locationDays[loc.id];
+        if (d && byDay[d]) byDay[d].push(loc);
+      });
+      const allDays = tripDays;
+      if (allDays.filter(d => (byDay[d]||[]).length > 0).length === 0) return <div style={{ color:th.textFaint, fontSize:"0.82rem", textAlign:"center", padding:"20px 0" }}>{t.noRouteHint}</div>;
+      return (
+        <div>
+          {dragLoc && (
+            <div style={{ fontSize:"0.72rem", color:th.accent, marginBottom:8, padding:"6px 12px", background:th.accentLight, borderRadius:9, border:`1px solid ${th.accent}` }}>
+              🖱 {lang==="de" ? `"${dragLoc.name}" auf einen Tag ziehen` : `Drag "${dragLoc.name}" to a day`}
             </div>
-          );
-        })}
-      </div>
-    );
-  }
+          )}
+          {allDays.map((d, di) => {
+            const locs = byDay[d] || [];
+            const color = getDayColor(tripDays.indexOf(d));
+            const isOver = dragOverDay === d;
+            const dayConflicts = detectConflicts(locs, locationTimes);
+            const conflictIds = new Set(dayConflicts.flatMap(c => [c.a.id, c.b.id]));
+            if (locs.length === 0 && !dragLoc) return null;
+            return (
+              <div key={d} style={{ marginBottom:20 }}
+                onDragOver={e => { e.preventDefault(); setDragOverDay(d); }}
+                onDragLeave={() => setDragOverDay(null)}
+                onDrop={e => { e.preventDefault(); if (dragLoc && onDayChange) onDayChange(dragLoc.id, d); setDragLoc(null); setDragOverDay(null); }}
+              >
+                <div style={{ fontWeight:700, fontSize:"0.8rem", color, textTransform:"uppercase", letterSpacing:1, marginBottom:8, display:"flex", alignItems:"center", gap:8, background: isOver ? color+"18" : "transparent", borderRadius:8, padding: isOver ? "4px 8px" : "0", transition:"all 0.15s", border: isOver ? `1.5px dashed ${color}` : "1.5px solid transparent" }}>
+                  <span style={{ width:10, height:10, borderRadius:"50%", background:color, display:"inline-block" }}/>
+                  {formatDateLabel(d, lang||"de")}
+                  {isOver && dragLoc && <span style={{ fontSize:"0.68rem", marginLeft:4 }}>⬇ {lang==="de"?"Hier ablegen":"Drop here"}</span>}
+                  {dayConflicts.length > 0 && <span style={{ fontSize:"0.65rem", background:th.warningBg, color:th.warning, borderRadius:6, padding:"1px 7px", marginLeft:4, fontWeight:700 }}>⚠ {dayConflicts.length} {lang==="de"?"Konflikt":"Conflict"}{dayConflicts.length>1?"e":""}</span>}
+                </div>
+                {dayConflicts.length > 0 && (
+                  <div style={{ background:th.warningBg, borderRadius:9, padding:"7px 12px", marginBottom:8, fontSize:"0.72rem", color:th.warning }}>
+                    {dayConflicts.map((c,i) => <div key={i}>⏰ <b>{c.a.name}</b> & <b>{c.b.name}</b> {lang==="de"?"überlappen zeitlich":"overlap in time"}</div>)}
+                  </div>
+                )}
+                {locs.map((loc, li) => {
+                  const travel = li > 0 ? calcTravelTime(locs[li-1], loc) : null;
+                  const hasConflict = conflictIds.has(loc.id);
+                  return (
+                    <div key={loc.id} draggable onDragStart={() => setDragLoc(loc)} onDragEnd={() => { setDragLoc(null); setDragOverDay(null); }} style={{ opacity: dragLoc?.id === loc.id ? 0.4 : 1, transition:"opacity 0.15s" }}>
+                      {travel && (
+                        <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 0 4px 18px", fontSize:"0.72rem", color:th.textFaint }}>
+                          <span style={{ width:1, height:20, background:th.border, display:"inline-block" }}/>
+                          {travelMode==="walking" ? `🚶 ${travel.walkMin} min` : travelMode==="transit" ? `🚇 ${travel.transitMin} min` : `🚗 ${Math.max(3,Math.round(travel.transitMin*0.6))} min`}
+                          <span>· {travel.distKm} km</span>
+                        </div>
+                      )}
+                      <div style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 8px", background:th.surface, borderRadius:10, border:`1px solid ${hasConflict ? th.warning : th.border}`, cursor:"grab", marginBottom:4 }}>
+                        <span style={{ color:th.textFaint, fontSize:"0.8rem" }}>⠿</span>
+                        <span style={{ fontSize:"1.2rem" }}>{loc.icon||"📍"}</span>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontWeight:600, fontSize:"0.85rem", color:th.text }}>{loc.name}</div>
+                          {loc.area && <div style={{ fontSize:"0.72rem", color:th.textMuted }}>{loc.area}</div>}
+                        </div>
+                        {locationTimes?.[loc.id] && <span style={{ fontSize:"0.7rem", color: hasConflict ? th.warning : th.accent, fontWeight:600 }}>🕐 {locationTimes[loc.id]}</span>}
+                        {loc.duration && <div style={{ fontSize:"0.72rem", color:th.textFaint }}>⏱ {loc.duration}</div>}
+                        {hasConflict && <span style={{ fontSize:"0.7rem", color:th.warning, marginLeft:2 }}>⚠</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                {locs.length === 0 && isOver && (
+                  <div style={{ fontSize:"0.72rem", color, textAlign:"center", padding:"10px 0", border:`1.5px dashed ${color}`, borderRadius:9 }}>
+                    {lang==="de"?"Hier ablegen":"Drop here"}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
 
-  function MapView({ locations, locationDays, tripDays, travelMode, city, th, lang = "de" }) {
+    function MapView({ locations, locationDays, tripDays, travelMode, city, th, lang = "de" }) {
     const mapRef = useRef(null);
       const mapInstanceRef = useRef(null);
       const markersRef = useRef([]);
