@@ -638,24 +638,24 @@ function WeatherWidget({ tripDays, city, lang, th }) {
     const rain = (code >= 51 && code <= 95) ? ((s % 15) + 1) * 0.5 : 0;
     return { code, max, min, rain };
   }
-  const wIcon = (c) => { if(c===0)return"\u2600\ufe0f"; if(c<=2)return"\u26c5"; if(c<=3)return"\u2601\ufe0f"; if(c<=49)return"\ud83c\udf2b\ufe0f"; if(c<=69)return"\ud83c\udf27\ufe0f"; if(c<=79)return"\u2744\ufe0f"; if(c<=82)return"\ud83c\udf26\ufe0f"; if(c<=99)return"\u26c8\ufe0f"; return"\ud83c\udf21\ufe0f"; };
-  const wLabel = (c) => { if(c===0)return lang==="de"?"Klar":"Clear"; if(c<=2)return lang==="de"?"Teils bew.":"Partly cloudy"; if(c<=3)return lang==="de"?"Bew\u00f6lkt":"Cloudy"; if(c<=49)return lang==="de"?"Nebel":"Foggy"; if(c<=69)return lang==="de"?"Regen":"Rain"; if(c<=79)return lang==="de"?"Schnee":"Snow"; if(c<=82)return lang==="de"?"Schauer":"Showers"; if(c<=99)return lang==="de"?"Gewitter":"Storm"; return"?"; };
+  const wIcon = (c) => { const icons = ["☀️","⛅","☁️","🌫️","🌧️","❄️","🌦️","⛈️","🌡️"]; if(c===0)return icons[0]; if(c<=2)return icons[1]; if(c<=3)return icons[2]; if(c<=49)return icons[3]; if(c<=69)return icons[4]; if(c<=79)return icons[5]; if(c<=82)return icons[6]; if(c<=99)return icons[7]; return icons[8]; };
+  const wLabel = (c) => { if(c===0)return lang==="de"?"Klar":"Clear"; if(c<=2)return lang==="de"?"Teils bew.":"Partly cloudy"; if(c<=3)return lang==="de"?"Bewölkt":"Cloudy"; if(c<=49)return lang==="de"?"Nebel":"Foggy"; if(c<=69)return lang==="de"?"Regen":"Rain"; if(c<=79)return lang==="de"?"Schnee":"Snow"; if(c<=82)return lang==="de"?"Schauer":"Showers"; if(c<=99)return lang==="de"?"Gewitter":"Storm"; return"?"; };
   if (!city || !tripDays || !tripDays.length) return null;
   const weatherData = tripDays.map(date => ({ date, ...pseudoWeather(city.id, date) }));
   const avgMax = Math.round(weatherData.reduce((s,w)=>s+w.max,0)/weatherData.length);
   const rainDays = weatherData.filter(w=>w.rain>0).length;
   return (
     <div style={{marginBottom:18,background:th.card,border:`1px solid ${th.border}`,borderRadius:16,padding:"14px 16px"}}>
-      <div style={{fontSize:"0.7rem",color:th.textFaint,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>\ud83c\udf24 {lang==="de"?"Wettervorschau":"Weather Forecast"} \u2014 {city.name}</div>
-      <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:12}}>\ud83d\udcca {lang==="de"?`\u00d8 ${avgMax}\u00b0 \u00b7 ${rainDays} Regentag${rainDays!==1?"e":""}`:`Avg ${avgMax}\u00b0 \u00b7 ${rainDays} rainy day${rainDays!==1?"s":""}`}</div>
+      <div style={{fontSize:"0.7rem",color:th.textFaint,letterSpacing:1.5,textTransform:"uppercase",marginBottom:4}}>🌤 {lang==="de"?"Wettervorschau":"Weather Forecast"} — {city.name}</div>
+      <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:12}}>📊 {lang==="de"?`Ø ${avgMax}° · ${rainDays} Regentag${rainDays!==1?"e":""}`:`Avg ${avgMax}° · ${rainDays} rainy day${rainDays!==1?"s":""}`}</div>
       <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>
         {weatherData.map((w,i) => (
           <div key={w.date} style={{minWidth:76,background:th.surface,border:`2px solid ${getDayColor(i)}44`,borderRadius:14,padding:"10px 8px",textAlign:"center",flexShrink:0}}>
             <div style={{fontSize:"0.65rem",color:getDayColor(i),fontWeight:700,marginBottom:3}}>{formatDateLabel(w.date,lang)}</div>
             <div style={{fontSize:"1.6rem",lineHeight:1.2,marginBottom:4}}>{wIcon(w.code)}</div>
-            <div style={{fontSize:"0.82rem",color:th.text,fontWeight:800}}>{Math.round(w.max)}\u00b0</div>
-            <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:2}}>{Math.round(w.min)}\u00b0</div>
-            {w.rain > 0 && <div style={{fontSize:"0.62rem",color:"#5b8dd9",marginTop:3}}>\ud83d\udca7{w.rain.toFixed(1)}mm</div>}
+            <div style={{fontSize:"0.82rem",color:th.text,fontWeight:800}}>{Math.round(w.max)}°</div>
+            <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:2}}>{Math.round(w.min)}°</div>
+            {w.rain > 0 && <div style={{fontSize:"0.62rem",color:"#5b8dd9",marginTop:3}}>💧{w.rain.toFixed(1)}mm</div>}
             <div style={{fontSize:"0.6rem",color:th.textFaint,marginTop:3}}>{wLabel(w.code)}</div>
           </div>
         ))}
