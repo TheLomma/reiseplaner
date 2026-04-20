@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.6",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.7",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.6",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.7",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -1252,7 +1252,7 @@ Antworte NUR mit JSON:
   );
 }
 
-function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th }) {
+function RouteTimeline({ locations, locationDays, locationTimes, tripDays, travelMode, city, lang, th, onDayChange }) {
     const t = TRANSLATIONS[lang];
     const byDay = {};
     tripDays.forEach(d => { byDay[d] = []; });
@@ -2006,7 +2006,7 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
             <>
               <TripSummaryBar locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
                 <RouteOptimizer locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} onApply={(newDays)=>setLocationDays(newDays)} lang={lang} th={th} />
-              <RouteTimeline locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} />
+              <RouteTimeline locations={locations} locationDays={locationDays} locationTimes={locationTimes} tripDays={tripDays} travelMode={travelMode} city={city} lang={lang} th={th} onDayChange={setDay} />
             </>
           )}
           {activeTab==="map" && <MapView locations={locations} locationDays={locationDays} tripDays={tripDays} travelMode={travelMode} city={city} th={th} lang={lang} />}
