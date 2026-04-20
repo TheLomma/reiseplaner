@@ -47,6 +47,328 @@ function useTheme() {
   return { mode, th: THEMES[mode] };
 }
 
+// ─── HOTELS BLOCK (mehrere Hotels) ──────────────────────────────────────────
+function HotelsBlock({ hotels, setHotels, lang, th, tripDays }) {
+  const [expanded, setExpanded] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ name:"", address:"", checkIn:"", checkOut:"", nights:"", price:"", confirmation:"" });
+
+  const addHotel = () => {
+    if (!form.name.trim()) return;
+    const h = { ...form, id: Date.now() };
+    setHotels(prev => [...(prev||[]), h]);
+    setForm({ name:"", address:"", checkIn:"", checkOut:"", nights:"", price:"", confirmation:"" });
+    setAdding(false);
+  };
+  const removeHotel = (id) => setHotels(prev => (prev||[]).filter(h => h.id !== id));
+
+  const inp = (field, placeholder, type="text") => (
+    <input type={type} placeholder={placeholder} value={form[field]}
+      onChange={e=>setForm(f=>({...f,[field]:e.target.value}))}
+      style={{ background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"6px 10px", fontSize:"0.82rem", color:th.text, width:"100%", marginBottom:6 }} />
+  );
+
+  return (
+    <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:16, padding:"14px 16px", marginBottom:16 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer" }} onClick={()=>setExpanded(e=>!e)}>
+        <div>
+          <div style={{ fontSize:"0.7rem", color:th.textFaint, letterSpacing:1.5, textTransform:"uppercase" }}>🏨 {lang==="de"?"Unterkunft":"Accommodation"}</div>
+          <div style={{ fontSize:"0.8rem", color:th.textMuted, marginTop:3 }}>
+            {(hotels||[]).length === 0
+              ? (lang==="de"?"Noch kein Hotel eingetragen":"No hotel added yet")
+              : (lang==="de"?`${hotels.length} Hotel${hotels.length>1?"s":""} eingetragen`:`${hotels.length} hotel${hotels.length>1?"s":""} added`)}
+          </div>
+        </div>
+        <span style={{ color:th.textFaint, fontSize:"0.9rem" }}>{expanded?"▲":"▼"}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ marginTop:14 }}>
+          {(hotels||[]).map((h, i) => (
+            <div key={h.id} style={{ background:th.surface, border:`1px solid ${th.border}`, borderRadius:12, padding:"12px 14px", marginBottom:10, position:"relative" }}>
+              <button onClick={()=>removeHotel(h.id)} style={{ position:"absolute", top:8, right:10, background:"none", border:"none", color:th.textFaint, cursor:"pointer", fontSize:"0.9rem" }}>✕</button>
+              <div style={{ fontWeight:700, color:th.accent, fontSize:"0.9rem", marginBottom:4 }}>🏨 {h.name}</div>
+              {h.address && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>📍 {h.address}</div>}
+              <div style={{ display:"flex", gap:16, marginTop:6, flexWrap:"wrap" }}>
+                {h.checkIn && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>📅 {lang==="de"?"Check-in":"Check-in"}: <b style={{color:th.text}}>{h.checkIn}</b></div>}
+                {h.checkOut && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>📅 {lang==="de"?"Check-out":"Check-out"}: <b style={{color:th.text}}>{h.checkOut}</b></div>}
+                {h.nights && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>🌙 {h.nights} {lang==="de"?"Nächte":"nights"}</div>}
+                {h.price && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>💶 {h.price}</div>}
+                {h.confirmation && <div style={{ fontSize:"0.75rem", color:th.textMuted }}>🔖 {h.confirmation}</div>}
+              </div>
+            </div>
+          ))}
+
+          {adding ? (
+            <div style={{ background:th.surface, border:`1px solid ${th.accent}`, borderRadius:12, padding:"14px" }}>
+              <div style={{ fontSize:"0.72rem", color:th.textFaint, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>{lang==="de"?"Neues Hotel":"New Hotel"}</div>
+              {inp("name", lang==="de"?"Hotelname *":"Hotel name *")}
+              {inp("address", lang==="de"?"Adresse":"Address")}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                {inp("checkIn", "Check-in", "date")}
+                {inp("checkOut", "Check-out", "date")}
+                {inp("nights", lang==="de"?"Nächte":"Nights")}
+                {inp("price", lang==="de"?"Preis":"Price")}
+              </div>
+              {inp("confirmation", lang==="de"?"Buchungsnummer":"Confirmation #")}
+              <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                <button onClick={addHotel} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:9, padding:"7px 18px", fontWeight:700, fontSize:"0.82rem", cursor:"pointer" }}>
+                  {lang==="de"?"Hinzufügen":"Add"}
+                </button>
+                <button onClick={()=>setAdding(false)} style={{ background:"none", border:`1px solid ${th.border}`, borderRadius:9, padding:"7px 14px", color:th.textMuted, fontSize:"0.82rem", cursor:"pointer" }}>
+                  {lang==="de"?"Abbrechen":"Cancel"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={()=>setAdding(true)} style={{ background:th.accentLight, border:`1px dashed ${th.accent}`, borderRadius:10, padding:"8px 18px", color:th.accent, fontWeight:700, fontSize:"0.82rem", cursor:"pointer", width:"100%", marginTop:4 }}>
+              + {lang==="de"?"Hotel hinzufügen":"Add hotel"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TRIP SUMMARY DOC ────────────────────────────────────────────────────────
+function TripSummaryDoc({ lang, th, locations, locationDays, locationNotes, locationTimes, tripDays, city, startDate, endDate, numDays, hotels }) {
+  const [generating, setGenerating] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [apiKey, setApiKey] = useState(() => safeLocalGet("rp_openai_key", ""));
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const t = TRANSLATIONS[lang];
+
+  const assignedLocs = (locations||[]).filter(l => locationDays?.[l.id]);
+  const packingItems = safeLocalGet("rp_packing", {});
+  const dayNotes = safeLocalGet("rp_day_notes", {});
+  const hasHotels = (hotels||[]).length > 0;
+  const hasPacking = Object.values(packingItems).some(arr => arr && arr.length > 0);
+  const hasDayNotes = Object.values(dayNotes).some(n => n && n.trim());
+
+  const buildPrompt = () => {
+    const lines = [];
+    const cityName = city?.name || "?";
+    lines.push(`Erstelle eine umfangreiche, schön formatierte Reisezusammenfassung auf ${lang==="de"?"Deutsch":"Englisch"} für folgende Reise:`);
+    lines.push(`
+🗺️ REISE: ${cityName} | ${startDate} – ${endDate} | ${numDays} Tage`);
+
+    if (hasHotels) {
+      lines.push("\n🏨 UNTERKUNFT:");
+      (hotels||[]).forEach(h => {
+        lines.push(`  • ${h.name}${h.address ? " | "+h.address : ""}${h.checkIn ? " | Check-in: "+h.checkIn : ""}${h.checkOut ? " | Check-out: "+h.checkOut : ""}${h.nights ? " | "+h.nights+" Nächte" : ""}${h.price ? " | "+h.price : ""}${h.confirmation ? " | Buchung: "+h.confirmation : ""}`);
+      });
+    }
+
+    lines.push("\n📍 ORTE PRO TAG:");
+    tripDays.forEach((day, di) => {
+      const dayLocs = assignedLocs.filter(l => locationDays[l.id] === day);
+      if (!dayLocs.length) return;
+      lines.push(`
+Tag ${di+1} (${formatDateLabel(day, lang)} – ${day}):`)
+      dayLocs.forEach(loc => {
+        const note = locationNotes?.[loc.id];
+        const time = locationTimes?.[loc.id];
+        const cost = city?.entryCosts?.[loc.name];
+        const rating = city?.ratings?.[loc.name];
+        const info = city?.locationInfo?.[loc.name];
+        lines.push(`  ${loc.icon||"📍"} ${loc.name}${time ? " um "+time : ""}${loc.duration ? " (ca. "+loc.duration+")" : ""}`);
+        if (info?.short) lines.push(`     → ${info.short}`);
+        if (info?.highlights?.length) lines.push(`     Highlights: ${info.highlights.join(", ")}`);
+        if (cost) lines.push(`     Eintritt: ${cost.currency}${cost.min}${cost.min!==cost.max?"–"+cost.currency+cost.max:""} ${cost.note||""}`)
+        if (rating) lines.push(`     Bewertung: ⭐ ${rating.stars} (${(rating.reviews/1000).toFixed(0)}k) | ${rating.price||""} | ${rating.badge||""}`)
+        if (note) lines.push(`     📝 Notiz: ${note}`);
+      });
+    });
+
+    const unassigned = (locations||[]).filter(l => !locationDays?.[l.id]);
+    if (unassigned.length > 0) {
+      lines.push("\n📌 NICHT ZUGEWIESENE ORTE:");
+      unassigned.forEach(l => lines.push(`  • ${l.icon||""} ${l.name}`));
+    }
+
+    if (hasPacking) {
+      lines.push("\n🧳 PACKLISTE:");
+      Object.entries(packingItems).forEach(([cat, items]) => {
+        if (!items?.length) return;
+        lines.push(`  ${cat}: ${items.map(i=>i.text||"").join(", ")}`);
+      });
+    }
+
+    if (hasDayNotes) {
+      lines.push("\n📝 TAGESNOTIZEN:");
+      Object.entries(dayNotes).forEach(([day, note]) => {
+        if (!note?.trim()) return;
+        lines.push(`  ${day}: ${note}`);
+      });
+    }
+
+    lines.push("\n🌤️ WETTERPROGNOSE:");
+    lines.push(`  Hinweis: Echte Wetterdaten sind in dieser App nicht verfügbar. Bitte schreibe für jeden Reisetag 'Wetterprognose: nicht verfügbar' – außer du hast allgemeines Klimawissen für ${cityName} im ${new Date(startDate).toLocaleString(lang==="de"?"de-DE":"en-US",{month:"long"})} (dann kurze Klimainfo).`);
+
+    lines.push("\n---");
+    lines.push(`Strukturiere die Zusammenfassung schön mit Emojis, Überschriften und Abschnitten. Beginne mit einem Reise-Header mit Banner. Mache es umfangreich, informativ und reiseführerartig. Füge am Ende eine 'Wichtige Hinweise & Tipps' Sektion hinzu. Nur Inhalte einbeziehen, die oben angegeben sind – nichts erfinden.`);
+    return lines.join("\n");
+  };
+
+  const generate = async () => {
+    if (!apiKey) { setShowKeyInput(true); return; }
+    setGenerating(true);
+    setSummary(null);
+    try {
+      const prompt = buildPrompt();
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 3000,
+          temperature: 0.7,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      setSummary(data.choices?.[0]?.message?.content || "");
+    } catch (e) {
+      setSummary(`❌ Fehler: ${e.message}`);
+    }
+    setGenerating(false);
+  };
+
+  const copyText = () => {
+    try { navigator.clipboard.writeText(summary); } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const printSummary = () => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const cityName = city?.name || "Reise";
+    win.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'><title>Reisezusammenfassung ${cityName}</title><style>
+      body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; padding: 0 30px; color: #2e2010; line-height: 1.7; }
+      h1 { background: linear-gradient(135deg, #c4a882, #d4a84b); color: #1e1a14; padding: 20px 30px; border-radius: 12px; font-size: 1.6rem; margin-bottom: 8px; }
+      .subtitle { color: #786050; font-size: 0.9rem; margin-bottom: 30px; padding: 0 4px; }
+      pre { white-space: pre-wrap; font-family: Georgia, serif; font-size: 0.92rem; }
+      @media print { body { margin: 20px; } }
+    </style></head><body>
+      <h1>${city?.emoji||"✈️"} Reiseplaner – ${cityName}</h1>
+      <div class='subtitle'>${startDate} – ${endDate} · ${numDays} Tage · Erstellt am ${new Date().toLocaleDateString(lang==="de"?"de-DE":"en-US")}</div>
+      <pre>${(summary||"")
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")
+        .replace(/^# (.+)$/gm,"<h2>$1</h2>")
+        .replace(/^## (.+)$/gm,"<h3>$1</h3>")
+        .replace(/^### (.+)$/gm,"<h4>$1</h4>")
+      }</pre>
+    </body></html>`);
+    win.document.close();
+    setTimeout(() => win.print(), 400);
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+
+      {/* HEADER CARD */}
+      <div style={{ background:`linear-gradient(135deg, ${th.gold}22, ${th.accent}18)`, border:`1.5px solid ${th.gold}`, borderRadius:18, padding:"20px 22px" }}>
+        <div style={{ fontSize:"1.4rem", marginBottom:6 }}>🧾</div>
+        <div style={{ fontWeight:800, fontSize:"1.1rem", color:th.gold, marginBottom:6 }}>
+          {lang==="de"?"KI-Reisezusammenfassung":"AI Travel Summary"}
+        </div>
+        <div style={{ fontSize:"0.82rem", color:th.textMuted, lineHeight:1.7, marginBottom:14 }}>
+          {lang==="de"
+            ? `Die KI erstellt dir eine vollständige, druckfertige Reisezusammenfassung für ${city?.name||"deine Reise"} – mit Tagesplan, Sehenswürdigkeiten, Hotel, Wetter, Packliste und Tipps.`
+            : `The AI creates a complete, print-ready travel summary for ${city?.name||"your trip"} – with daily plan, sights, hotel, weather, packing list and tips.`}
+        </div>
+
+        {/* INHALT PREVIEW */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:16 }}>
+          {[{icon:"📍",de:`${assignedLocs.length} Orte`,en:`${assignedLocs.length} places`},{icon:"📅",de:`${numDays} Tage`,en:`${numDays} days`},{icon:"🏨",de:`${(hotels||[]).length} Hotel${(hotels||[]).length!==1?"s":""}`,en:`${(hotels||[]).length} hotel${(hotels||[]).length!==1?"s":""}`,show:(hotels||[]).length>0},{icon:"🧳",de:"Packliste",en:"Packing list",show:hasPacking},{icon:"📝",de:"Tagesnotizen",en:"Day notes",show:hasDayNotes},{icon:"🌤️",de:"Wetter",en:"Weather",show:true}].filter(x=>x.show!==false).map(item=>(
+            <div key={item.icon} style={{ background:th.accentLight, border:`1px solid ${th.border}`, borderRadius:8, padding:"4px 10px", fontSize:"0.75rem", color:th.accent, fontWeight:600 }}>
+              {item.icon} {lang==="de"?item.de:item.en}
+            </div>
+          ))}
+        </div>
+
+        {showKeyInput && (
+          <div style={{ marginBottom:12, background:th.card, borderRadius:10, padding:"10px 12px", border:`1px solid ${th.inputBorder}` }}>
+            <div style={{ fontSize:"0.72rem", color:th.textFaint, marginBottom:6 }}>🔑 OpenAI API-Key</div>
+            <div style={{ display:"flex", gap:8 }}>
+              <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)}
+                placeholder="sk-..." style={{ flex:1, background:th.input, border:`1px solid ${th.inputBorder}`, borderRadius:8, padding:"6px 10px", fontSize:"0.82rem", color:th.text }} />
+              <button onClick={()=>{safeLocalSet("rp_openai_key",apiKey);setShowKeyInput(false);}} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:8, padding:"6px 14px", fontWeight:700, cursor:"pointer", fontSize:"0.82rem" }}>
+                {lang==="de"?"Speichern":"Save"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          <button onClick={generate} disabled={generating || assignedLocs.length===0} style={{
+            background: generating||assignedLocs.length===0 ? th.border : `linear-gradient(135deg, ${th.gold}, ${th.accent})`,
+            color: generating||assignedLocs.length===0 ? th.textFaint : th.bg,
+            border:"none", borderRadius:11, padding:"10px 24px",
+            fontWeight:800, fontSize:"0.9rem", cursor: generating||assignedLocs.length===0 ? "not-allowed" : "pointer",
+            display:"flex", alignItems:"center", gap:8,
+            boxShadow: generating||assignedLocs.length===0 ? "none" : `0 4px 16px ${th.gold}44`,
+          }}>
+            {generating ? <><Spinner size={16} color={th.textMuted} />{lang==="de"?" Wird erstellt...":" Generating..."}</> : `✨ ${lang==="de"?"Zusammenfassung erstellen":"Create Summary"}`}
+          </button>
+          {!apiKey && (
+            <button onClick={()=>setShowKeyInput(v=>!v)} style={{ background:"none", border:`1px solid ${th.border}`, borderRadius:10, padding:"8px 14px", color:th.textMuted, fontSize:"0.8rem", cursor:"pointer" }}>
+              🔑 API-Key
+            </button>
+          )}
+          {apiKey && (
+            <button onClick={()=>setShowKeyInput(v=>!v)} style={{ background:th.accentLight, border:`1px solid ${th.border}`, borderRadius:10, padding:"8px 14px", color:th.accent, fontSize:"0.8rem", cursor:"pointer", fontWeight:700 }}>
+              🔑 {lang==="de"?"API aktiv ✓":"API active ✓"}
+            </button>
+          )}
+        </div>
+
+        {assignedLocs.length===0 && (
+          <div style={{ fontSize:"0.75rem", color:th.warning, marginTop:8 }}>
+            ⚠ {lang==="de"?"Bitte zuerst Orte einem Tag zuweisen.":"Please assign places to days first."}
+          </div>
+        )}
+      </div>
+
+      {/* RESULT */}
+      {summary && (
+        <div style={{ background:th.card, border:`1px solid ${th.border}`, borderRadius:16, overflow:"hidden" }}>
+          {/* Druckbarer Header */}
+          <div style={{ background:`linear-gradient(135deg, ${th.gold}33, ${th.accent}22)`, padding:"16px 20px", borderBottom:`1px solid ${th.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
+            <div>
+              <div style={{ fontWeight:800, fontSize:"1rem", color:th.gold }}>{city?.emoji||"✈️"} Reiseplaner · {city?.name||""}</div>
+              <div style={{ fontSize:"0.72rem", color:th.textMuted, marginTop:2 }}>{startDate} – {endDate} · {numDays} {lang==="de"?"Tage":"days"}</div>
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={copyText} style={{ background:copied?th.success:th.accentLight, color:copied?"#fff":th.accent, border:`1px solid ${th.border}`, borderRadius:9, padding:"6px 14px", fontSize:"0.78rem", fontWeight:700, cursor:"pointer" }}>
+                {copied?(lang==="de"?"✓ Kopiert!":"✓ Copied!"):(lang==="de"?"📋 Kopieren":"📋 Copy")}
+              </button>
+              <button onClick={printSummary} style={{ background:th.accent, color:th.bg, border:"none", borderRadius:9, padding:"6px 14px", fontSize:"0.78rem", fontWeight:700, cursor:"pointer" }}>
+                🖨️ {lang==="de"?"Drucken / PDF":"Print / PDF"}
+              </button>
+            </div>
+          </div>
+          <div style={{ padding:"18px 20px", whiteSpace:"pre-wrap", fontSize:"0.84rem", color:th.text, lineHeight:1.8, maxHeight:600, overflowY:"auto" }}>
+            {summary.split("\n").map((line, i) => {
+              if (line.startsWith("# ")) return <div key={i} style={{ fontWeight:800, fontSize:"1.1rem", color:th.gold, marginTop:16, marginBottom:4 }}>{line.slice(2)}</div>;
+              if (line.startsWith("## ")) return <div key={i} style={{ fontWeight:700, fontSize:"0.95rem", color:th.accent, marginTop:12, marginBottom:3 }}>{line.slice(3)}</div>;
+              if (line.startsWith("### ")) return <div key={i} style={{ fontWeight:700, fontSize:"0.88rem", color:th.text, marginTop:8, marginBottom:2 }}>{line.slice(4)}</div>;
+              if (line.startsWith("**") && line.endsWith("**")) return <div key={i} style={{ fontWeight:700, color:th.accent }}>{line.slice(2,-2)}</div>;
+              if (line.trim()==="---" || line.trim()==="─────────────────") return <hr key={i} style={{ border:"none", borderTop:`1px solid ${th.border}`, margin:"12px 0" }} />;
+              return <div key={i}>{line || <br/>}</div>;
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PWAInstallBanner({ lang, th }) {
   const [prompt, setPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
@@ -342,7 +664,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.8",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v8.1",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -372,7 +694,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.8",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v8.1",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -2118,10 +2440,10 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","notes","packing","ics","pwa","pdf"].map(tab => (
+            {["route","map","budget","plans","share","notes","packing","ics","pwa","summary","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
-                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="notes"?(lang==="de"?"📝 Notizen":"📝 Notes"):tab==="packing"?t.packingList:tab==="ics"?"📅 .ics":tab==="pwa"?"📲 PWA":"📄 PDF"}
+                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="notes"?(lang==="de"?"📝 Notizen":"📝 Notes"):tab==="packing"?t.packingList:tab==="ics"?"📅 .ics":tab==="pwa"?"📲 PWA":tab==="summary"?"🧾 Zusammenfassung":"📄 PDF"}
               </button>
             ))}
           </div>
