@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.4",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.5",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.4",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.5",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -482,6 +482,48 @@ function SkeletonCard({ th }) {
         <div style={{ flex: 1 }}>{bar("60%", 12)}{bar("40%", 8, 6)}</div>
       </div>
       {bar("90%", 8, 12)}{bar("75%", 8, 6)}{bar("50%", 8, 6)}
+    </div>
+  );
+}
+
+function DayNotesPanel({ tripDays, lang, th }) {
+  const [notes, setNotes] = useState(() => safeLocalGet("rp_daynotes", {}));
+  useEffect(() => { safeLocalSet("rp_daynotes", notes); }, [notes]);
+  const [activeDay, setActiveDay] = useState(tripDays[0] || "");
+  useEffect(() => { if (!activeDay && tripDays.length) setActiveDay(tripDays[0]); }, [tripDays]);
+  if (!tripDays || !tripDays.length) return null;
+  return (
+    <div style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:16,padding:"14px 16px"}}>
+      <div style={{fontSize:"0.7rem",color:th.textFaint,letterSpacing:1.5,textTransform:"uppercase",marginBottom:12}}>📝 {lang==="de"?"Tagesnotizen":"Day Notes"}</div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+        {tripDays.map((d,i) => (
+          <button key={d} onClick={()=>setActiveDay(d)}
+            style={{padding:"4px 12px",borderRadius:9,border:`1.5px solid ${activeDay===d?getDayColor(i):th.border}`,background:activeDay===d?getDayColor(i)+"22":"transparent",color:activeDay===d?getDayColor(i):th.textMuted,fontWeight:activeDay===d?700:400,fontSize:"0.75rem",cursor:"pointer"}}>
+            {formatDateLabel(d,lang)}
+            {notes[d] && notes[d].trim() && <span style={{marginLeft:4,color:getDayColor(i),fontSize:"0.6rem"}}>●</span>}
+          </button>
+        ))}
+      </div>
+      {activeDay && (
+        <div>
+          <div style={{fontSize:"0.72rem",color:th.textMuted,marginBottom:6,fontWeight:600}}>{formatDateLabel(activeDay,lang)}</div>
+          <textarea
+            value={notes[activeDay]||""}
+            onChange={e=>setNotes(n=>({...n,[activeDay]:e.target.value}))}
+            placeholder={lang==="de"?"Notizen, Tipps, Packliste für diesen Tag...": "Notes, tips, packing list for this day..."}
+            rows={6}
+            style={{width:"100%",background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:10,padding:"10px 12px",fontSize:"0.85rem",color:th.text,resize:"vertical",fontFamily:"inherit",lineHeight:1.6,boxSizing:"border-box"}}
+          />
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
+            <span style={{fontSize:"0.65rem",color:th.textFaint}}>{(notes[activeDay]||``).length} {lang==="de"?"Zeichen":"chars"}</span>
+            {notes[activeDay] && (
+              <button onClick={()=>setNotes(n=>({...n,[activeDay]:""}))} style={{background:"none",border:`1px solid ${th.border}`,borderRadius:7,padding:"2px 10px",color:th.textMuted,fontSize:"0.7rem",cursor:"pointer"}}>
+                {lang==="de"?"Löschen":"Clear"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1806,7 +1848,7 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","packing","pdf"].map(tab => (
+            {["route","map","budget","plans","share","notes","packing","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
                 {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="packing"?t.packingList:"📄 PDF"}
@@ -1840,6 +1882,7 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
           {activeTab==="plans" && <SavedPlansPanel lang={lang} th={th} onLoad={loadPlan} />}
           {activeTab==="share" && <SharePanel lang={lang} th={th} />}
           
+            {activeTab==="notes" && <DayNotesPanel tripDays={tripDays} lang={lang} th={th} />}
             {activeTab==="packing" && <PackingListPanel lang={lang} th={th} />
             }
             {activeTab==="pdf" && <PDFExportPanel lang={lang} th={th} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
