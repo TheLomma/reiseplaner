@@ -427,7 +427,7 @@ function getOpeningInfo(name, day, city) {
   if (!key) return null;
   const info = hours[key];
   let dayKey;
-  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+  if (day && new RegExp("^\\d{4}-\\d{2}-\\d{2}$").test(day)) {
     dayKey = getWeekdayKey(day);
   } else {
     dayKey = DAY_KEY_MAP[day] || null;
@@ -482,6 +482,138 @@ function SkeletonCard({ th }) {
         <div style={{ flex: 1 }}>{bar("60%", 12)}{bar("40%", 8, 6)}</div>
       </div>
       {bar("90%", 8, 12)}{bar("75%", 8, 6)}{bar("50%", 8, 6)}
+    </div>
+  );
+}
+
+function generateICS(locations, locationDays, locationNotes, locationTimes, tripDays, city) {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//TravelPlanner//v5.6//DE",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+  ];
+  const cityName = city ? city.name : "Reise";
+  const toICSDate = (dateStr) => {
+    if (!dateStr) return null;
+    return dateStr.replace(/-/g, "");
+  };
+  const toICSDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return null;
+    const base = dateStr.replace(/-/g, "");
+    if (timeStr && new RegExp("^\\d{2}:\\d{2}$").test(timeStr)) {
+      return base + "T" + timeStr.replace(":","") + "00";
+    }
+    return base;
+  };
+  const escapeICS = (s) => (s || "").replace(new RegExp("[\\r\\n]","g"), " ").replace(new RegExp(",","g"), "\\,").replace(new RegExp(";","g"), "\\;");
+  const locsByDay = {};
+  (locations || []).forEach(loc => {
+    const day = locationDays?.[loc.id];
+    if (!day) return;
+    if (!locsByDay[day]) locsByDay[day] = [];
+    locsByDay[day].push(loc);
+  });
+  Object.keys(locsByDay).sort().forEach(day => {
+    locsByDay[day].forEach((loc, idx) => {
+      const uid = `rp-${loc.id}-${day}@travelplanner`;
+      const timeStr = locationTimes?.[loc.id] || null;
+      const dtstart = toICSDateTime(day, timeStr);
+      const dtend = dtstart;
+      const note = locationNotes?.[loc.id] || "";
+      const desc = [loc.type, loc.area, note].filter(Boolean).join(" · ");
+      lines.push("BEGIN:VEVENT");
+      lines.push(`UID:${uid}`);
+      lines.push(`DTSTAMP:${new Date().toISOString().replace(new RegExp("[-:]","g"),"").slice(0,15)}Z`);
+      if (timeStr) {
+        lines.push(`DTSTART:${dtstart}`);
+        lines.push(`DTEND:${dtend}`);
+      } else {
+        lines.push(`DTSTART;VALUE=DATE:${toICSDate(day)}`);
+        lines.push(`DTEND;VALUE=DATE:${toICSDate(day)}`);
+      }
+      lines.push(`SUMMARY:${escapeICS(loc.icon + " " + loc.name + " – " + cityName)}`);
+      lines.push(`DESCRIPTION:${escapeICS(desc)}`);
+      if (loc.address) lines.push(`LOCATION:${escapeICS(loc.address)}`);
+      if (loc.lat && loc.lng) lines.push(`GEO:${loc.lat};${loc.lng}`);
+      lines.push("END:VEVENT");
+    });
+  });
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+function ICSExportPanel({ locations, locationDays, locationNotes, locationTimes, tripDays, city, lang, th }) {
+  const [downloaded, setDownloaded] = useState(false);
+  const assignedLocs = (locations || []).filter(l => locationDays?.[l.id]);
+  const unassignedLocs = (locations || []).filter(l => !locationDays?.[l.id]);
+  const cityName = city ? city.name : "Reise";
+  const fileName = `Reiseplan_${cityName.replace(new RegExp("\\s+","g"),"_")}.ics`;
+
+  const handleDownload = () => {
+    const icsContent = generateICS(locations, locationDays, locationNotes, locationTimes, tripDays, city);
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2500);
+  };
+
+  return (
+    <div style={{ background: th.card, border: `1px solid ${th.border}`, borderRadius: 16, padding: "18px 18px" }}>
+      <div style={{ fontSize: "0.7rem", color: th.textFaint, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>📅 {lang === "de" ? "Kalender-Export (.ics)" : "Calendar Export (.ics)"}</div>
+      <div style={{ fontSize: "0.82rem", color: th.textMuted, marginBottom: 16, lineHeight: 1.6 }}>
+        {lang === "de"
+          ? `Exportiert alle ${assignedLocs.length} zugewiesenen Orte als Kalendereinträge. Kompatibel mit Google Calendar, Apple Calendar und Outlook.`
+          : `Exports all ${assignedLocs.length} assigned places as calendar events. Compatible with Google Calendar, Apple Calendar and Outlook.`}
+      </div>
+      {assignedLocs.length === 0 ? (
+        <div style={{ color: th.textFaint, fontSize: "0.82rem", textAlign: "center", padding: "18px 0" }}>
+          {lang === "de" ? "⚠ Noch keine Orte einem Tag zugewiesen." : "⚠ No places assigned to a day yet."}
+        </div>
+      ) : (
+        <>
+          <div style={{ marginBottom: 14 }}>
+            {tripDays.map((day, di) => {
+              const dayLocs = assignedLocs.filter(l => locationDays[l.id] === day);
+              if (!dayLocs.length) return null;
+              return (
+                <div key={day} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: "0.72rem", color: getDayColor(di), fontWeight: 700, marginBottom: 5, letterSpacing: 0.5 }}>
+                    📆 {formatDateLabel(day, lang)}
+                  </div>
+                  {dayLocs.map(loc => (
+                    <div key={loc.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 10px", background: th.surface, borderRadius: 9, marginBottom: 4, fontSize: "0.8rem", color: th.text }}>
+                      <span>{loc.icon || "📍"}</span>
+                      <span style={{ flex: 1 }}>{loc.name}</span>
+                      {locationTimes?.[loc.id] && <span style={{ color: th.textMuted, fontSize: "0.72rem" }}>🕐 {locationTimes[loc.id]}</span>}
+                      {locationNotes?.[loc.id] && <span style={{ color: th.textFaint, fontSize: "0.68rem" }}>📝</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+          {unassignedLocs.length > 0 && (
+            <div style={{ fontSize: "0.72rem", color: th.textFaint, marginBottom: 14 }}>
+              ⚠ {unassignedLocs.length} {lang === "de" ? "Ort(e) ohne Tag – werden nicht exportiert." : "place(s) without a day – not exported."}
+            </div>
+          )}
+          <button
+            onClick={handleDownload}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: `1.5px solid ${th.accent}`, background: downloaded ? th.success : th.accentLight, color: downloaded ? "#fff" : th.accent, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", transition: "all 0.2s" }}>
+            {downloaded ? (lang === "de" ? "✓ Heruntergeladen!" : "✓ Downloaded!") : (lang === "de" ? `📥 ${fileName} herunterladen` : `📥 Download ${fileName}`)}
+          </button>
+          <div style={{ fontSize: "0.68rem", color: th.textFaint, marginTop: 8, textAlign: "center" }}>
+            {lang === "de" ? "Datei in Google Calendar / Apple Calendar importieren." : "Import file into Google Calendar / Apple Calendar."}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1848,10 +1980,10 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","notes","packing","pdf"].map(tab => (
+            {["route","map","budget","plans","share","notes","packing","ics","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
-                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="packing"?t.packingList:"📄 PDF"}
+                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="notes"?(lang==="de"?"📝 Notizen":"📝 Notes"):tab==="packing"?t.packingList:tab==="ics"?"📅 .ics":"📄 PDF"}
               </button>
             ))}
           </div>
@@ -1885,6 +2017,7 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
             {activeTab==="notes" && <DayNotesPanel tripDays={tripDays} lang={lang} th={th} />}
             {activeTab==="packing" && <PackingListPanel lang={lang} th={th} />
             }
+            {activeTab==="ics" && <ICSExportPanel locations={locations} locationDays={locationDays} locationNotes={locationNotes} locationTimes={locationTimes} tripDays={tripDays} city={city} lang={lang} th={th} />}
             {activeTab==="pdf" && <PDFExportPanel lang={lang} th={th} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
 
         </div>
