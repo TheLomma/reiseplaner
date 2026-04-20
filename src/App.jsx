@@ -289,7 +289,7 @@ const TRANSLATIONS = {
     warningClosed:"ist an dem gewählten Tag geschlossen!",warningHint:"Bitte Besuchstag ändern.",
     closed:"geschlossen",apiActive:"API aktiv",apiMissing:"API-Key fehlt",
     apiTitle:"OpenAI API-Key",apiHint:"Lokal gespeichert.",apiSave:"Speichern",
-    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.3",
+    apiSaved:"Gespeichert!",apiDelete:"Key löschen",footerText:"Reiseplaner v7.4",
     noRouteHint:"Füge mind. 2 Orte hinzu.",errorEmpty:"Bitte Link eingeben.",
     errorNotFound:"Link nicht erkannt.",
     searchPlaceholder:"Ort suchen, z.B. Eiffelturm Paris...",search:"Suchen",searching:"Suche...",searchNoResults:"Keine Ergebnisse gefunden.",searchTab:"Suche",linkTab:"Link",
@@ -319,7 +319,7 @@ const TRANSLATIONS = {
     warningClosed:"is closed on the selected day!",warningHint:"Please change the visit day.",
     closed:"closed",apiActive:"API active",apiMissing:"API Key missing",
     apiTitle:"OpenAI API Key",apiHint:"Stored locally.",apiSave:"Save",
-    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.3",
+    apiSaved:"Saved!",apiDelete:"Delete key",footerText:"Travel Planner v7.4",
     noRouteHint:"Add at least 2 places.",errorEmpty:"Please enter a link.",
     errorNotFound:"Link not recognized.",
     searchPlaceholder:"Search place, e.g. Eiffel Tower Paris...",search:"Search",searching:"Searching...",searchNoResults:"No results found.",searchTab:"Search",linkTab:"Link",
@@ -482,6 +482,81 @@ function SkeletonCard({ th }) {
         <div style={{ flex: 1 }}>{bar("60%", 12)}{bar("40%", 8, 6)}</div>
       </div>
       {bar("90%", 8, 12)}{bar("75%", 8, 6)}{bar("50%", 8, 6)}
+    </div>
+  );
+}
+
+function HotelBlock({ hotel, setHotel, lang, th }) {
+  const [open, setOpen] = useState(false);
+  const hasHotel = hotel && hotel.name;
+  const label = lang==="de" ? "Unterkunft" : "Accommodation";
+  return (
+    <div style={{marginBottom:14,background:th.card,border:`1px solid ${hasHotel?th.accent:th.border}`,borderRadius:16,padding:"12px 16px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}} onClick={()=>setOpen(o=>!o)}>
+        <div style={{fontSize:"0.7rem",color:th.textFaint,letterSpacing:1.5,textTransform:"uppercase"}}>
+          🏨 {label}{hasHotel ? ` · ${hotel.name}` : ""}
+        </div>
+        <span style={{color:th.textFaint,fontSize:"0.8rem"}}>{open?"▲":"▼"}</span>
+      </div>
+      {hasHotel && !open && (
+        <div style={{marginTop:6,display:"flex",gap:16,flexWrap:"wrap",fontSize:"0.75rem",color:th.textMuted}}>
+          {hotel.checkin && <span>✈️ Check-in: <b style={{color:th.text}}>{hotel.checkin}{hotel.checkinTime ? " "+hotel.checkinTime : ""}</b></span>}
+          {hotel.checkout && <span>🚪 Check-out: <b style={{color:th.text}}>{hotel.checkout}{hotel.checkoutTime ? " "+hotel.checkoutTime : ""}</b></span>}
+        </div>
+      )}
+      {open && (
+        <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <div style={{flex:2,minWidth:160}}>
+              <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>{lang==="de"?"Hotelname / Unterkunft":"Hotel / Accommodation"}</label>
+              <input value={hotel.name||""} onChange={e=>setHotel(h=>({...h,name:e.target.value}))} placeholder={lang==="de"?"z.B. Hotel Adlon":"e.g. Hotel Adlon"}
+                style={{width:"100%",background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 10px",fontSize:"0.85rem",color:th.text}} />
+            </div>
+            <div style={{flex:1,minWidth:120}}>
+              <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>{lang==="de"?"Bestätigungs-Nr.":"Confirmation No."}</label>
+              <input value={hotel.confirmation||""} onChange={e=>setHotel(h=>({...h,confirmation:e.target.value}))} placeholder="#ABC123"
+                style={{width:"100%",background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 10px",fontSize:"0.85rem",color:th.text}} />
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:120}}>
+              <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>Check-in</label>
+              <div style={{display:"flex",gap:4}}>
+                <input type="date" value={hotel.checkin||""} onChange={e=>setHotel(h=>({...h,checkin:e.target.value}))}
+                  style={{flex:1,background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 8px",fontSize:"0.82rem",color:th.text}} />
+                <input type="time" value={hotel.checkinTime||""} onChange={e=>setHotel(h=>({...h,checkinTime:e.target.value}))}
+                  style={{width:80,background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 8px",fontSize:"0.82rem",color:th.text}} />
+              </div>
+            </div>
+            <div style={{flex:1,minWidth:120}}>
+              <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>Check-out</label>
+              <div style={{display:"flex",gap:4}}>
+                <input type="date" value={hotel.checkout||""} onChange={e=>setHotel(h=>({...h,checkout:e.target.value}))}
+                  style={{flex:1,background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 8px",fontSize:"0.82rem",color:th.text}} />
+                <input type="time" value={hotel.checkoutTime||""} onChange={e=>setHotel(h=>({...h,checkoutTime:e.target.value}))}
+                  style={{width:80,background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 8px",fontSize:"0.82rem",color:th.text}} />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>{lang==="de"?"Adresse":"Address"}</label>
+            <input value={hotel.address||""} onChange={e=>setHotel(h=>({...h,address:e.target.value}))} placeholder={lang==="de"?"Straße, Stadt":"Street, City"}
+              style={{width:"100%",background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 10px",fontSize:"0.82rem",color:th.text}} />
+          </div>
+          <div>
+            <label style={{fontSize:"0.7rem",color:th.textMuted,display:"block",marginBottom:3}}>{lang==="de"?"Notiz":"Note"}</label>
+            <input value={hotel.note||""} onChange={e=>setHotel(h=>({...h,note:e.target.value}))} placeholder={lang==="de"?"z.B. Frühstück inklusive":"e.g. Breakfast included"}
+              style={{width:"100%",background:th.input,border:`1px solid ${th.inputBorder}`,borderRadius:9,padding:"6px 10px",fontSize:"0.82rem",color:th.text}} />
+          </div>
+          {hotel.address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel.address)}`} target="_blank" rel="noopener noreferrer"
+              style={{fontSize:"0.75rem",color:th.accent,textDecoration:"none"}}>🗺 {lang==="de"?"In Google Maps öffnen":"Open in Google Maps"}</a>
+          )}
+          <button onClick={()=>setHotel({})} style={{alignSelf:"flex-start",background:"none",border:`1px solid ${th.border}`,borderRadius:8,padding:"4px 12px",color:th.textMuted,fontSize:"0.75rem",cursor:"pointer"}}>
+            {lang==="de"?"Zurücksetzen":"Reset"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1576,6 +1651,8 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
         const [locationTimes, setLocationTimes] = useState({});
       const [travelMode, setTravelMode] = useState("walking");
       const [activeTab, setActiveTab] = useState("route");
+        const [hotel, setHotel] = useState(() => safeLocalGet("rp_hotel", {}));
+        useEffect(() => { safeLocalSet("rp_hotel", hotel); }, [hotel]);
       const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0,10));
       const [numDays, setNumDays] = useState(4);
       const tripDays = generateTripDays(startDate, numDays);
@@ -1704,7 +1781,8 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
             </div>
           </div>
 
-          <WeatherWidget tripDays={tripDays} city={city} lang={lang} th={th} />
+          <HotelBlock hotel={hotel} setHotel={setHotel} lang={lang} th={th} />
+            <WeatherWidget tripDays={tripDays} city={city} lang={lang} th={th} />
 
             {/* WARNINGS */}
           {closedWarnings.length > 0 && (
