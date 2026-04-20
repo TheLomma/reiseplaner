@@ -47,6 +47,59 @@ function useTheme() {
   return { mode, th: THEMES[mode] };
 }
 
+function PWAInstallBanner({ lang, th }) {
+  const [prompt, setPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(() => safeLocalGet("rp_pwa_dismissed", false));
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setInstalled(true));
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === "accepted") setInstalled(true);
+    setPrompt(null);
+  };
+
+  const handleDismiss = () => { setDismissed(true); safeLocalSet("rp_pwa_dismissed", true); };
+
+  if (installed || dismissed) return null;
+
+  const isIOS = typeof navigator !== "undefined" && new RegExp("iphone|ipad|ipod","i").test(navigator.userAgent);
+  const isStandalone = typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches;
+  if (isStandalone) return null;
+
+  if (!prompt && !isIOS) return null;
+
+  return (
+    <div style={{ background: th.accentLight, border: `1px solid ${th.accent}`, borderRadius: 14, padding: "12px 16px", marginBottom: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <span style={{ fontSize: "1.4rem" }}>📲</span>
+      <div style={{ flex: 1, minWidth: 180 }}>
+        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: th.accent }}>
+          {lang === "de" ? "App installieren" : "Install App"}
+        </div>
+        <div style={{ fontSize: "0.72rem", color: th.textMuted, marginTop: 2 }}>
+          {isIOS
+            ? (lang === "de" ? "Tippe auf Teilen → \"Zum Home-Bildschirm\"" : "Tap Share → \"Add to Home Screen\"")
+            : (lang === "de" ? "Offline nutzbar, schneller Start" : "Works offline, faster launch")}
+        </div>
+      </div>
+      {prompt && (
+        <button onClick={handleInstall} style={{ background: th.accent, color: th.bg, border: "none", borderRadius: 9, padding: "6px 16px", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}>
+          {lang === "de" ? "Installieren" : "Install"}
+        </button>
+      )}
+      <button onClick={handleDismiss} style={{ background: "none", border: "none", color: th.textFaint, cursor: "pointer", fontSize: "1rem", padding: "2px 6px" }}>✕</button>
+    </div>
+  );
+}
+
 function toggleTheme() {
   ThemeCtx.current = ThemeCtx.current === "dark" ? "light" : "dark";
   ThemeCtx.listeners.forEach(fn => fn(ThemeCtx.current));
@@ -1322,6 +1375,26 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
                   {isOver && dragLoc && <span style={{ fontSize:"0.68rem", marginLeft:4 }}>⬇ {lang==="de"?"Hier ablegen":"Drop here"}</span>}
                   {dayConflicts.length > 0 && <span style={{ fontSize:"0.65rem", background:th.warningBg, color:th.warning, borderRadius:6, padding:"1px 7px", marginLeft:4, fontWeight:700 }}>⚠ {dayConflicts.length} {lang==="de"?"Konflikt":"Conflict"}{dayConflicts.length>1?"e":""}</span>}
                 </div>
+                {(() => {
+                  let dayMin = 0;
+                  locs.forEach(loc => { dayMin += parseDurationMin(loc.duration); });
+                  for (let i = 1; i < locs.length; i++) {
+                    const t = calcTravelTime(locs[i-1], locs[i]);
+                    if (t) dayMin += travelMode==="walking" ? t.walkMin : travelMode==="driving" ? Math.max(3,Math.round(t.transitMin*0.6)) : t.transitMin;
+                  }
+                  let costMin = 0, costMax = 0, currency = "€";
+                  locs.forEach(loc => { const c = getEntryCost(loc.name, city); if(c){costMin+=c.min;costMax+=c.max;currency=c.currency;} });
+                  const hrs = Math.floor(dayMin/60), mins = dayMin%60;
+                  const timeStr = hrs>0 ? `${hrs}h${mins>0?` ${mins}min`:""}` : `${mins}min`;
+                  return locs.length > 0 ? (
+                    <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:8 }}>
+                      <span style={{ fontSize:"0.68rem", background:th.surface, border:`1px solid ${th.border}`, borderRadius:20, padding:"2px 9px", color:th.textMuted }}>⏱ {timeStr}</span>
+                      <span style={{ fontSize:"0.68rem", background:th.surface, border:`1px solid ${th.border}`, borderRadius:20, padding:"2px 9px", color:th.textMuted }}>📍 {locs.length} {lang==="de"?"Orte":"places"}</span>
+                      {costMax > 0 && <span style={{ fontSize:"0.68rem", background:th.goldBg, border:`1px solid ${th.gold}44`, borderRadius:20, padding:"2px 9px", color:th.gold }}>🎫 {currency}{costMin}{costMax!==costMin?`–${costMax}`:""}</span>}
+                      {costMax === 0 && costMin === 0 && locs.some(l => getEntryCost(l.name,city)) && <span style={{ fontSize:"0.68rem", background:th.goldBg, border:`1px solid ${th.gold}44`, borderRadius:20, padding:"2px 9px", color:th.gold }}>🎫 {lang==="de"?"Kostenlos":"Free"}</span>}
+                    </div>
+                  ) : null;
+                })()}
                 {dayConflicts.length > 0 && (
                   <div style={{ background:th.warningBg, borderRadius:9, padding:"7px 12px", marginBottom:8, fontSize:"0.72rem", color:th.warning }}>
                     {dayConflicts.map((c,i) => <div key={i}>⏰ <b>{c.a.name}</b> & <b>{c.b.name}</b> {lang==="de"?"überlappen zeitlich":"overlap in time"}</div>)}
@@ -1943,6 +2016,7 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
       <div style={{ minHeight:"100vh", background:th.bg, color:th.text, fontFamily:"'Inter',sans-serif", transition:"background 0.3s,color 0.3s" }}>
         <style>{`
           @keyframes spin { to { transform: rotate(360deg); } }
+            @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
           * { box-sizing: border-box; }
           ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:${th.border}; border-radius:3px; }
@@ -1997,7 +2071,8 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
             </div>
           </div>
 
-          <HotelBlock hotel={hotel} setHotel={setHotel} lang={lang} th={th} />
+          <PWAInstallBanner lang={lang} th={th} />
+            <HotelBlock hotel={hotel} setHotel={setHotel} lang={lang} th={th} />
             <WeatherWidget tripDays={tripDays} city={city} lang={lang} th={th} />
 
             {/* WARNINGS */}
@@ -2043,10 +2118,10 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
 
           {/* TABS */}
           <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-            {["route","map","budget","plans","share","notes","packing","ics","pdf"].map(tab => (
+            {["route","map","budget","plans","share","notes","packing","ics","pwa","pdf"].map(tab => (
               <button key={tab} onClick={()=>setActiveTab(tab)}
                 style={{ padding:"6px 14px", borderRadius:10, border:`1.5px solid ${activeTab===tab?th.accent:th.border}`, background:activeTab===tab?th.accentLight:"transparent", color:activeTab===tab?th.accent:th.textMuted, fontWeight:activeTab===tab?700:400, fontSize:"0.8rem", cursor:"pointer" }}>
-                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="notes"?(lang==="de"?"📝 Notizen":"📝 Notes"):tab==="packing"?t.packingList:tab==="ics"?"📅 .ics":"📄 PDF"}
+                {tab==="route"?t.route:tab==="map"?t.sectionMap:tab==="budget"?t.budget:tab==="plans"?t.savedPlans:tab==="share"?t.share:tab==="notes"?(lang==="de"?"📝 Notizen":"📝 Notes"):tab==="packing"?t.packingList:tab==="ics"?"📅 .ics":tab==="pwa"?"📲 PWA":"📄 PDF"}
               </button>
             ))}
           </div>
@@ -2080,7 +2155,8 @@ function RouteTimeline({ locations, locationDays, locationTimes, tripDays, trave
             {activeTab==="notes" && <DayNotesPanel tripDays={tripDays} lang={lang} th={th} />}
             {activeTab==="packing" && <PackingListPanel lang={lang} th={th} />
             }
-            {activeTab==="ics" && <ICSExportPanel locations={locations} locationDays={locationDays} locationNotes={locationNotes} locationTimes={locationTimes} tripDays={tripDays} city={city} lang={lang} th={th} />}
+            {activeTab==="pwa" && <PWATab lang={lang} th={th} online={online} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
+              {activeTab==="ics" && <ICSExportPanel locations={locations} locationDays={locationDays} locationNotes={locationNotes} locationTimes={locationTimes} tripDays={tripDays} city={city} lang={lang} th={th} />}
             {activeTab==="pdf" && <PDFExportPanel lang={lang} th={th} locations={locations} locationDays={locationDays} locationNotes={locationNotes} tripDays={tripDays} city={city} startDate={startDate} numDays={numDays} />}
 
         </div>
